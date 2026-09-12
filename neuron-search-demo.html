@@ -368,7 +368,7 @@
     {
       query: 'X-200ラインの異音トラブル、過去の対応事例は？',
       hits: '18',
-      cycle: 11000,           // ← 1つ目だけ尺を固定（11秒）
+      cycle: 11000,           // ← 1つ目だけ尺を固定（PACE=1.5 で16.5秒）
       answer:
         '過去3年でX-200ラインの異音報告は7件。主因は駆動部ベアリングの摩耗（5件）で、' +
         '<em class="nrn-mark">給脂周期を500h→300hへ見直した2023年7月以降、同種の再発は発生していません。</em>',
@@ -437,6 +437,19 @@
   var HOLD_BASE = 1400;
   var HOLD_PER_CHAR = 8;
   var HOLD_MIN = 1100;
+
+  /* ===== 全体の間の取り方（1.0で標準、大きくするほどゆっくり読ませる） =====
+     拡大・縮小のアニメーション自体（spotIn / spotOut / fadeOut）は
+     もたつかないよう等速のままにし、「見せている時間」だけを伸ばします。 */
+  var PACE = 1.5;
+  ['startPause','holdQuery','holdRepos','holdAnsBase','holdAnsChar',
+   'afterQuery','press','afterRepos','beforeAnswer','citeStep'].forEach(function (k) {
+    SPEED[k] = Math.round(SPEED[k] * PACE);
+  });
+  HOLD_BASE = Math.round(HOLD_BASE * PACE);
+  HOLD_PER_CHAR = HOLD_PER_CHAR * PACE;
+  HOLD_MIN = Math.round(HOLD_MIN * PACE);
+  PATTERNS.forEach(function (p) { if (p.cycle) p.cycle = Math.round(p.cycle * PACE); });
 
   var bar     = root.querySelector('.nrn-bar');
   var q       = root.querySelector('.nrn-q');
