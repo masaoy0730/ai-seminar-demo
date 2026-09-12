@@ -14,7 +14,7 @@
      ============================================================ -->
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Roboto+Mono:wght@400;500&display=swap');
 
 .nrn-demo{
   /* ---------- カラートークン（ここだけ変えれば全体を調整できます） ---------- */
@@ -149,7 +149,7 @@
 @keyframes nrn-sh{from{background-position:110% 0}to{background-position:-110% 0}}
 
 .nrn-ans-text{font-size:16.5px;line-height:1.95;letter-spacing:.01em;margin:0;color:var(--nrn-ink);font-weight:400;}
-.nrn-ans-text .nrn-mark{background:linear-gradient(transparent 60%, var(--nrn-accent-soft) 60%);padding-bottom:1px;font-style:normal;}
+.nrn-mark{background:linear-gradient(transparent 60%, var(--nrn-accent-soft) 60%);padding-bottom:1px;font-style:normal;}
 
 /* 見出し＋本文の2カラム項目（原因分析・対応策など） */
 .nrn-item{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;margin-bottom:12px;}
@@ -189,6 +189,30 @@
 .nrn-pip{width:22px;height:4px;border-radius:2px;background:rgba(255,255,255,.42);transition:background-color .4s ease;}
 .nrn-pip.on{background:var(--nrn-accent);}
 
+/* ---------- 拡大表示（スポットライト） ---------- */
+.nrn-spot{position:absolute;inset:0;z-index:5;pointer-events:none;display:flex;align-items:center;justify-content:center;padding:24px;}
+.nrn-spot-bg{position:absolute;inset:0;background:rgba(0,95,142,.62);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);opacity:0;transition:opacity .35s ease;}
+.nrn-spot.on .nrn-spot-bg{opacity:1;}
+.nrn-spot-inner{position:relative;width:100%;max-width:820px;transform-origin:50% 50%;will-change:transform,opacity;opacity:0;}
+.nrn-big{background:#fff;border-radius:16px;box-shadow:0 18px 50px rgba(0,45,75,.32);padding:26px 30px;}
+.nrn-big-query{display:flex;align-items:center;gap:16px;font-size:30px;font-weight:700;line-height:1.5;color:var(--nrn-ink);}
+.nrn-big-ico{flex:none;color:var(--nrn-blue);width:34px;height:34px;}
+.nrn-big-cap{
+  display:flex;align-items:center;gap:13px;
+  font-size:24px;font-weight:900;letter-spacing:.01em;line-height:1.4;
+  color:var(--nrn-navy);margin-bottom:20px;
+}
+.nrn-big-cap::before{content:'';width:5px;align-self:stretch;min-height:1.2em;border-radius:3px;background:var(--nrn-accent);flex:none;}
+.nrn-big-cap .nrn-em{color:var(--nrn-blue-ink);}
+.nrn-big-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.nrn-big-chip{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:700;color:var(--nrn-navy);background:var(--nrn-pale);border:1px solid #8ED4F0;border-radius:999px;padding:9px 14px;}
+.nrn-big-chip i{width:8px;height:8px;border-radius:50%;background:var(--nrn-blue);flex:none;box-shadow:0 0 0 3px rgba(0,158,222,.22);}
+.nrn-big-body{font-size:18.5px;line-height:1.85;color:var(--nrn-ink);}
+.nrn-big-body .nrn-item{gap:16px;margin-bottom:16px;}
+.nrn-big-body .nrn-k{font-size:15px;padding:5px 12px;margin-top:4px;}
+.nrn-big-body .nrn-list li{grid-template-columns:32px 1fr;gap:14px;margin-bottom:10px;}
+.nrn-big-body .nrn-list li::before{font-size:15px;line-height:28px;}
+
 /* ---------- ループの切れ目 ---------- */
 .nrn-body{transition:opacity .45s ease;}
 .nrn-demo.is-fading .nrn-body{opacity:0;}
@@ -215,6 +239,19 @@
   .nrn-list li{grid-template-columns:22px 1fr;gap:8px;}
   .nrn-cite{width:100%;font-size:11px;}
   .nrn-cite b{white-space:nowrap;}
+  .nrn-spot{padding:14px;align-items:flex-start;padding-top:76px;}
+  .nrn-big{padding:16px;border-radius:14px;}
+  .nrn-big-query{font-size:18px;gap:10px;}
+  .nrn-big-ico{width:24px;height:24px;}
+  .nrn-big-cap{font-size:15.5px;gap:9px;margin-bottom:14px;}
+  .nrn-big-cap::before{width:4px;}
+  .nrn-big-grid{grid-template-columns:repeat(2,1fr);gap:7px;}
+  .nrn-big-chip{font-size:11.5px;padding:7px 10px;gap:6px;}
+  .nrn-big-body{font-size:14.5px;line-height:1.8;}
+  .nrn-big-body .nrn-item{gap:6px;margin-bottom:12px;}
+  .nrn-big-body .nrn-k{font-size:12px;}
+  .nrn-big-body .nrn-list li{grid-template-columns:24px 1fr;gap:10px;}
+  .nrn-big-body .nrn-list li::before{font-size:12px;line-height:22px;}
   .nrn-skel i:nth-child(1){width:100%;}
   .nrn-skel i:nth-child(2){width:100%;}
   .nrn-skel i:nth-child(3){width:62%;}
@@ -310,6 +347,8 @@
     </div>
 
   </div>
+
+  <div class="nrn-spot" aria-hidden="true"><div class="nrn-spot-bg"></div><div class="nrn-spot-inner"></div></div>
 </div>
 
 <script>
@@ -327,7 +366,7 @@
     {
       query: 'X-200ラインの異音トラブル、過去の対応事例は？',
       hits: '18',
-      cycle: 10000,           // ← 1つ目だけ10秒固定
+      cycle: 11000,           // ← 1つ目だけ尺を固定（11秒）
       answer:
         '過去3年でX-200ラインの異音報告は7件。主因は駆動部ベアリングの摩耗（5件）で、' +
         '<em class="nrn-mark">給脂周期を500h→300hへ見直した2023年7月以降、同種の再発は発生していません。</em>',
@@ -380,22 +419,28 @@
 
   /* ===== 速度調整（ミリ秒） ===== */
   var SPEED = {
-    startPause:   500,
-    queryChar:     62,   // 質問文 1文字あたり
-    beforeSubmit: 400,   // 入力完了 → 検索
-    chipStep:     110,   // リポジトリが1つ点灯する間隔
-    afterChips:   400,   // 点灯完了 → 件数表示
-    beforeAnswer: 400,   // 件数表示 → 回答生成
-    answerChar:    24,   // 回答文 1文字あたり
-    citeStep:     110,   // 出典バッジの間隔
-    fadeOut:      500    // フェードアウト
+    startPause:   400,
+    spotIn:       340,   // 拡大表示があらわれる時間
+    spotOut:      600,   // 定位置に縮んで戻る時間
+    holdQuery:   1100,   // 質問文を大きく見せている時間
+    holdRepos:   1000,   // リポジトリを大きく見せている時間
+    holdAnsBase: 1200,   // 回答を大きく見せている時間（下限）
+    holdAnsChar:    8,   // ＋回答1文字あたり
+    afterQuery:   350,
+    press:        300,
+    afterRepos:   450,
+    beforeAnswer: 450,
+    citeStep:      90,
+    fadeOut:      500
   };
   /* cycle 未指定のパターンの保持時間：下限 ＋ 回答1文字あたりの読む時間 */
   var HOLD_BASE = 1400;
   var HOLD_PER_CHAR = 8;
   var HOLD_MIN = 1100;
 
+  var bar     = root.querySelector('.nrn-bar');
   var q       = root.querySelector('.nrn-q');
+  var sources = root.querySelector('.nrn-sources');
   var chips   = [].slice.call(root.querySelectorAll('.nrn-chip'));
   var row1    = root.querySelector('.nrn-row1');
   var row2    = root.querySelector('.nrn-row2');
@@ -407,24 +452,29 @@
   var ansEl   = root.querySelector('.nrn-ans-text');
   var citeBox = root.querySelector('.nrn-cites');
   var pips    = [].slice.call(root.querySelectorAll('.nrn-pip'));
+  var spot    = root.querySelector('.nrn-spot');
+  var spotIn  = root.querySelector('.nrn-spot-inner');
 
-  /* HTMLタグを壊さずに1文字ずつ出すためのトークン列 */
-  function tokenize(html) {
-    var out = [], i = 0;
-    while (i < html.length) {
-      if (html.charAt(i) === '<') {
-        var e = html.indexOf('>', i);
-        if (e === -1) { out.push(html.slice(i)); break; }
-        out.push({ tag: html.slice(i, e + 1) });
-        i = e + 1;
-      } else { out.push(html.charAt(i)); i++; }
-    }
-    return out;
-  }
+  var REPOS = chips.map(function (c) { return c.textContent.trim(); });
   PATTERNS.forEach(function (p) {
-    p.tokens = tokenize(p.answer);
-    p.chars = p.tokens.filter(function (t) { return typeof t === 'string'; }).length;
+    p.chars = p.answer.replace(/<[^>]*>/g, '').length;
   });
+
+  /* ---- 拡大表示の中身 ---- */
+  function bigQuery(p) {
+    return '<div class="nrn-big nrn-big-query">' +
+      '<svg class="nrn-big-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg>' +
+      '<span>' + p.query + '</span></div>';
+  }
+  function bigRepos() {
+    var h = '<div class="nrn-big nrn-big-repos"><div class="nrn-big-cap">AIエージェントが社内ナレッジを<span class="nrn-em">Neuron</span>で自動検索</div><div class="nrn-big-grid">';
+    REPOS.forEach(function (n) { h += '<span class="nrn-big-chip"><i></i>' + n + '</span>'; });
+    return h + '</div></div>';
+  }
+  function bigAnswer(p) {
+    return '<div class="nrn-big nrn-big-ans"><div class="nrn-big-cap">AIエージェントが結果を回答</div>' +
+           '<div class="nrn-big-body">' + p.answer + '</div></div>';
+  }
 
   function renderCites(p, show) {
     citeBox.innerHTML = '';
@@ -463,8 +513,50 @@
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   function sleep(ms) { return new Promise(function (r) { timer = setTimeout(r, ms); }); }
 
+  function clearSpot() {
+    spot.classList.remove('on');
+    spotIn.style.transition = 'none';
+    spotIn.style.transform = 'none';
+    spotIn.style.opacity = '0';
+    spotIn.innerHTML = '';
+  }
+
+  /* 全体に大きく表示 → 定位置へ縮めて戻す */
+  async function spotlight(html, target, hold, reveal, my) {
+    var alive = function () { return my === token; };
+
+    spotIn.innerHTML = html;
+    spot.classList.add('on');
+    spotIn.style.transition = 'none';
+    spotIn.style.transform = 'scale(.93)';
+    spotIn.style.opacity = '0';
+    void spotIn.offsetWidth;                       // 反映させる
+    spotIn.style.transition = 'transform ' + SPEED.spotIn + 'ms cubic-bezier(.2,.85,.3,1), opacity ' + SPEED.spotIn + 'ms ease';
+    spotIn.style.transform = 'scale(1)';
+    spotIn.style.opacity = '1';
+
+    await sleep(SPEED.spotIn + hold);              if (!alive()) return;
+
+    var r = spotIn.getBoundingClientRect();
+    var t = target.getBoundingClientRect();
+    var sc = Math.min(t.width / r.width, t.height / r.height);
+    if (!isFinite(sc) || sc <= 0) sc = 0.2;
+    var dx = (t.left + t.width / 2) - (r.left + r.width / 2);
+    var dy = (t.top + t.height / 2) - (r.top + r.height / 2);
+
+    spotIn.style.transition = 'transform ' + SPEED.spotOut + 'ms cubic-bezier(.4,0,.2,1), opacity ' + SPEED.spotOut + 'ms ease';
+    spotIn.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(' + sc + ')';
+    spotIn.style.opacity = '0';
+    spot.classList.remove('on');
+    if (reveal) reveal();                          // 実物を定位置に表示
+
+    await sleep(SPEED.spotOut);                    if (!alive()) return;
+    clearSpot();
+  }
+
   function reset(p) {
     root.className = 'nrn-demo';
+    clearSpot();
     q.textContent = '';
     ansEl.innerHTML = '';
     label.textContent = LABEL_WAIT;
@@ -494,62 +586,56 @@
     var t0 = Date.now();
     var cs = reset(p);
 
-    await sleep(SPEED.startPause);                    if (!alive()) return;
+    await sleep(SPEED.startPause);                 if (!alive()) return;
 
-    /* 1) 自然文で問いかける */
-    root.classList.add('is-focus', 'is-typing');
-    for (var i = 0; i < p.query.length; i++) {
-      q.textContent = p.query.slice(0, i + 1);
-      await sleep(SPEED.queryChar);                   if (!alive()) return;
-    }
-    root.classList.remove('is-typing');
-    await sleep(SPEED.beforeSubmit);                  if (!alive()) return;
+    /* 1) プロンプト：大きく見せてから検索バーへ */
+    await spotlight(bigQuery(p), bar, SPEED.holdQuery, function () {
+      root.classList.add('is-focus');
+      q.textContent = p.query;
+    }, my);                                        if (!alive()) return;
+    await sleep(SPEED.afterQuery);                 if (!alive()) return;
 
     /* 2) 検索を実行 */
     root.classList.add('is-press', 'is-searching');
     setTimeout(function () { root.classList.remove('is-press'); }, 180);
     row1.classList.add('on');
+    await sleep(SPEED.press);                      if (!alive()) return;
 
-    /* 3) 社内リポジトリを横断 */
-    for (var j = 0; j < chips.length; j++) {
-      chips[j].classList.add('on');
-      await sleep(SPEED.chipStep);                    if (!alive()) return;
-    }
-    await sleep(SPEED.afterChips);                    if (!alive()) return;
+    /* 3) リポジトリ：大きく見せてから一覧へ */
+    await spotlight(bigRepos(), sources, SPEED.holdRepos, function () {
+      chips.forEach(function (c) { c.classList.add('on'); });
+    }, my);                                        if (!alive()) return;
+    await sleep(SPEED.afterRepos);                 if (!alive()) return;
 
     /* 4) 根拠件数 */
     row1.classList.remove('on');
     row2.classList.add('on');
-    await sleep(SPEED.beforeAnswer);                  if (!alive()) return;
+    await sleep(SPEED.beforeAnswer);               if (!alive()) return;
 
-    /* 5) AIエージェントが回答 */
-    root.classList.remove('is-searching');
-    root.classList.add('is-answered');
-    label.textContent = LABEL_DONE;
-    var html = '';
-    for (var k = 0; k < p.tokens.length; k++) {
-      var t = p.tokens[k];
-      if (typeof t === 'string') {
-        html += t; ansEl.innerHTML = html;
-        await sleep(SPEED.answerChar);                if (!alive()) return;
-      } else { html += t.tag; ansEl.innerHTML = html; }
-    }
+    /* 5) 回答：大きく見せてから回答カードへ */
+    var holdA = SPEED.holdAnsBase + p.chars * SPEED.holdAnsChar;
+    await spotlight(bigAnswer(p), card, holdA, function () {
+      root.classList.remove('is-searching');
+      root.classList.add('is-answered');
+      label.textContent = LABEL_DONE;
+      ansEl.innerHTML = p.answer;
+    }, my);                                        if (!alive()) return;
 
-    /* 6) 出典を提示 */
+    /* 6) 出典 */
     cs = [].slice.call(citeBox.children);
     if (!cs.length) cs = renderCites(p, false);
     for (var m = 0; m < cs.length; m++) {
       cs[m].classList.add('on');
-      await sleep(SPEED.citeStep);                    if (!alive()) return;
+      await sleep(SPEED.citeStep);                 if (!alive()) return;
     }
 
     /* 7) 保持 → フェードして次のパターンへ */
     var hold = p.cycle
-      ? p.cycle - (Date.now() - t0) - SPEED.fadeOut          // 尺を固定するパターン
-      : HOLD_BASE + p.chars * HOLD_PER_CHAR;                 // 文字数に応じて可変
-    await sleep(Math.max(HOLD_MIN, hold));            if (!alive()) return;
+      ? p.cycle - (Date.now() - t0) - SPEED.fadeOut
+      : HOLD_BASE + p.chars * HOLD_PER_CHAR;
+    await sleep(Math.max(HOLD_MIN, hold));         if (!alive()) return;
     root.classList.add('is-fading');
-    await sleep(SPEED.fadeOut);                       if (!alive()) return;
+    await sleep(SPEED.fadeOut);                    if (!alive()) return;
     idx = (idx + 1) % PATTERNS.length;
     run(my);
   }
@@ -558,7 +644,7 @@
     if (reduce) { finalState(PATTERNS[0]); return; }
     token++; clearTimeout(timer); run(token);
   }
-  function stop() { token++; clearTimeout(timer); }
+  function stop() { token++; clearTimeout(timer); clearSpot(); }
 
   /* 初期化：高さを確定させてから再生 */
   measure();
