@@ -490,6 +490,12 @@
    'afterQuery','press','afterRepos','beforeAnswer','citeStep'].forEach(function (k) {
     SPEED[k] = Math.round(SPEED[k] * PACE);
   });
+  /* 拡大表示（プロンプト／リポジトリ／回答）を消すまでの保持を一律で延長（ミリ秒） */
+  var EXTRA_HOLD = 1000;
+  SPEED.holdQuery += EXTRA_HOLD;
+  SPEED.holdRepos += EXTRA_HOLD;
+  SPEED.holdAnsBase += EXTRA_HOLD;
+
   HOLD_BASE = Math.round(HOLD_BASE * PACE);
   HOLD_PER_CHAR = HOLD_PER_CHAR * PACE;
   HOLD_MIN = Math.round(HOLD_MIN * PACE);
