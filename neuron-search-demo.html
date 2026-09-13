@@ -14,7 +14,7 @@
      ============================================================ -->
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Roboto+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Roboto+Mono:wght@400;500&display=swap');
 
 .nrn-demo{
   /* ---------- カラートークン（ここだけ変えれば全体を調整できます） ---------- */
@@ -40,7 +40,7 @@
     radial-gradient(95% 130% at 100% 105%, rgba(0,200,255,.45), transparent 62%),
     linear-gradient(145deg, var(--nrn-blue-dp) 0%, var(--nrn-blue) 62%, var(--nrn-blue-lt) 100%);
   border-radius:20px;
-  font-family:'Zen Kaku Gothic New','Noto Sans JP','Hiragino Sans',-apple-system,BlinkMacSystemFont,sans-serif;
+  font-family:'BIZ UDPGothic','BIZ UDPゴシック','Noto Sans JP','Hiragino Sans',-apple-system,BlinkMacSystemFont,sans-serif;
   color:var(--nrn-ink);
   position:relative;
   overflow:hidden;
@@ -52,9 +52,9 @@
 /* ---------- ヘッダー（青地の上） ---------- */
 .nrn-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:11px;padding:0 4px;}
 .nrn-title{font-size:17px;font-weight:700;letter-spacing:.05em;margin:0;color:#fff;}
-.nrn-sublabel{font-size:13.5px;font-weight:500;color:#fff;letter-spacing:.02em;}
+.nrn-sublabel{font-size:13.5px;font-weight:700;color:#fff;letter-spacing:.02em;}
 .nrn-badge{
-  margin-left:auto;font-size:11px;font-weight:500;color:#fff;
+  margin-left:auto;font-size:11px;font-weight:700;color:#fff;
   border:1px solid rgba(255,255,255,.55);border-radius:999px;padding:3px 10px;
   letter-spacing:.08em;white-space:nowrap;
 }
@@ -77,7 +77,7 @@
 }
 .nrn-demo.is-focus .nrn-bar{border-color:var(--nrn-blue);box-shadow:0 0 0 3px rgba(0,158,222,.18);}
 .nrn-bar-ico{flex:none;color:var(--nrn-blue);display:flex;}
-.nrn-qwrap{flex:1;min-width:0;display:flex;align-items:center;font-size:15.5px;line-height:1.55;color:var(--nrn-ink);font-weight:500;}
+.nrn-qwrap{flex:1;min-width:0;display:flex;align-items:center;font-size:15.5px;line-height:1.55;color:var(--nrn-ink);font-weight:400;}
 .nrn-q{white-space:pre-wrap;word-break:break-word;}
 .nrn-q:empty::before{content:'社内のことを、話しことばで聞いてください';color:#9AA3AE;font-weight:400;}
 .nrn-caret{display:inline-block;width:2px;height:1.15em;background:var(--nrn-accent);margin-left:2px;vertical-align:-.18em;opacity:0;}
@@ -94,7 +94,7 @@
 .nrn-sources{display:flex;flex-wrap:wrap;gap:6px;margin:11px 0 0;}
 .nrn-chip{
   display:inline-flex;align-items:center;gap:6px;
-  font-size:12px;font-weight:500;color:var(--nrn-ink-sub);
+  font-size:12px;font-weight:400;color:var(--nrn-ink-sub);
   background:var(--nrn-card);border:1px solid var(--nrn-mono);
   border-radius:999px;padding:5px 11px 5px 9px;
   transition:color .3s ease, border-color .3s ease, background-color .3s ease;
@@ -185,7 +185,7 @@
 
 /* ---------- 再生中のシナリオ表示（青地の上） ---------- */
 .nrn-foot{display:flex;align-items:center;gap:8px;margin-top:9px;padding:0 4px;}
-.nrn-foot-label{font-size:11px;font-weight:600;letter-spacing:.08em;color:rgba(255,255,255,.92);margin-right:2px;}
+.nrn-foot-label{font-size:11px;font-weight:700;letter-spacing:.08em;color:rgba(255,255,255,.92);margin-right:2px;}
 .nrn-pip{width:22px;height:4px;border-radius:2px;background:rgba(255,255,255,.42);transition:background-color .4s ease;}
 .nrn-pip.on{background:var(--nrn-accent);}
 
@@ -199,7 +199,7 @@
 .nrn-big-ico{flex:none;color:var(--nrn-blue);width:34px;height:34px;}
 .nrn-big-cap{
   display:flex;align-items:center;gap:13px;
-  font-size:24px;font-weight:900;letter-spacing:.01em;line-height:1.4;
+  font-size:25px;font-weight:700;letter-spacing:.01em;line-height:1.4;
   color:var(--nrn-navy);margin-bottom:20px;
 }
 .nrn-big-cap::before{content:'';width:5px;align-self:stretch;min-height:1.2em;border-radius:3px;background:var(--nrn-accent);flex:none;}
@@ -235,7 +235,7 @@
 .nrn-f3{top:136px;height:44px;}
 .nrn-f4{top:204px;height:58px;}
 .nrn-f5{top:296px;height:52px;background:var(--nrn-blue);border-color:var(--nrn-blue);color:#fff;font-size:20px;}
-.nrn-f4sub{display:block;font-size:12.5px;font-weight:500;color:#9AA3AE;margin-top:3px;opacity:0;transition:opacity .3s ease;}
+.nrn-f4sub{display:block;font-size:12.5px;font-weight:400;color:#9AA3AE;margin-top:3px;opacity:0;transition:opacity .3s ease;}
 .nrn-f4sub.on{opacity:1;}
 .nrn-ar{position:absolute;left:155px;width:22px;height:22px;color:#AFDCF2;opacity:0;transform:translateY(-5px);transition:opacity .28s ease, transform .28s ease;}
 .nrn-ar.on{opacity:1;transform:none;}
