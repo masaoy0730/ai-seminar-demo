@@ -204,14 +204,51 @@
 }
 .nrn-big-cap::before{content:'';width:5px;align-self:stretch;min-height:1.2em;border-radius:3px;background:var(--nrn-accent);flex:none;}
 .nrn-big-cap .nrn-em{color:var(--nrn-blue-ink);}
-.nrn-big-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
-.nrn-big-chip{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:700;color:var(--nrn-navy);background:var(--nrn-pale);border:1px solid #8ED4F0;border-radius:999px;padding:9px 14px;}
-.nrn-big-chip i{width:8px;height:8px;border-radius:50%;background:var(--nrn-blue);flex:none;box-shadow:0 0 0 3px rgba(0,158,222,.22);}
+.nrn-big-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;}
+.nrn-big-chip:nth-child(-n+3){grid-column:span 2;}
+.nrn-big-chip:nth-child(n+4){grid-column:span 3;}
+.nrn-big-chip{display:flex;align-items:center;justify-content:center;gap:10px;font-size:17px;font-weight:700;color:var(--nrn-navy);background:var(--nrn-pale);border:1px solid #8ED4F0;border-radius:999px;padding:12px 18px;}
+.nrn-big-chip i{width:9px;height:9px;border-radius:50%;background:var(--nrn-blue);flex:none;box-shadow:0 0 0 3px rgba(0,158,222,.22);}
 .nrn-big-body{font-size:18.5px;line-height:1.85;color:var(--nrn-ink);}
 .nrn-big-body .nrn-item{gap:16px;margin-bottom:16px;}
 .nrn-big-body .nrn-k{font-size:15px;padding:5px 12px;margin-top:4px;}
 .nrn-big-body .nrn-list li{grid-template-columns:32px 1fr;gap:14px;margin-bottom:10px;}
 .nrn-big-body .nrn-list li::before{font-size:15px;line-height:28px;}
+
+/* ---------- エージェントの処理フロー（拡大表示の中で再生） ---------- */
+.nrn-spot-inner.is-flow{max-width:560px;}
+.nrn-big-flow .nrn-big-cap{margin-bottom:16px;}
+.nrn-flowwrap{position:relative;height:348px;}
+.nrn-flow{position:relative;width:280px;height:348px;margin:0 auto;}
+.nrn-flowsvg{position:absolute;left:0;top:0;width:280px;height:348px;overflow:visible;}
+.nrn-fb{
+  position:absolute;left:56px;width:220px;
+  border:1px solid #E1E7EC;background:#F3F6F9;border-radius:9px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:0 12px;
+  font-size:18px;font-weight:700;color:#6E7887;letter-spacing:.01em;
+  opacity:0;transform:translateY(7px);transition:opacity .3s ease, transform .3s ease;
+}
+.nrn-fb.on{opacity:1;transform:none;}
+.nrn-f1{top:0;height:44px;}
+.nrn-f2{top:68px;height:44px;}
+.nrn-f3{top:136px;height:44px;}
+.nrn-f4{top:204px;height:58px;}
+.nrn-f5{top:296px;height:52px;background:var(--nrn-blue);border-color:var(--nrn-blue);color:#fff;font-size:20px;}
+.nrn-f4sub{display:block;font-size:12.5px;font-weight:500;color:#9AA3AE;margin-top:3px;opacity:0;transition:opacity .3s ease;}
+.nrn-f4sub.on{opacity:1;}
+.nrn-ar{position:absolute;left:155px;width:22px;height:22px;color:#AFDCF2;opacity:0;transform:translateY(-5px);transition:opacity .28s ease, transform .28s ease;}
+.nrn-ar.on{opacity:1;transform:none;}
+.nrn-a1{top:46px;}
+.nrn-a2{top:114px;}
+.nrn-a3{top:182px;}
+.nrn-ya{top:266px;color:var(--nrn-blue);}
+.nrn-nolabel{position:absolute;left:-3px;top:238px;width:38px;text-align:center;font-size:13px;font-weight:700;color:var(--nrn-accent);opacity:0;transition:opacity .3s ease;}
+.nrn-yeslabel{position:absolute;left:186px;top:270px;font-size:13px;font-weight:700;color:var(--nrn-blue-ink);opacity:0;transition:opacity .3s ease;}
+.nrn-nolabel.on,.nrn-yeslabel.on{opacity:1;}
+.nrn-nopath{stroke-dasharray:600;stroke-dashoffset:600;}
+.nrn-nohead{opacity:0;transition:opacity .25s ease;}
+.nrn-nohead.on{opacity:1;}
 
 /* ---------- ループの切れ目 ---------- */
 .nrn-body{transition:opacity .45s ease;}
@@ -245,11 +282,17 @@
   .nrn-big{padding:16px;border-radius:14px;}
   .nrn-big-query{font-size:18px;gap:10px;}
   .nrn-big-ico{width:24px;height:24px;}
-  .nrn-big-cap{font-size:15.5px;gap:9px;margin-bottom:14px;}
-  .nrn-big-cap::before{width:4px;}
-  .nrn-big-grid{grid-template-columns:repeat(2,1fr);gap:7px;}
-  .nrn-big-chip{font-size:11.5px;padding:7px 10px;gap:6px;}
+  .nrn-big-cap{display:block;font-size:14.5px;line-height:1.5;margin-bottom:14px;
+    border-left:4px solid var(--nrn-accent);padding-left:10px;}
+  .nrn-big-cap::before{display:none;}
+  .nrn-big-grid{grid-template-columns:1fr;gap:7px;}
+  .nrn-big-chip:nth-child(-n+3),
+  .nrn-big-chip:nth-child(n+4){grid-column:auto;}
+  .nrn-big-chip{font-size:14px;padding:9px 14px;gap:9px;}
   .nrn-big-body{font-size:14.5px;line-height:1.8;}
+  .nrn-spot-inner.is-flow{max-width:none;}
+  .nrn-big-flow .nrn-big-cap{font-size:13.5px;}
+  .nrn-flowwrap{height:348px;}
   .nrn-big-body .nrn-item{gap:6px;margin-bottom:12px;}
   .nrn-big-body .nrn-k{font-size:12px;}
   .nrn-big-body .nrn-list li{grid-template-columns:24px 1fr;gap:10px;}
@@ -368,7 +411,7 @@
     {
       query: 'X-200ラインの異音トラブル、過去の対応事例は？',
       hits: '18',
-      cycle: 11000,           // ← 1つ目だけ尺を固定（PACE=1.5 で16.5秒）
+      cycle: 11000,           // ← 1つ目だけ尺を固定（PACE倍して使用）
       answer:
         '過去3年でX-200ラインの異音報告は7件。主因は駆動部ベアリングの摩耗（5件）で、' +
         '<em class="nrn-mark">給脂周期を500h→300hへ見直した2023年7月以降、同種の再発は発生していません。</em>',
@@ -423,7 +466,7 @@
     spotIn:       340,   // 拡大表示があらわれる時間
     spotOut:      600,   // 定位置に縮んで戻る時間
     holdQuery:   1100,   // 質問文を大きく見せている時間
-    holdRepos:   1000,   // リポジトリを大きく見せている時間
+    holdRepos:   1500,   // リポジトリを大きく見せている時間（ここだけ1.5倍）
     holdAnsBase: 1200,   // 回答を大きく見せている時間（下限）
     holdAnsChar:    8,   // ＋回答1文字あたり
     afterQuery:   350,
@@ -440,7 +483,8 @@
 
   /* ===== 全体の間の取り方（1.0で標準、大きくするほどゆっくり読ませる） =====
      拡大・縮小のアニメーション自体（spotIn / spotOut / fadeOut）は
-     もたつかないよう等速のままにし、「見せている時間」だけを伸ばします。 */
+     もたつかないよう等速のままにし、「見せている時間」だけを伸ばします。
+     処理フロー（FLOW）はここでは変倍せず、常に一定の速さで再生します。 */
   var PACE = 1.5;
   ['startPause','holdQuery','holdRepos','holdAnsBase','holdAnsChar',
    'afterQuery','press','afterRepos','beforeAnswer','citeStep'].forEach(function (k) {
@@ -479,15 +523,43 @@
       '<svg class="nrn-big-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg>' +
       '<span>' + p.query + '</span></div>';
   }
+  /* 拡大表示で見せるリポジトリ（多すぎると読めないので代表5つ） */
+  var BIG_REPOS = ['ファイルサーバー', 'SharePoint Online', 'Box', '文書管理システム', 'データベース'];
   function bigRepos() {
     var h = '<div class="nrn-big nrn-big-repos"><div class="nrn-big-cap">AIエージェントが社内ナレッジを<span class="nrn-em">Neuron</span>で自動検索</div><div class="nrn-big-grid">';
-    REPOS.forEach(function (n) { h += '<span class="nrn-big-chip"><i></i>' + n + '</span>'; });
+    BIG_REPOS.forEach(function (n) { h += '<span class="nrn-big-chip"><i></i>' + n + '</span>'; });
     return h + '</div></div>';
   }
   function bigAnswer(p) {
     return '<div class="nrn-big nrn-big-ans"><div class="nrn-big-cap">AIエージェントが結果を回答</div>' +
            '<div class="nrn-big-body">' + p.answer + '</div></div>';
   }
+
+  /* ---- エージェントの処理フロー ---- */
+  var ARROW = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 2h6v12h5l-8 8-8-8h5z"/></svg>';
+  function bigFlow() {
+    return '<div class="nrn-big nrn-big-flow">' +
+      '<div class="nrn-big-cap">必要な情報がそろうまで<span class="nrn-em">検索を繰り返す</span></div>' +
+      '<div class="nrn-flowwrap"><div class="nrn-flow">' +
+        '<svg class="nrn-flowsvg" viewBox="0 0 280 348" fill="none">' +
+          '<path class="nrn-nopath" d="M56 233 H16 V90 H44" stroke="#F06522" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>' +
+          '<polygon class="nrn-nohead" points="44,83.5 57,90 44,96.5" fill="#F06522"/>' +
+        '</svg>' +
+        '<div class="nrn-fb nrn-f1">目的（質問内容）</div>' +
+        '<span class="nrn-ar nrn-a1">' + ARROW + '</span>' +
+        '<div class="nrn-fb nrn-f2">Neuronで検索を実行</div>' +
+        '<span class="nrn-ar nrn-a2">' + ARROW + '</span>' +
+        '<div class="nrn-fb nrn-f3">検索結果を確認</div>' +
+        '<span class="nrn-ar nrn-a3">' + ARROW + '</span>' +
+        '<div class="nrn-fb nrn-f4"><span>情報は足りたか？</span><span class="nrn-f4sub">足りなければ 検索に戻る</span></div>' +
+        '<span class="nrn-nolabel">NO</span>' +
+        '<span class="nrn-ar nrn-ya">' + ARROW + '</span>' +
+        '<span class="nrn-yeslabel">YES</span>' +
+        '<div class="nrn-fb nrn-f5">回答する</div>' +
+      '</div></div></div>';
+  }
+  /* フロー各要素の出るタイミング（ミリ秒）— 合計およそ5秒 */
+  var FLOW = { fadeIn:340, step:240, sub:380, no:360, draw:650, wait:800, yes:380, hold:1500, fadeOut:400 };
 
   function renderCites(p, show) {
     citeBox.innerHTML = '';
@@ -528,6 +600,7 @@
 
   function clearSpot() {
     spot.classList.remove('on');
+    spotIn.className = 'nrn-spot-inner';
     spotIn.style.transition = 'none';
     spotIn.style.transform = 'none';
     spotIn.style.opacity = '0';
@@ -564,6 +637,65 @@
     if (reveal) reveal();                          // 実物を定位置に表示
 
     await sleep(SPEED.spotOut);                    if (!alive()) return;
+    clearSpot();
+  }
+
+  /* 処理フローを拡大表示で再生する（定位置には戻らず、そのまま消える） */
+  async function spotFlow(my) {
+    var alive = function () { return my === token; };
+    var g = function (sel) { return spotIn.querySelector(sel); };
+
+    spotIn.className = 'nrn-spot-inner is-flow';
+    spotIn.innerHTML = bigFlow();
+    spot.classList.add('on');
+    spotIn.style.transition = 'none';
+    spotIn.style.transform = 'scale(.96)';
+    spotIn.style.opacity = '0';
+    void spotIn.offsetWidth;
+    spotIn.style.transition = 'transform ' + FLOW.fadeIn + 'ms cubic-bezier(.2,.85,.3,1), opacity ' + FLOW.fadeIn + 'ms ease';
+    spotIn.style.transform = 'scale(1)';
+    spotIn.style.opacity = '1';
+    await sleep(FLOW.fadeIn);                      if (!alive()) return;
+
+    /* 上から順に図形と文字を表示 */
+    var seq = ['.nrn-f1', '.nrn-a1', '.nrn-f2', '.nrn-a2', '.nrn-f3', '.nrn-a3', '.nrn-f4'];
+    for (var i = 0; i < seq.length; i++) {
+      g(seq[i]).classList.add('on');
+      await sleep(FLOW.step);                      if (!alive()) return;
+    }
+
+    /* 「足りなければ 検索に戻る」 */
+    g('.nrn-f4sub').classList.add('on');
+    await sleep(FLOW.sub);                         if (!alive()) return;
+
+    /* NO ＋ 上に伸びる矢印 */
+    g('.nrn-nolabel').classList.add('on');
+    await sleep(FLOW.no);                          if (!alive()) return;
+    var path = g('.nrn-nopath');
+    var len = path.getTotalLength ? path.getTotalLength() : 600;
+    path.style.strokeDasharray = len;
+    path.style.strokeDashoffset = len;
+    void path.getBoundingClientRect();
+    path.style.transition = 'stroke-dashoffset ' + FLOW.draw + 'ms linear';
+    path.style.strokeDashoffset = '0';
+    await sleep(FLOW.draw);                        if (!alive()) return;
+    g('.nrn-nohead').classList.add('on');
+
+    /* 少し待ってから YES へ */
+    await sleep(FLOW.wait);                        if (!alive()) return;
+    g('.nrn-yeslabel').classList.add('on');
+    g('.nrn-ya').classList.add('on');
+    await sleep(FLOW.yes);                         if (!alive()) return;
+
+    /* 回答する */
+    g('.nrn-f5').classList.add('on');
+    await sleep(FLOW.hold);                        if (!alive()) return;
+
+    spotIn.style.transition = 'transform ' + FLOW.fadeOut + 'ms ease, opacity ' + FLOW.fadeOut + 'ms ease';
+    spotIn.style.transform = 'scale(.97)';
+    spotIn.style.opacity = '0';
+    spot.classList.remove('on');
+    await sleep(FLOW.fadeOut);                     if (!alive()) return;
     clearSpot();
   }
 
@@ -619,6 +751,9 @@
       chips.forEach(function (c) { c.classList.add('on'); });
     }, my);                                        if (!alive()) return;
     await sleep(SPEED.afterRepos);                 if (!alive()) return;
+
+    /* 3-b) エージェントの処理フロー（約5秒） */
+    await spotFlow(my);                            if (!alive()) return;
 
     /* 4) 根拠件数 */
     row1.classList.remove('on');
