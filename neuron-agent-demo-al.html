@@ -170,6 +170,37 @@ ul.acts{margin:0;padding-left:18px;font-size:13px;}
 ul.acts li{margin-bottom:5px;}
 .ask{margin:10px 0 0;font-size:12.5px;color:var(--muted);background:var(--bg);border:1px dashed var(--border-strong);border-radius:8px;padding:9px 12px;}
 
+/* ---------- 成果物（PPTX） ---------- */
+.filecard{display:flex;align-items:center;gap:14px;border:1px solid var(--border);border-radius:10px;padding:13px 16px;background:var(--surface);}
+.fileicon{flex:none;width:42px;height:50px;border-radius:5px;background:#c8442b;color:#fff;display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;font-size:10px;font-weight:700;letter-spacing:.06em;position:relative;box-shadow:0 1px 3px rgba(16,24,40,.18);}
+.fileicon::before{content:'';position:absolute;top:0;right:0;border-width:0 12px 12px 0;border-style:solid;border-color:#fff #fff transparent transparent;border-radius:0 5px 0 0;}
+.filename{font-size:14.5px;font-weight:700;margin:0;}
+.filemeta{font-size:12px;color:var(--muted);margin:2px 0 0;}
+.fileok{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--ok);background:var(--ok-soft);border:1px solid #bfe3d2;border-radius:999px;padding:4px 12px;white-space:nowrap;}
+.slides{display:grid;grid-template-columns:repeat(7,1fr);gap:9px;margin-top:12px;}
+.sl{border:1px solid var(--border);border-radius:6px;background:var(--surface);overflow:hidden;box-shadow:0 1px 2px rgba(16,24,40,.05);}
+.sl .pg{aspect-ratio:16/9;padding:7px 8px;display:flex;flex-direction:column;gap:4px;}
+.sl .ttl{font-size:8.5px;font-weight:700;line-height:1.35;color:var(--text);}
+.sl .bar{height:3px;border-radius:2px;background:#e6eaef;}
+.sl .bar.w70{width:70%;} .sl .bar.w50{width:50%;}
+.sl.cover .pg{background:var(--accent);justify-content:center;}
+.sl.cover .ttl{color:#fff;font-size:9px;}
+.sl.cover .bar{background:rgba(255,255,255,.55);}
+.sl .cap{font-size:9.5px;color:var(--muted);text-align:center;border-top:1px solid var(--border);padding:3px 2px;}
+
+/* ---------- コネクタ（Box）への保存 ---------- */
+.tool{margin-top:14px;border:1px solid var(--border);border-radius:10px;background:var(--surface);overflow:hidden;}
+.toolhead{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fbfcfd;border-bottom:1px solid var(--border);}
+.toolico{flex:none;width:24px;height:24px;border-radius:6px;background:#0061d5;color:#fff;display:flex;align-items:center;justify-content:center;}
+.toolname{font-size:13px;font-weight:700;}
+.toolact{font-size:12px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;}
+.toolstate{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--ok);white-space:nowrap;}
+.toolbody{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;margin:0;padding:11px 14px;font-size:12.5px;}
+.toolbody dt{color:var(--muted);white-space:nowrap;}
+.toolbody dd{margin:0;}
+.toolbody code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1px 6px;}
+.toolbody .muted{color:var(--muted);}
+
 /* ---------- 拡大表示（スポットライト） ---------- */
 .spot{position:absolute;inset:0;z-index:5;pointer-events:none;display:flex;align-items:center;justify-content:center;padding:28px;}
 .spot.ans{align-items:stretch;padding:20px;}
@@ -243,6 +274,7 @@ ul.acts li{margin-bottom:5px;}
   .big-q .ico{width:28px;height:28px;}
   .big-cap{font-size:13px;margin-bottom:12px;}
   .big-repo{font-size:15px;padding:11px 16px;}
+  .slides{grid-template-columns:repeat(2,1fr);}
   .chap{display:none;}
   .player{gap:9px;padding:9px 10px;}
 }
@@ -272,7 +304,7 @@ ul.acts li{margin-bottom:5px;}
         <div class="steplabel">01 ／ プロンプト</div>
         <div class="prompt">
           <span class="ico" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg></span>
-          <p>自動車の軽量化を目的としたアルミニウム合金の表面処理技術に関する研究事例を探して、要点と新規性をまとめて。</p>
+          <p>自動車の軽量化を目的としたアルミニウム合金の表面処理技術に関する研究事例を探して、要点と新規性をまとめて。調べた内容はPPTXのスライドにしてください。</p>
           <button class="sendbtn" id="promptSend" type="button" tabindex="-1" aria-hidden="true">検索<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M12 5l7 7-7 7"/></svg></button>
         </div>
       </section>
@@ -518,6 +550,38 @@ ul.acts li{margin-bottom:5px;}
         </ul>
         <p class="ask"><b>関連文献をさらに探しますか？</b>　「特許に絞って調べる」「競合他社の公開技術と比較する」「文献④の詳細を見る」などをご指示ください。</p>
       </section>
+      <section class="blk" data-dur="4.6" data-label="PPTXスライドを作成" data-ans="1">
+        <h3 class="sec">PPTXでスライドを作りました</h3>
+        <div class="filecard">
+          <span class="fileicon" aria-hidden="true">PPTX</span>
+          <div>
+            <p class="filename">アルミニウム表面処理_研究動向まとめ.pptx</p>
+            <p class="filemeta">7スライド ／ PowerPoint 形式 ／ 調査結果の1〜5章を構成に反映</p>
+          </div>
+          <span class="fileok"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>作成完了</span>
+        </div>
+        <div class="slides">
+          <div class="sl cover"><div class="pg"><div class="ttl">アルミ表面処理<br>研究動向まとめ</div><div class="bar w70"></div><div class="bar"></div><div class="bar w50"></div></div><div class="cap">表紙</div></div>
+          <div class="sl "><div class="pg"><div class="ttl">耐食性から<br>接合技術へ</div><div class="bar w70"></div><div class="bar"></div><div class="bar w50"></div></div><div class="cap">調査サマリー</div></div>
+          <div class="sl "><div class="pg"><div class="ttl">文献①〜⑤ 一覧</div><div class="bar w70"></div><div class="bar"></div><div class="bar w50"></div></div><div class="cap">特定した文献</div></div>
+          <div class="sl "><div class="pg"><div class="ttl">化学処理／物理加工</div><div class="bar w70"></div><div class="bar"></div><div class="bar w50"></div></div><div class="cap">各文献の要点</div></div>
+          <div class="sl "><div class="pg"><div class="ttl">5観点マトリクス</div><div class="bar w70"></div><div class="bar"></div><div class="bar w50"></div></div><div class="cap">新規性の比較</div></div>
+          <div class="sl "><div class="pg"><div class="ttl">空白領域の指摘</div><div class="bar w70"></div><div class="bar"></div><div class="bar w50"></div></div><div class="cap">研究開発への示唆</div></div>
+          <div class="sl "><div class="pg"><div class="ttl">3件の提案</div><div class="bar w70"></div><div class="bar"></div><div class="bar w50"></div></div><div class="cap">次のアクション</div></div>
+        </div>
+        <div class="tool">
+          <div class="toolhead">
+            <span class="toolico" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></span>
+            <span class="toolname">Box</span>
+            <span class="toolact">upload_file</span>
+            <span class="toolstate"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>保存しました</span>
+          </div>
+          <dl class="toolbody">
+            <dt>保存先</dt><dd><code>/研究開発部/表面処理グループ/2026_技術調査</code></dd>
+            <dt>ファイル</dt><dd><code>アルミニウム表面処理_研究動向まとめ.pptx</code> <span class="muted">7スライド ／ 1.8 MB</span></dd>
+          </dl>
+        </div>
+      </section>
       </div><!-- /#answerWrap -->
 
     </div><!-- /.log -->
@@ -563,7 +627,7 @@ ul.acts li{margin-bottom:5px;}
     q: function () {
       return '<div class="big" id="bigq"><div class="big-bar">' +
         '<span class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg></span>' +
-        '<span class="big-q">自動車の軽量化を目的としたアルミニウム合金の表面処理技術に関する研究事例を探して、要点と新規性をまとめて。</span>' +
+        '<span class="big-q">自動車の軽量化を目的としたアルミニウム合金の表面処理技術に関する研究事例を探して、要点と新規性をまとめて。調べた内容はPPTXのスライドにしてください。</span>' +
         '</div></div>';
     },
     r: function () {
@@ -650,7 +714,9 @@ ul.acts li{margin-bottom:5px;}
       var span = (ansEnd - ansStart) - ANS_IN - ANS_OUT;
       var p = (t - ansStart - ANS_IN) / span;
       p = Math.min(1, Math.max(0, (p - .05) / .9));
-      var over = Math.max(0, ansRoll.scrollHeight - ansBox.clientHeight + 8);
+      var cs = getComputedStyle(ansBox);
+      var pad = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+      var over = Math.max(0, ansRoll.scrollHeight - (ansBox.clientHeight - pad) + 10);
       ansRoll.style.transform = 'translateY(' + (-over * p) + 'px)';
       if (t >= ansEnd - ANS_OUT) closeAns(false);
     } else if (ansOpen) {
