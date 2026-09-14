@@ -33,7 +33,7 @@ body{
 
 /* ---------- ステージ ---------- */
 .stage{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
-.viewport{position:relative;}
+.viewport{position:relative;overflow:hidden;}
 .log{height:clamp(560px, calc(100vh - 160px), 1040px);overflow-y:auto;padding:18px 20px 28px;scroll-behavior:smooth;}
 .log::-webkit-scrollbar{width:10px;}
 .log::-webkit-scrollbar-thumb{background:#d8dde4;border-radius:6px;border:3px solid var(--surface);}
@@ -170,36 +170,55 @@ ul.acts{margin:0;padding-left:18px;font-size:13px;}
 ul.acts li{margin-bottom:5px;}
 .ask{margin:10px 0 0;font-size:12.5px;color:var(--muted);background:var(--bg);border:1px dashed var(--border-strong);border-radius:8px;padding:9px 12px;}
 
-/* ---------- 成果物（PPTX） ---------- */
-.filecard{display:flex;align-items:center;gap:14px;border:1px solid var(--border);border-radius:10px;padding:13px 16px;background:var(--surface);}
-.fileicon{flex:none;width:42px;height:50px;border-radius:5px;background:#c8442b;color:#fff;display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;font-size:10px;font-weight:700;letter-spacing:.06em;position:relative;box-shadow:0 1px 3px rgba(16,24,40,.18);}
-.fileicon::before{content:'';position:absolute;top:0;right:0;border-width:0 12px 12px 0;border-style:solid;border-color:#fff #fff transparent transparent;border-radius:0 5px 0 0;}
-.filename{font-size:14.5px;font-weight:700;margin:0;}
-.filemeta{font-size:12px;color:var(--muted);margin:2px 0 0;}
-.fileok{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--ok);background:var(--ok-soft);border:1px solid #bfe3d2;border-radius:999px;padding:4px 12px;white-space:nowrap;}
-.slides{display:grid;grid-template-columns:repeat(7,1fr);gap:9px;margin-top:12px;}
-.sl{border:1px solid var(--border);border-radius:6px;background:var(--surface);overflow:hidden;box-shadow:0 1px 2px rgba(16,24,40,.05);}
-.sl .pg{aspect-ratio:16/9;padding:7px 8px;display:flex;flex-direction:column;gap:4px;}
-.sl .ttl{font-size:8.5px;font-weight:700;line-height:1.35;color:var(--text);}
-.sl .bar{height:3px;border-radius:2px;background:#e6eaef;}
-.sl .bar.w70{width:70%;} .sl .bar.w50{width:50%;}
-.sl.cover .pg{background:var(--accent);justify-content:center;}
-.sl.cover .ttl{color:#fff;font-size:9px;}
-.sl.cover .bar{background:rgba(255,255,255,.55);}
-.sl .cap{font-size:9.5px;color:var(--muted);text-align:center;border-top:1px solid var(--border);padding:3px 2px;}
 
-/* ---------- コネクタ（Box）への保存 ---------- */
-.tool{margin-top:14px;border:1px solid var(--border);border-radius:10px;background:var(--surface);overflow:hidden;}
-.toolhead{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fbfcfd;border-bottom:1px solid var(--border);}
-.toolico{flex:none;width:24px;height:24px;border-radius:6px;background:#0061d5;color:#fff;display:flex;align-items:center;justify-content:center;}
-.toolname{font-size:13px;font-weight:700;}
-.toolact{font-size:12px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;}
-.toolstate{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--ok);white-space:nowrap;}
-.toolbody{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;margin:0;padding:11px 14px;font-size:12.5px;}
-.toolbody dt{color:var(--muted);white-space:nowrap;}
-.toolbody dd{margin:0;}
-.toolbody code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1px 6px;}
-.toolbody .muted{color:var(--muted);}
+/* ---------- 成果物（PPTX）とプレビューパネル ---------- */
+.sldesc{margin:0 0 10px;font-size:15px;line-height:1.9;}
+ol.sllist{margin:0 0 12px;padding-left:22px;font-size:13.5px;line-height:1.85;}
+ol.sllist li{margin-bottom:2px;}
+.slnote{margin:0;font-size:13px;line-height:1.85;color:var(--muted);}
+
+.dlcard{display:flex;align-items:center;gap:12px;border:1px solid var(--border-strong);border-radius:12px;background:#fff;padding:10px 12px;max-width:620px;box-shadow:0 1px 2px rgba(16,24,40,.05);}
+.dlico{flex:none;width:40px;height:40px;border-radius:10px;background:#f3d9c6;color:#b4500f;display:flex;align-items:center;justify-content:center;}
+.dlmeta{flex:1;min-width:0;}
+.dlname{font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dlsub{font-size:11.5px;color:var(--muted);}
+.dlbtn{flex:none;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border-strong);border-radius:9px;background:#fff;color:var(--text);font-family:inherit;font-size:12.5px;font-weight:700;padding:7px 13px;cursor:default;}
+.dlbtn svg{color:var(--muted);}
+
+.preview{position:absolute;top:0;right:0;bottom:0;width:366px;z-index:4;display:flex;flex-direction:column;background:#fbfbfa;border-left:1px solid var(--border);box-shadow:-10px 0 28px rgba(16,24,40,.07);transform:translateX(103%);pointer-events:none;transition:transform .55s cubic-bezier(.2,.8,.3,1);}
+.viewport.split .preview{transform:none;pointer-events:auto;}
+.viewport.split .log{padding-right:386px;}
+.pvhead{flex:none;display:flex;align-items:center;gap:9px;padding:9px 11px;border-bottom:1px solid var(--border);background:#fff;}
+.pvhead .dlico{width:28px;height:28px;border-radius:8px;}
+.pvtitle{flex:1;min-width:0;}
+.pvtitle b{display:block;font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;}
+.pvtitle span{font-size:10.5px;color:var(--muted);}
+.pvicon{flex:none;width:26px;height:26px;border-radius:7px;border:1px solid var(--border);background:#fff;color:var(--muted);display:flex;align-items:center;justify-content:center;}
+.pvbody{flex:1;overflow-y:auto;padding:14px 14px 22px;display:flex;flex-direction:column;gap:12px;}
+.pvbody::-webkit-scrollbar{width:8px;}
+.pvbody::-webkit-scrollbar-thumb{background:#dfe3e9;border-radius:6px;border:2px solid #fbfbfa;}
+
+.sl{position:relative;flex:none;aspect-ratio:16/9;border:1px solid var(--border-strong);border-radius:7px;background:#fff;overflow:hidden;box-shadow:0 1px 3px rgba(16,24,40,.09);padding:10px 12px;}
+.sl .pg{position:absolute;right:6px;bottom:5px;font-size:7px;font-weight:700;color:#fff;background:rgba(29,36,48,.7);border-radius:5px;padding:2px 6px;letter-spacing:.03em;}
+.sl h5{margin:0 0 5px;font-size:9px;font-weight:700;line-height:1.35;padding-bottom:4px;border-bottom:1.5px solid var(--accent);}
+.sl p{margin:0;font-size:7px;line-height:1.5;color:#41506a;}
+.sl ul{margin:0;padding-left:8px;list-style:disc;}
+.sl li{margin:0 0 2px;font-size:7px;line-height:1.45;color:#41506a;}
+.sl .two{display:grid;grid-template-columns:1fr 1fr;gap:4px 7px;}
+.sl .chip{display:block;font-size:6.5px;font-weight:700;color:var(--accent-dark);background:var(--accent-soft);border-radius:4px;padding:1.5px 4px;margin-bottom:2px;}
+.sl table{width:100%;min-width:0;border-collapse:collapse;font-size:6.5px;}
+.sl th,.sl td{border-bottom:.5px solid var(--border);padding:1.5px 3px;white-space:nowrap;text-align:left;}
+.sl th{background:#f2f5f9;color:var(--muted);font-size:6px;font-weight:700;}
+.sl.cover{background:linear-gradient(135deg,#2c4372,#1b2a49);border-color:#1b2a49;display:flex;flex-direction:column;justify-content:center;padding:14px 16px;}
+.sl.cover .bar{width:32px;height:2.5px;background:var(--accent);margin-bottom:8px;}
+.sl.cover h5{border:0;padding:0;color:#fff;font-size:11px;line-height:1.45;margin-bottom:6px;}
+.sl.cover p{color:#bcccec;font-size:7px;}
+
+@media (max-width:900px){
+  .preview{left:0;right:0;top:auto;height:250px;width:auto;border-left:0;border-top:1px solid var(--border);box-shadow:0 -10px 26px rgba(16,24,40,.09);transform:translateY(104%);}
+  .viewport.split .log{padding-right:20px;padding-bottom:268px;}
+  .pvbody{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:start;}
+}
 
 /* ---------- 拡大表示（スポットライト） ---------- */
 .spot{position:absolute;inset:0;z-index:5;pointer-events:none;display:flex;align-items:center;justify-content:center;padding:28px;}
@@ -274,7 +293,6 @@ ul.acts li{margin-bottom:5px;}
   .big-q .ico{width:28px;height:28px;}
   .big-cap{font-size:13px;margin-bottom:12px;}
   .big-repo{font-size:15px;padding:11px 16px;}
-  .slides{grid-template-columns:repeat(2,1fr);}
   .chap{display:none;}
   .player{gap:9px;padding:9px 10px;}
 }
@@ -296,7 +314,7 @@ ul.acts li{margin-bottom:5px;}
   </div>
 
   <div class="stage">
-   <div class="viewport">
+   <div class="viewport" id="vp">
     <div class="log" id="log">
 
       <!-- 01 プロンプト -->
@@ -550,43 +568,129 @@ ul.acts li{margin-bottom:5px;}
         </ul>
         <p class="ask"><b>関連文献をさらに探しますか？</b>　「特許に絞って調べる」「競合他社の公開技術と比較する」「文献④の詳細を見る」などをご指示ください。</p>
       </section>
-      <section class="blk" data-dur="4.6" data-label="PPTXスライドを作成" data-ans="1">
-        <h3 class="sec">PPTXでスライドを作りました</h3>
-        <div class="filecard">
-          <span class="fileicon" aria-hidden="true">PPTX</span>
-          <div>
-            <p class="filename">アルミニウム表面処理_研究動向まとめ.pptx</p>
-            <p class="filemeta">7スライド ／ PowerPoint 形式 ／ 調査結果の1〜5章を構成に反映</p>
+      </div><!-- /#answerWrap -->
+
+      <!-- 10 スライドの説明 -->
+      <section class="blk" data-dur="5.2" data-label="スライドを作成" data-pv="1">
+        <p class="sldesc">調査結果を <b>7 枚のスライド</b> にまとめました。1 枚目を表紙、2 枚目に全体サマリを置き、3 枚目以降で本文と同じ順に展開しています。</p>
+        <ol class="sllist">
+          <li>表紙 － 調査テーマ・対象文献数・作成日</li>
+          <li>調査サマリ － 押さえるべき 3 つのポイント</li>
+          <li>特定した文献 － 5 件の一覧（文献ID・年・主題）</li>
+          <li>各文献の要点 － ①〜⑤ の要点と課題</li>
+          <li>新規性の比較 － 制御レベル・新規性・量産適用性の対比表</li>
+          <li>研究開発への示唆 － 空白領域と評価軸の提案</li>
+          <li>次のアクション候補 － 3 件の具体アクション</li>
+        </ol>
+        <p class="slnote">表とテキストはすべて編集可能な PowerPoint オブジェクトで作成しています。プレビュー画面で各ページを確認できます。</p>
+      </section>
+
+      <!-- 11 ダウンロード -->
+      <section class="blk" data-dur="4.6" data-label="PPTXをダウンロード" data-pv="1">
+        <div class="dlcard">
+          <div class="dlico"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h5"/><path d="M9 13h3a1.6 1.6 0 0 1 0 3.2H9z"/><path d="M9 13v5.5"/></svg></div>
+          <div class="dlmeta">
+            <div class="dlname">アルミニウム合金_表面処理技術_調査報告.pptx</div>
+            <div class="dlsub">プレゼンテーション ・ 7 スライド ・ 1.4 MB</div>
           </div>
-          <span class="fileok"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>作成完了</span>
-        </div>
-        <div class="slides">
-          <div class="sl cover"><div class="pg"><div class="ttl">アルミ表面処理<br>研究動向まとめ</div><div class="bar w70"></div><div class="bar"></div><div class="bar w50"></div></div><div class="cap">表紙</div></div>
-          <div class="sl "><div class="pg"><div class="ttl">耐食性から<br>接合技術へ</div><div class="bar w70"></div><div class="bar"></div><div class="bar w50"></div></div><div class="cap">調査サマリー</div></div>
-          <div class="sl "><div class="pg"><div class="ttl">文献①〜⑤ 一覧</div><div class="bar w70"></div><div class="bar"></div><div class="bar w50"></div></div><div class="cap">特定した文献</div></div>
-          <div class="sl "><div class="pg"><div class="ttl">化学処理／物理加工</div><div class="bar w70"></div><div class="bar"></div><div class="bar w50"></div></div><div class="cap">各文献の要点</div></div>
-          <div class="sl "><div class="pg"><div class="ttl">5観点マトリクス</div><div class="bar w70"></div><div class="bar"></div><div class="bar w50"></div></div><div class="cap">新規性の比較</div></div>
-          <div class="sl "><div class="pg"><div class="ttl">空白領域の指摘</div><div class="bar w70"></div><div class="bar"></div><div class="bar w50"></div></div><div class="cap">研究開発への示唆</div></div>
-          <div class="sl "><div class="pg"><div class="ttl">3件の提案</div><div class="bar w70"></div><div class="bar"></div><div class="bar w50"></div></div><div class="cap">次のアクション</div></div>
-        </div>
-        <div class="tool">
-          <div class="toolhead">
-            <span class="toolico" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></span>
-            <span class="toolname">Box</span>
-            <span class="toolact">upload_file</span>
-            <span class="toolstate"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>保存しました</span>
-          </div>
-          <dl class="toolbody">
-            <dt>保存先</dt><dd><code>/研究開発部/表面処理グループ/2026_技術調査</code></dd>
-            <dt>ファイル</dt><dd><code>アルミニウム表面処理_研究動向まとめ.pptx</code> <span class="muted">7スライド ／ 1.8 MB</span></dd>
-          </dl>
+          <span class="dlbtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg>ダウンロード</span>
         </div>
       </section>
-      </div><!-- /#answerWrap -->
 
     </div><!-- /.log -->
 
     <div class="spot" id="spot" aria-hidden="true"><div class="spot-bg"></div><div class="spot-in" id="spotIn"></div></div>
+
+    <aside class="preview" id="pvPanel" aria-hidden="true">
+      <div class="pvhead">
+        <div class="dlico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h5"/><path d="M9 13h3a1.6 1.6 0 0 1 0 3.2H9z"/><path d="M9 13v5.5"/></svg></div>
+        <div class="pvtitle">
+          <b>アルミニウム合金_表面処理技術_調査報告.pptx</b>
+          <span>PPTX ・ 7 スライド</span>
+        </div>
+        <span class="pvicon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg></span>
+        <span class="pvicon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></span>
+      </div>
+      <div class="pvbody" id="pvBody">
+
+        <div class="sl cover">
+          <div class="bar"></div>
+          <h5>自動車軽量化に向けた<br>アルミニウム合金 表面処理技術</h5>
+          <p>社内文献 5 件の調査レポート ／ 要点と新規性の整理</p>
+          <p>2026-09 ／ エージェント検索による自動作成</p>
+          <span class="pg">Page 1 / 7</span>
+        </div>
+
+        <div class="sl">
+          <h5>調査サマリ － 押さえるべき 3 点</h5>
+          <ul>
+            <li>研究の主眼は耐食性単独から<b>「軽量化を成立させる接合信頼性」</b>へ移行</li>
+            <li>制御対象が nm 級の微細構造・化学組成まで細かくなっている</li>
+            <li>初期強度ではなく<b>湿熱環境での保持率</b>が新しい評価軸</li>
+          </ul>
+          <span class="pg">Page 2 / 7</span>
+        </div>
+
+        <div class="sl">
+          <h5>1. 特定した文献（5 件）</h5>
+          <table>
+            <tr><th>#</th><th>主題</th><th>年</th></tr>
+            <tr><td>①</td><td>陽極酸化皮膜の細孔構造制御</td><td>2021</td></tr>
+            <tr><td>②</td><td>レーザー周期溝による樹脂直接接合</td><td>2023</td></tr>
+            <tr><td>③</td><td>Zr 系化成＋シラン複合処理</td><td>2022</td></tr>
+            <tr><td>④</td><td>湿熱環境での界面水和劣化</td><td>2024</td></tr>
+            <tr><td>⑤</td><td>異材接合部の電食抑制・量産適用</td><td>2025</td></tr>
+          </table>
+          <span class="pg">Page 3 / 7</span>
+        </div>
+
+        <div class="sl">
+          <h5>2. 各文献の要点</h5>
+          <div class="two">
+            <div><span class="chip">① 陽極酸化</span><p>細孔径に接着強度の極大あり。未処理比 約 2.3 倍。</p></div>
+            <div><span class="chip">② レーザー</span><p>アンダーカット形成で最大 32 MPa。タクトが課題。</p></div>
+            <div><span class="chip">③ Zr 系化成</span><p>塩水噴霧 1000 h 同等。既存ラインへ組込可。</p></div>
+            <div><span class="chip">④ 湿熱劣化</span><p>水和が破壊起点。1000 h 後の保持率に約 2 倍差。</p></div>
+            <div><span class="chip">⑤ 異材・量産</span><p>絶縁性と接着性はトレードオフ。工程制約を変数化。</p></div>
+          </div>
+          <span class="pg">Page 4 / 7</span>
+        </div>
+
+        <div class="sl">
+          <h5>3. 新規性の比較</h5>
+          <table>
+            <tr><th>観点</th><th>①</th><th>②</th><th>③</th><th>④</th><th>⑤</th></tr>
+            <tr><th>制御レベル</th><td>nm</td><td>µm</td><td>nm</td><td>経時</td><td>系全体</td></tr>
+            <tr><th>新規性</th><td>中</td><td>高</td><td>中</td><td>高</td><td>高</td></tr>
+            <tr><th>量産適用性</th><td>中</td><td>低</td><td>高</td><td>－</td><td>高</td></tr>
+            <tr><th>軽量化寄与</th><td>接着</td><td>接着剤レス</td><td>防錆</td><td>信頼性</td><td>異材化</td></tr>
+          </table>
+          <span class="pg">Page 5 / 7</span>
+        </div>
+
+        <div class="sl">
+          <h5>4. 研究開発への示唆</h5>
+          <ul>
+            <li>空白領域：レーザー処理面の<b>長期耐食・湿熱耐久データ</b>が社内に存在しない</li>
+            <li>評価軸：初期強度に加えて<b>1000 h 後の保持率</b>を選定基準へ</li>
+            <li>設計指針：量産ライン制約を初期段階から設計変数として扱う</li>
+            <li>結論：高強度・高耐食・高接着・低環境負荷・量産性を同時に満たす<b>階層構造表面処理</b>が有望</li>
+          </ul>
+          <span class="pg">Page 6 / 7</span>
+        </div>
+
+        <div class="sl">
+          <h5>5. 次のアクション候補</h5>
+          <ul>
+            <li>レーザー処理面の塩水噴霧試験を先行開発部へ提案（空白領域の穴埋め）</li>
+            <li>文献④の著者（共同研究先）へ評価手法の適用可否を照会</li>
+            <li>文献①②のローデータを条件－性能データベースとして統合</li>
+          </ul>
+          <span class="pg">Page 7 / 7</span>
+        </div>
+
+      </div>
+    </aside>
    </div><!-- /.viewport -->
 
     <div class="player">
@@ -666,6 +770,33 @@ ul.acts li{margin-bottom:5px;}
   var ansStart = ansIdx.length ? starts[ansIdx[0]] : Infinity;
   var ansEnd = ansIdx.length ? starts[ansIdx[ansIdx.length - 1]] + steps[ansIdx[ansIdx.length - 1]].dur : Infinity;
   var ANS_IN = 300, ANS_OUT = 600;
+
+  /* プレビューパネル（PPTX サムネイル） */
+  var vp = document.getElementById('vp');
+  var pvPanel = document.getElementById('pvPanel');
+  var pvBody = document.getElementById('pvBody');
+  var pvIdx = [];
+  steps.forEach(function (s, i) { if (s.el.dataset.pv === '1') pvIdx.push(i); });
+  var pvStart = pvIdx.length ? starts[pvIdx[0]] : Infinity;
+  var pvLast = pvIdx.length ? pvIdx[pvIdx.length - 1] : -1;
+  var pvEnd = pvLast >= 0 ? starts[pvLast] + steps[pvLast].dur : Infinity;
+  function setSplit(on, instant) {
+    if (!vp || on === vp.classList.contains('split')) return;
+    if (instant && pvPanel) pvPanel.style.transition = 'none';
+    vp.classList.toggle('split', on);
+    if (pvPanel) pvPanel.setAttribute('aria-hidden', on ? 'false' : 'true');
+    if (instant && pvPanel) { void pvPanel.offsetWidth; pvPanel.style.transition = ''; }
+  }
+  function drivePv(instant) {
+    if (!pvIdx.length || !pvBody) return;
+    var on = t >= pvStart - 400;
+    setSplit(on, !!instant);
+    if (!on) { pvBody.scrollTop = 0; return; }
+    var p = (t - pvStart) / (pvEnd - pvStart);
+    p = Math.min(1, Math.max(0, (p - .28) / .64));
+    var over = Math.max(0, pvBody.scrollHeight - pvBody.clientHeight);
+    pvBody.scrollTop = over * p;
+  }
   /* 「検索完了」を見せてから「回答する」を点灯させるまでの間（ミリ秒） */
   var FINAL_DELAY = 1500;
   var finalIdx = -1;
@@ -801,6 +932,7 @@ ul.acts li{margin-bottom:5px;}
     flow.classList.remove('pulse');
     fcnum.textContent = maxPulse || 1;
     shown = i;
+    drivePv(true);
     ensureVisible(steps[i].el, false);
   }
 
@@ -819,15 +951,23 @@ ul.acts li{margin-bottom:5px;}
   }
 
   /* 新しく表示した要素が必ず画面に入るようにスクロールする */
+  /* 下からせり上がるプレビュー（スマホ）に隠れる高さ */
+  function bottomInset() {
+    if (!pvPanel || !vp || !vp.classList.contains('split')) return 0;
+    var r = pvPanel.getBoundingClientRect(), lr = log.getBoundingClientRect();
+    if (r.left > lr.left + 2) return 0;           // 右サイドパネルのときは影響なし
+    return Math.max(0, Math.min(lr.height - 80, lr.bottom - r.top));
+  }
+
   function ensureVisible(el, smooth) {
     if (!el) return;
     var top = contentTop(el);
-    var h = el.offsetHeight, view = log.clientHeight, cur = log.scrollTop;
+    var h = el.offsetHeight, view = log.clientHeight - bottomInset(), cur = log.scrollTop;
     var target = cur;
     if (h >= view - 24) target = top - 10;                       // 画面より高い要素は上端に合わせる
     else if (top + h > cur + view - 14) target = top + h - view + 18;  // 下がはみ出す → 下端を見せる
     else if (top < cur + 10) target = top - 10;                  // 上がはみ出す → 上端を見せる
-    target = Math.max(0, Math.min(target, log.scrollHeight - view));
+    target = Math.max(0, Math.min(target, log.scrollHeight - log.clientHeight));
     if (Math.abs(target - cur) < 2) return;
     scrollLock = Date.now() + 900;
     if (smooth) log.scrollTo({ top: target, behavior: 'smooth' });
@@ -839,7 +979,7 @@ ul.acts li{margin-bottom:5px;}
     if (userScrolled || Date.now() < scrollLock) return;
     var el = steps[i].el;
     var top = contentTop(el) - 10;
-    var over = el.offsetHeight - log.clientHeight + 24;
+    var over = el.offsetHeight - (log.clientHeight - bottomInset()) + 24;
     if (over <= 0) return;
     var p = (t - starts[i]) / steps[i].dur;
     p = Math.min(1, Math.max(0, (p - .15) / .7));
@@ -869,6 +1009,7 @@ ul.acts li{margin-bottom:5px;}
     var dt = now - last; last = now;
     t = Math.min(total, t + dt);
     var i = indexAt(t);
+    drivePv(false);
     if (i > shown) { for (var k = shown + 1; k <= i; k++) reveal(k); }
     else autoScroll(i);
     driveSpot(i);
