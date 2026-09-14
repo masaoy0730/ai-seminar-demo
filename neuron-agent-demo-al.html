@@ -186,7 +186,7 @@ ol.sllist li{margin-bottom:2px;}
 .dlbtn svg{color:var(--muted);}
 
 .preview{position:absolute;top:0;right:0;bottom:0;width:366px;z-index:4;display:flex;flex-direction:column;background:#fbfbfa;border-left:1px solid var(--border);box-shadow:-10px 0 28px rgba(16,24,40,.07);transform:translateX(103%);pointer-events:none;transition:transform .55s cubic-bezier(.2,.8,.3,1);}
-.viewport.split .preview{transform:none;pointer-events:auto;}
+.preview.on{transform:none;pointer-events:auto;}
 .viewport.split .log{padding-right:386px;}
 .pvhead{flex:none;display:flex;align-items:center;gap:9px;padding:9px 11px;border-bottom:1px solid var(--border);background:#fff;}
 .pvhead .dlico{width:28px;height:28px;border-radius:8px;}
@@ -219,6 +219,28 @@ ol.sllist li{margin-bottom:2px;}
   .viewport.split .log{padding-right:20px;padding-bottom:268px;}
   .pvbody{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:start;}
 }
+
+/* 関連ファイル（回答の右段） */
+.ansgrid{display:grid;grid-template-columns:1fr;gap:0;align-items:start;}
+.ansgrid.withfiles{grid-template-columns:minmax(0,1fr) 330px;gap:26px;}
+.anscol{min-width:0;}
+.rfcol{display:none;min-width:0;border-left:1px solid var(--border);padding-left:18px;}
+.ansgrid.withfiles .rfcol{display:block;}
+.rfhead{display:flex;align-items:center;gap:7px;padding-bottom:8px;margin-bottom:4px;border-bottom:1px solid var(--border);color:var(--muted);}
+.rfhead svg{flex:none;color:var(--accent-dark);}
+.rfhead b{font-size:12.5px;font-weight:700;color:var(--text);}
+.rfhead span{font-size:10.5px;}
+.rfitem{display:flex;gap:9px;padding:10px 6px;border-bottom:1px solid var(--border);}
+.rfitem:last-child{border-bottom:0;}
+.rfitem.cur{background:#fdeeee;border-radius:8px;border-bottom-color:transparent;}
+.rfck{flex:none;width:13px;height:13px;margin-top:3px;border:1.5px solid var(--border-strong);border-radius:3px;background:#fff;position:relative;}
+.rfck.on{background:var(--accent);border-color:var(--accent);}
+.rfck.on::after{content:'';position:absolute;left:3.4px;top:.6px;width:3px;height:6px;border:solid #fff;border-width:0 1.6px 1.6px 0;transform:rotate(45deg);}
+.rftxt{flex:1;min-width:0;}
+.rfname{font-size:12px;font-weight:700;color:var(--accent-dark);line-height:1.55;}
+.rfpv{display:inline-block;margin-left:6px;font-size:8.5px;font-weight:700;color:#fff;background:#8a93a2;border-radius:4px;padding:1px 5px;vertical-align:1.5px;}
+.rfsnip{font-size:10.5px;color:var(--muted);line-height:1.6;margin-top:3px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.rfsrc{color:#7d879a;}
 
 /* ---------- 拡大表示（スポットライト） ---------- */
 .spot{position:absolute;inset:0;z-index:5;pointer-events:none;display:flex;align-items:center;justify-content:center;padding:28px;}
@@ -295,6 +317,10 @@ ol.sllist li{margin-bottom:2px;}
   .big-repo{font-size:15px;padding:11px 16px;}
   .chap{display:none;}
   .player{gap:9px;padding:9px 10px;}
+}
+@media (max-width:1040px){
+  .ansgrid.withfiles{grid-template-columns:minmax(0,1fr);gap:0;}
+  .ansgrid.withfiles .rfcol{border-left:0;border-top:1px solid var(--border);padding-left:0;padding-top:12px;margin-top:16px;}
 }
 @media (prefers-reduced-motion: reduce){
   .blk.anim,.blk.anim *{animation:none !important;opacity:1 !important;transform:none !important;}
@@ -430,8 +456,10 @@ ol.sllist li{margin-bottom:2px;}
       </section>
 
       <!-- 04 調査結果リード -->
+      <div class="ansgrid" id="ansGrid">
+      <div class="anscol">
       <div id="answerWrap">
-      <section class="blk" data-dur="1.1" data-label="調査結果" data-ans="1">
+      <section class="blk" data-dur="1.1" data-label="調査結果" data-ans="1" data-panel="files">
         <div class="steplabel">04 ／ 回答</div>
         <div class="answer-head">
           <h2>調査結果</h2>
@@ -441,7 +469,7 @@ ol.sllist li{margin-bottom:2px;}
       </section>
 
       <!-- 05 章1 -->
-      <section class="blk" data-dur="1.77" data-label="1. 特定した文献" data-ans="1">
+      <section class="blk" data-dur="1.77" data-label="1. 特定した文献" data-ans="1" data-panel="files">
         <h3 class="sec">1. 特定した文献</h3>
         <div class="tblwrap">
           <table>
@@ -458,7 +486,7 @@ ol.sllist li{margin-bottom:2px;}
       </section>
 
       <!-- 06 章2 -->
-      <section class="blk" data-dur="2.23" data-label="2. 各文献の要点" data-ans="1">
+      <section class="blk" data-dur="2.23" data-label="2. 各文献の要点" data-ans="1" data-panel="files">
         <h3 class="sec">2. 各文献の要点</h3>
         <div class="docs">
           <div class="doc">
@@ -510,7 +538,7 @@ ol.sllist li{margin-bottom:2px;}
       </section>
 
       <!-- 07 章3 -->
-      <section class="blk" data-dur="2" data-label="3. 新規性の比較" data-ans="1">
+      <section class="blk" data-dur="2" data-label="3. 新規性の比較" data-ans="1" data-panel="files">
         <h3 class="sec">3. 新規性の比較</h3>
         <div class="tblwrap">
           <table>
@@ -532,7 +560,7 @@ ol.sllist li{margin-bottom:2px;}
       </section>
 
       <!-- 08 章4 -->
-      <section class="blk" data-dur="2" data-label="4. 研究開発への示唆" data-ans="1">
+      <section class="blk" data-dur="2" data-label="4. 研究開発への示唆" data-ans="1" data-panel="files">
         <h3 class="sec">4. 研究開発への示唆</h3>
         <div class="imps">
           <div class="imp">
@@ -559,7 +587,7 @@ ol.sllist li{margin-bottom:2px;}
       </section>
 
       <!-- 09 章5 -->
-      <section class="blk" data-dur="1.33" data-label="5. 次のアクション候補" data-ans="1">
+      <section class="blk" data-dur="1.33" data-label="5. 次のアクション候補" data-ans="1" data-panel="files">
         <h3 class="sec">5. 次のアクション候補</h3>
         <ul class="acts">
           <li>レーザー処理面の塩水噴霧試験（空白領域の穴埋め）を先行開発部へ提案する</li>
@@ -570,8 +598,17 @@ ol.sllist li{margin-bottom:2px;}
       </section>
       </div><!-- /#answerWrap -->
 
-      <!-- 10 スライドの説明 -->
-      <section class="blk" data-dur="5.2" data-label="スライドを作成" data-pv="1">
+      <!-- 10 回答の先頭に戻って関連ファイルを表示 -->
+      <div data-dur="6" data-label="関連ファイル" data-panel="files" data-scroll="#answerWrap"></div>
+
+      <!-- 11 5. 次のアクション候補まで一気にスクロール -->
+      <div data-dur="2.4" data-label="回答の読み返し" data-panel="files" data-scrollrun="1"></div>
+
+      <!-- 12 拡大表示を閉じたあとの間 -->
+      <div data-dur="1.5" data-label="PPTXを作成" data-panel="files"></div>
+
+      <!-- 11 スライドの説明 -->
+      <section class="blk" data-dur="4.4" data-label="スライドの説明" data-panel="files">
         <p class="sldesc">調査結果を <b>7 枚のスライド</b> にまとめました。1 枚目を表紙、2 枚目に全体サマリを置き、3 枚目以降で本文と同じ順に展開しています。</p>
         <ol class="sllist">
           <li>表紙 － 調査テーマ・対象文献数・作成日</li>
@@ -585,8 +622,8 @@ ol.sllist li{margin-bottom:2px;}
         <p class="slnote">表とテキストはすべて編集可能な PowerPoint オブジェクトで作成しています。プレビュー画面で各ページを確認できます。</p>
       </section>
 
-      <!-- 11 ダウンロード -->
-      <section class="blk" data-dur="4.6" data-label="PPTXをダウンロード" data-pv="1">
+      <!-- 12 ダウンロード -->
+      <section class="blk" data-dur="3.4" data-label="PPTXをダウンロード" data-panel="files">
         <div class="dlcard">
           <div class="dlico"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h5"/><path d="M9 13h3a1.6 1.6 0 0 1 0 3.2H9z"/><path d="M9 13v5.5"/></svg></div>
           <div class="dlmeta">
@@ -597,9 +634,36 @@ ol.sllist li{margin-bottom:2px;}
         </div>
       </section>
 
+      <!-- 13 右側プレビューパネル -->
+      <div data-dur="6" data-label="スライドのプレビュー" data-panel="slides" data-pscroll="1"></div>
+
+      <!-- 14 プレビューを閉じて関連ファイルに戻る -->
+      <div data-dur="4" data-label="関連ファイル" data-panel="files" data-scroll="#answerWrap"></div>
+
+      </div><!-- /.anscol -->
+
+      <aside class="rfcol" id="rfCol">
+        <div class="rfhead">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-7.5L10.6 4.6A2 2 0 0 0 9.2 4H4a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1z"/></svg>
+          <b>関連ファイル</b><span>回答候補のファイル一覧 ・ 10 件</span>
+        </div>
+        <div class="rfitem cur"><span class="rfck on"></span><div class="rftxt"><div class="rfname">硫酸陽極酸化皮膜の細孔径・皮膜厚が A6061／エポキシ接着接合強度に及ぼす影響<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">社内文献DB（外部論文アーカイブ）／ PAP-SURF-2021-0342</span>　細孔径 20〜60 nm、皮膜厚 1〜10 µm の皮膜を作り分け、エポキシ接着剤とのせん断強度を評価。最適条件で未処理比 約2.3倍。</div></div></div>
+        <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">ファイバーレーザによる周期溝加工を用いた A5052／PA6 直接接合<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">学会発表資料アーカイブ／ CONF-2023-0117</span>　溝ピッチ 100〜400 µm の周期構造を形成し射出成形で直接接合。アンダーカット条件で最大 32 MPa。</div></div></div>
+        <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">ジルコニウム系化成処理とシランカップリング剤の複合処理による耐食性・接着性の両立<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">社内文献DB（外部論文アーカイブ）／ PAP-SURF-2022-0511</span>　クロメート代替。Zr 酸化物層 20〜50 nm にアミノシランを複合し、塩水噴霧 1000 h で従来同等。</div></div></div>
+        <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">湿熱環境下におけるアルミニウム／接着剤界面の水和劣化と皮膜安定性<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">大学共同研究報告書／ RPT-CRS-2024-008</span>　80 ℃／95 %RH で 1000 h の促進試験。水和（ベーマイト化）が界面破壊の起点であることを断面観察で特定。</div></div></div>
+        <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">アルミ／高張力鋼 異材接合部における電食抑制皮膜の設計と車体量産工程適用<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">先行開発部 技術報告書／ RPT-ADV-2025-021</span>　電位差腐食を絶縁性皮膜と接着剤層で抑制。電着塗装〜焼付け通過後の性能保持まで評価。</div></div></div>
+        <div class="rfitem"><span class="rfck"></span><div class="rftxt"><div class="rfname">アルミ押出材の摩擦攪拌接合部における表面処理条件の影響<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">社内文献DB（外部論文アーカイブ）／ PAP-SURF-2020-0219</span>　FSW 接合部の前処理条件と継手強度の関係を整理。接着接合ではなく溶接系のため今回は対象外。</div></div></div>
+        <div class="rfitem"><span class="rfck"></span><div class="rftxt"><div class="rfname">電着塗装前処理ラインの薬液管理基準と更新履歴<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">生産技術部 標準書／ STD-PT-2023-008</span>　脱脂・化成処理浴の管理項目と更新履歴。量産ライン制約の裏付け資料として参照可能。</div></div></div>
+        <div class="rfitem"><span class="rfck"></span><div class="rftxt"><div class="rfname">クロメートフリー化に関する法規制動向調査（2024年版）<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">環境安全部 調査レポート／ ENV-2024-011</span>　国内外の六価クロム規制と代替技術の動向。文献③の背景情報。</div></div></div>
+        <div class="rfitem"><span class="rfck"></span><div class="rftxt"><div class="rfname">アルミ部材の接着接合強度 社内試験データ集（2019-2024）<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">実験データ共有フォルダ／ DATA-ADH-2024</span>　社内で実施した接着試験のローデータ。条件－性能データベース化の候補。</div></div></div>
+        <div class="rfitem"><span class="rfck"></span><div class="rftxt"><div class="rfname">軽量化ボディ構造の材料選定ガイドライン 第3版<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">設計標準／ GDL-BODY-2022-03</span>　マルチマテリアル構造の材料選定基準。表面処理要件は参照のみで詳細規定なし。</div></div></div>
+      </aside>
+      </div><!-- /.ansgrid -->
+
     </div><!-- /.log -->
 
     <div class="spot" id="spot" aria-hidden="true"><div class="spot-bg"></div><div class="spot-in" id="spotIn"></div></div>
+
 
     <aside class="preview" id="pvPanel" aria-hidden="true">
       <div class="pvhead">
@@ -771,32 +835,38 @@ ol.sllist li{margin-bottom:2px;}
   var ansEnd = ansIdx.length ? starts[ansIdx[ansIdx.length - 1]] + steps[ansIdx[ansIdx.length - 1]].dur : Infinity;
   var ANS_IN = 300, ANS_OUT = 600;
 
-  /* プレビューパネル（PPTX サムネイル） */
+  /* 右サイドパネル（関連ファイル／スライドプレビュー） */
   var vp = document.getElementById('vp');
+  var ansGrid = document.getElementById('ansGrid');
   var pvPanel = document.getElementById('pvPanel');
   var pvBody = document.getElementById('pvBody');
-  var pvIdx = [];
-  steps.forEach(function (s, i) { if (s.el.dataset.pv === '1') pvIdx.push(i); });
-  var pvStart = pvIdx.length ? starts[pvIdx[0]] : Infinity;
-  var pvLast = pvIdx.length ? pvIdx[pvIdx.length - 1] : -1;
-  var pvEnd = pvLast >= 0 ? starts[pvLast] + steps[pvLast].dur : Infinity;
-  function setSplit(on, instant) {
-    if (!vp || on === vp.classList.contains('split')) return;
-    if (instant && pvPanel) pvPanel.style.transition = 'none';
-    vp.classList.toggle('split', on);
-    if (pvPanel) pvPanel.setAttribute('aria-hidden', on ? 'false' : 'true');
-    if (instant && pvPanel) { void pvPanel.offsetWidth; pvPanel.style.transition = ''; }
+  /* 現在のステップに紐づく右側表示（切り替えは少しだけ先読み） */
+  function panelAt(ms) {
+    var i = indexAt(ms);
+    if (i + 1 < steps.length && ms >= starts[i + 1] - 200) i += 1;
+    return { name: steps[i].el.dataset.panel || null, i: i };
   }
-  function drivePv(instant) {
-    if (!pvIdx.length || !pvBody) return;
-    var on = t >= pvStart - 400;
-    setSplit(on, !!instant);
-    if (!on) { pvBody.scrollTop = 0; return; }
-    var p = (t - pvStart) / (pvEnd - pvStart);
-    p = Math.min(1, Math.max(0, (p - .28) / .64));
-    var over = Math.max(0, pvBody.scrollHeight - pvBody.clientHeight);
-    pvBody.scrollTop = over * p;
+  function drivePanels(instant) {
+    var cur = panelAt(t);
+    var files = cur.name === 'files', slides = cur.name === 'slides';
+    if (ansGrid) ansGrid.classList.toggle('withfiles', files);
+    if (pvPanel && slides !== pvPanel.classList.contains('on')) {
+      if (instant) pvPanel.style.transition = 'none';
+      pvPanel.classList.toggle('on', slides);
+      pvPanel.setAttribute('aria-hidden', slides ? 'false' : 'true');
+      if (instant) { void pvPanel.offsetWidth; pvPanel.style.transition = ''; }
+    }
+    if (pvBody) {
+      if (!slides) pvBody.scrollTop = 0;
+      else if (steps[cur.i].el.dataset.pscroll) {
+        var q = (t - starts[cur.i]) / steps[cur.i].dur;
+        q = Math.min(1, Math.max(0, (q - .12) / .7));
+        pvBody.scrollTop = Math.max(0, pvBody.scrollHeight - pvBody.clientHeight) * q;
+      }
+    }
+    if (vp) vp.classList.toggle('split', slides);
   }
+
   /* 「検索完了」を見せてから「回答する」を点灯させるまでの間（ミリ秒） */
   var FINAL_DELAY = 1500;
   var finalIdx = -1;
@@ -844,7 +914,7 @@ ol.sllist li{margin-bottom:2px;}
       if (!ansRoll) return;
       var span = (ansEnd - ansStart) - ANS_IN - ANS_OUT;
       var p = (t - ansStart - ANS_IN) / span;
-      p = Math.min(1, Math.max(0, (p - .05) / .9));
+      p = Math.min(1, Math.max(0, (p - .17) / .78));
       var cs = getComputedStyle(ansBox);
       var pad = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
       var over = Math.max(0, ansRoll.scrollHeight - (ansBox.clientHeight - pad) + 10);
@@ -932,8 +1002,25 @@ ol.sllist li{margin-bottom:2px;}
     flow.classList.remove('pulse');
     fcnum.textContent = maxPulse || 1;
     shown = i;
-    drivePv(true);
-    ensureVisible(steps[i].el, false);
+    runIdx = -1;
+    drivePanels(true);
+    placeScroll(i, false);
+  }
+
+  /* 指定ステップの表示位置（通常／回答の先頭へ／末尾まで一気に） */
+  var runIdx = -1, runFrom = 0, runTo = 0;
+  function maxScroll() { return Math.max(0, log.scrollHeight - log.clientHeight); }
+  function setScroll(v, smooth) {
+    v = Math.max(0, Math.min(v, maxScroll()));
+    scrollLock = Date.now() + 900;
+    if (smooth) log.scrollTo({ top: v, behavior: 'smooth' });
+    else { log.style.scrollBehavior = 'auto'; log.scrollTop = v; log.style.scrollBehavior = ''; }
+  }
+  function placeScroll(i, smooth) {
+    var el = steps[i].el, d = el.dataset;
+    if (d.scroll) { var tg = log.querySelector(d.scroll); if (tg) { setScroll(contentTop(tg) - 12, smooth); return; } }
+    if (d.scrollrun) { setScroll(maxScroll(), smooth); return; }
+    ensureVisible(el, smooth);
   }
 
   function reveal(i) {
@@ -942,7 +1029,21 @@ ol.sllist li{margin-bottom:2px;}
     if (s.pulse) pulseFlow(s.pulse);
     if (s.spot) { s.phase = null; }
     shown = i; userScrolled = false;
-    ensureVisible(s.el, true);
+    if (s.el.dataset.scrollrun) { runIdx = i; runFrom = log.scrollTop; runTo = maxScroll(); }
+    else placeScroll(i, true);
+  }
+
+  /* 「5. 次のアクション候補」まで一気に送る */
+  function driveRun(i) {
+    if (i !== runIdx) return false;
+    var p = (t - starts[i]) / (steps[i].dur * .5);
+    p = Math.min(1, Math.max(0, p));
+    var e = p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+    scrollLock = Date.now() + 400;
+    log.style.scrollBehavior = 'auto';
+    log.scrollTop = runFrom + (Math.min(runTo, maxScroll()) - runFrom) * e;
+    log.style.scrollBehavior = '';
+    return true;
   }
 
   /* 要素のログ内での位置（スクロール座標）を求める */
@@ -953,9 +1054,9 @@ ol.sllist li{margin-bottom:2px;}
   /* 新しく表示した要素が必ず画面に入るようにスクロールする */
   /* 下からせり上がるプレビュー（スマホ）に隠れる高さ */
   function bottomInset() {
-    if (!pvPanel || !vp || !vp.classList.contains('split')) return 0;
+    if (!vp || !vp.classList.contains('split') || !pvPanel) return 0;
     var r = pvPanel.getBoundingClientRect(), lr = log.getBoundingClientRect();
-    if (r.left > lr.left + 2) return 0;           // 右サイドパネルのときは影響なし
+    if (r.left > lr.left + 2) return 0;
     return Math.max(0, Math.min(lr.height - 80, lr.bottom - r.top));
   }
 
@@ -1009,9 +1110,10 @@ ol.sllist li{margin-bottom:2px;}
     var dt = now - last; last = now;
     t = Math.min(total, t + dt);
     var i = indexAt(t);
-    drivePv(false);
-    if (i > shown) { for (var k = shown + 1; k <= i; k++) reveal(k); }
-    else autoScroll(i);
+    drivePanels(false);
+    var justRevealed = false;
+    if (i > shown) { for (var k = shown + 1; k <= i; k++) reveal(k); justRevealed = true; }
+    if (!driveRun(i) && !justRevealed) autoScroll(i);
     driveSpot(i);
     driveFinal();
     driveAns(false);
