@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ヒヤリハット横断調査デモ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#F2F5F8; --surface:#FFFFFF; --surface-2:#F7F9FB; --surface-3:#EDF2F7;
+  --ink:#1A2331; --ink-2:#4E6178; --ink-3:#7C8EA3;
+  --line:#DCE4EC; --line-strong:#C3D0DC;
+  --accent:#009EDE; --accent-deep:#0E7FB8; --navy:#33476A;
+  --ok:#14805E; --warn:#B4690E; --crit:#B3342B;
+  --s1:#0E7FB8; --s2:#C0690E;
+  --shadow:0 1px 2px rgba(26,35,49,.06), 0 6px 20px rgba(26,35,49,.05);
+  --ui:"BIZ UDPGothic","Yu Gothic UI","Hiragino Kaku Gothic ProN","Meiryo",system-ui,sans-serif;
+  --body:"Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",system-ui,sans-serif;
+  --mono:ui-monospace,"SFMono-Regular","Roboto Mono",Menlo,Consolas,"Noto Sans JP",monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F151D; --surface:#17202B; --surface-2:#1D2835; --surface-3:#233040;
+    --ink:#E7EEF6; --ink-2:#A8BACD; --ink-3:#7A8CA0;
+    --line:#2A3746; --line-strong:#3A4B5E;
+    --accent:#3EBFF0; --accent-deep:#3AA0D2; --navy:#9FB4D6;
+    --ok:#3FBF95; --warn:#D9A03E; --crit:#E3776C;
+    --s1:#3AA0D2; --s2:#BC7E1E;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.28);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F151D; --surface:#17202B; --surface-2:#1D2835; --surface-3:#233040;
+  --ink:#E7EEF6; --ink-2:#A8BACD; --ink-3:#7A8CA0;
+  --line:#2A3746; --line-strong:#3A4B5E;
+  --accent:#3EBFF0; --accent-deep:#3AA0D2; --navy:#9FB4D6;
+  --ok:#3FBF95; --warn:#D9A03E; --crit:#E3776C;
+  --s1:#3AA0D2; --s2:#BC7E1E;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.28);
+}
+
+body{background:var(--bg); color:var(--ink); font-family:var(--body); font-size:14px; line-height:1.75;
+  -webkit-font-smoothing:antialiased;}
+*{box-sizing:border-box;}
+
+/* ---------- chrome ---------- */
+.topbar{position:sticky; top:env(safe-area-inset-top,0px); z-index:30; background:var(--surface);
+  border-bottom:1px solid var(--line); display:flex; align-items:center; gap:12px;
+  padding:10px 20px;}
+.brand{display:flex; align-items:baseline; gap:9px; font-family:var(--ui);}
+.brand b{font-size:15px; letter-spacing:.02em; color:var(--ink);}
+.brand span{font-size:11px; color:var(--ink-3); letter-spacing:.09em;}
+.dot{width:9px; height:9px; border-radius:50%; background:var(--accent); flex:0 0 auto;
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);}
+.tag{margin-left:auto; font-family:var(--ui); font-size:10.5px; letter-spacing:.12em;
+  color:var(--ink-3); border:1px solid var(--line-strong); border-radius:3px; padding:2px 8px;}
+
+.wrap{max-width:880px; margin:0 auto; padding-inline:20px; padding-block:28px 132px;}
+
+/* ---------- prompt ---------- */
+.promptbox{background:var(--surface); border:1px solid var(--line); border-radius:10px;
+  box-shadow:var(--shadow); padding:18px 20px;}
+.promptbox .who{font-family:var(--ui); font-size:11px; letter-spacing:.1em; color:var(--ink-3);
+  display:flex; align-items:center; gap:8px; margin-bottom:9px;}
+.promptbox .who::before{content:""; width:20px; height:20px; border-radius:4px;
+  background:var(--surface-3); border:1px solid var(--line);}
+.promptbox p{margin:0; font-size:15px; line-height:1.85;}
+.caret{display:inline-block; width:2px; height:1em; background:var(--accent);
+  vertical-align:-2px; animation:blink 1s step-end infinite;}
+@keyframes blink{50%{opacity:0}}
+
+/* ---------- agent trace ---------- */
+.trace{margin-top:26px; position:relative;}
+.trace::before{content:""; position:absolute; left:13px; top:6px; bottom:10px; width:2px;
+  background:linear-gradient(var(--line-strong), transparent); border-radius:2px;}
+.node{position:relative; padding-left:44px; margin-bottom:18px;}
+.node::before{content:""; position:absolute; left:7px; top:12px; width:14px; height:14px;
+  border-radius:50%; background:var(--surface); border:2px solid var(--line-strong);}
+.node.live::before{border-color:var(--accent); box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 16%,transparent);}
+.node.done::before{border-color:var(--accent-deep); background:var(--accent-deep);}
+
+.kicker{font-family:var(--ui); font-size:11px; letter-spacing:.12em; color:var(--accent-deep);
+  margin-bottom:6px;}
+.card{background:var(--surface); border:1px solid var(--line); border-radius:9px; padding:14px 16px;}
+.qbox{display:flex; align-items:stretch; border:1px solid var(--line-strong); border-radius:6px;
+  background:var(--surface-2); overflow:hidden;}
+.qbox .q{flex:1 1 auto; min-width:0; font-family:var(--mono); font-size:12.5px; line-height:1.7;
+  color:var(--ink); padding:9px 11px; white-space:pre-wrap; word-break:break-all;}
+.qbtn{flex:0 0 46px; border:0; border-left:1px solid var(--line-strong); background:var(--surface-3);
+  color:var(--ink-2); display:grid; place-items:center; cursor:default; border-radius:0;
+  transition:background .16s ease, color .16s ease, transform .1s ease;}
+.qbtn svg{width:16px; height:16px; display:block;}
+.qbtn.press{background:var(--accent-deep); color:#fff; transform:scale(.9);}
+.qbtn.done{background:var(--accent-deep); color:#fff; transform:none;}
+.caret2{display:inline-block; width:7px; height:1.05em; background:var(--accent); opacity:.85;
+  vertical-align:-3px; margin-left:1px; animation:blink 1s step-end infinite;}
+.filecard{display:flex; align-items:center; gap:13px; background:var(--surface);
+  border:1px solid var(--line); border-radius:9px; padding:14px 16px; box-shadow:var(--shadow);}
+.filecard .ic{flex:0 0 40px; height:48px; border-radius:5px; border:1px solid var(--line-strong);
+  background:var(--surface-2); display:grid; place-items:center; font-family:var(--ui);
+  font-size:10px; letter-spacing:.04em; color:var(--accent-deep); font-weight:700;}
+.filecard .nm{font-family:var(--ui); font-size:13px; line-height:1.55; color:var(--ink);
+  word-break:break-all;}
+.filecard .mt{font-size:11.5px; color:var(--ink-3); margin-top:3px;}
+.toc{list-style:none; margin:12px 0 0; padding:0; display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:4px 18px;}
+.toc li{font-size:12px; color:var(--ink-2); padding:3px 0; border-bottom:1px dotted var(--line);}
+.toc li b{font-family:var(--ui); color:var(--ink-3); font-weight:400; margin-right:7px;
+  font-variant-numeric:tabular-nums;}
+.scope{font-family:var(--ui); font-size:11.5px; color:var(--ink-2); margin-top:7px;}
+.scope em{font-style:normal; color:var(--ink); border-bottom:1px solid var(--line-strong);}
+
+.status{display:flex; align-items:center; gap:8px; margin-top:11px;
+  font-family:var(--ui); font-size:12.5px; color:var(--ink-2);}
+.spin{width:12px; height:12px; border-radius:50%; border:2px solid var(--line-strong);
+  border-top-color:var(--accent); animation:spin .7s linear infinite; flex:0 0 auto;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hit{font-family:var(--ui); color:var(--ink); font-weight:700;}
+.hit b{color:var(--accent-deep); font-size:15px; font-variant-numeric:tabular-nums;}
+
+.docs{display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;}
+.doc{display:inline-flex; align-items:center; gap:7px; max-width:100%;
+  background:var(--surface-2); border:1px solid var(--line); border-radius:5px;
+  padding:5px 9px; font-size:11.5px; color:var(--ink-2);}
+.doc code{font-family:var(--mono); font-size:11px; color:var(--ink); white-space:nowrap;}
+.doc.key{border-color:color-mix(in srgb,var(--accent) 45%,var(--line));
+  background:color-mix(in srgb,var(--accent) 7%,var(--surface));}
+.doc .kind{font-family:var(--ui); font-size:9.5px; letter-spacing:.06em; color:var(--ink-3);
+  border:1px solid var(--line-strong); border-radius:3px; padding:0 4px; flex:0 0 auto;}
+
+.note{margin-top:10px; font-size:12.5px; color:var(--ink-2); line-height:1.8;}
+.judge{margin-top:11px; padding:10px 13px; border-left:3px solid var(--accent);
+  background:color-mix(in srgb,var(--accent) 5%,var(--surface-2));
+  border-radius:0 6px 6px 0; font-size:13px; line-height:1.8;}
+.judge .lbl{font-family:var(--ui); font-size:10.5px; letter-spacing:.1em; color:var(--accent-deep);
+  display:block; margin-bottom:3px;}
+
+/* ---------- distribution chart ---------- */
+.chart{margin-top:12px; border:1px solid var(--line); border-radius:8px; background:var(--surface-2);
+  padding:14px 14px 12px;}
+.chart h4{font-family:var(--ui); font-size:12px; margin:0 0 2px; color:var(--ink);}
+.chart .sub{font-size:11px; color:var(--ink-3); margin-bottom:12px;}
+.legend{display:flex; gap:14px; flex-wrap:wrap; margin-bottom:10px; font-size:11.5px; color:var(--ink-2);}
+.legend i{display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:6px;
+  vertical-align:-1px;}
+.grid{display:grid; grid-template-columns:auto repeat(9,minmax(0,1fr)); gap:0 4px; align-items:center;
+  min-width:420px;}
+.gscroll{overflow-x:auto;}
+.rowlab{font-family:var(--ui); font-size:11px; color:var(--ink-2); padding-right:10px; white-space:nowrap;}
+.cell{height:34px; display:flex; align-items:center; justify-content:center; gap:3px;
+  border-radius:4px; position:relative;}
+.cell.on{background:color-mix(in srgb,var(--ink-3) 8%,transparent); cursor:default;}
+.mk{width:10px; height:10px; border-radius:50%; box-shadow:0 0 0 2px var(--surface-2);}
+.yr{font-family:var(--ui); font-size:10px; color:var(--ink-3); text-align:center;
+  font-variant-numeric:tabular-nums; padding-top:4px;}
+.mark{grid-column:5 / span 1; position:relative; height:0;}
+.cutline{position:absolute; top:-78px; right:-4px; width:2px; height:78px;
+  background:repeating-linear-gradient(var(--crit) 0 4px, transparent 4px 8px);}
+.cutlab{margin-top:8px; font-size:11px; color:var(--crit); display:flex; gap:6px; align-items:flex-start;}
+.cutlab::before{content:"▲"; font-size:8px; line-height:1.9;}
+.tblview{margin-top:10px;}
+.tblview summary{font-family:var(--ui); font-size:11px; color:var(--ink-2); cursor:pointer;}
+.tip{position:fixed; z-index:60; pointer-events:none; opacity:0; transition:opacity .12s;
+  background:var(--ink); color:var(--surface); font-size:11.5px; font-family:var(--ui);
+  padding:5px 9px; border-radius:5px; white-space:nowrap;}
+.tip.on{opacity:1;}
+
+/* ---------- answer ---------- */
+.done-bar{margin:26px 0 8px; font-family:var(--ui); font-size:12.5px; color:var(--ink-2);
+  border-top:1px solid var(--line); padding-top:14px; line-height:1.9;}
+.done-bar b{color:var(--ink);}
+.done-bar .badge{display:inline-block; font-size:10.5px; letter-spacing:.1em; color:#fff;
+  background:var(--accent-deep); border-radius:3px; padding:1px 8px; margin-right:10px;
+  vertical-align:1px;}
+.answer h2{font-family:var(--ui); font-size:19px; margin:34px 0 6px; color:var(--ink);
+  text-wrap:balance; letter-spacing:.01em;}
+.answer h3{font-family:var(--ui); font-size:14px; margin:28px 0 10px; color:var(--navy);
+  padding-bottom:6px; border-bottom:1px solid var(--line); letter-spacing:.02em;}
+.answer p{margin:0 0 12px;}
+.lead{font-size:14.5px; line-height:1.95;}
+.answer strong{font-weight:700; background:linear-gradient(transparent 62%, color-mix(in srgb,var(--accent) 20%,transparent) 62%);}
+.tw{overflow-x:auto; border:1px solid var(--line); border-radius:8px; background:var(--surface);}
+table{border-collapse:collapse; width:100%; font-size:12.5px; min-width:560px;}
+th,td{text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:top;}
+th{font-family:var(--ui); font-weight:700; font-size:11.5px; color:var(--ink-2);
+  background:var(--surface-2); letter-spacing:.04em; white-space:nowrap;}
+tr:last-child td{border-bottom:none;}
+td code{font-family:var(--mono); font-size:11.5px; white-space:nowrap;}
+tr.hl td{background:color-mix(in srgb,var(--accent) 6%,var(--surface));}
+.quote{border:1px solid var(--line); border-left:3px solid var(--navy); border-radius:0 8px 8px 0;
+  background:var(--surface); padding:14px 18px; font-size:12.5px; line-height:1.9;}
+.quote .src{font-family:var(--ui); font-size:10.5px; letter-spacing:.08em; color:var(--ink-3);
+  display:block; margin-bottom:8px;}
+.causes{display:grid; grid-template-columns:repeat(auto-fit,minmax(248px,1fr)); gap:10px;}
+.cause{background:var(--surface); border:1px solid var(--line); border-radius:9px; padding:13px 15px;}
+.cause .n{font-family:var(--ui); font-size:11px; letter-spacing:.06em; color:var(--accent-deep);
+  margin-bottom:4px;}
+.cause .t{font-family:var(--ui); font-size:13px; line-height:1.65; margin-bottom:8px;}
+.cause .e{font-size:11.5px; color:var(--ink-2); line-height:1.7;}
+.cause .e span{font-family:var(--ui); color:var(--ink-3);}
+.cause.extra{border-style:dashed;}
+.unknowns{list-style:none; padding:0; margin:0; display:grid; gap:8px;}
+.unknowns li{background:var(--surface); border:1px solid var(--line); border-radius:7px;
+  padding:10px 14px 10px 34px; position:relative; font-size:12.5px; line-height:1.8;}
+.unknowns li::before{content:"?"; position:absolute; left:13px; top:10px; font-family:var(--ui);
+  font-size:12px; color:var(--warn); font-weight:700;}
+.foot{margin-top:30px; padding-top:16px; border-top:1px solid var(--line);
+  font-size:11.5px; color:var(--ink-3); line-height:1.8;}
+
+/* ---------- controls ---------- */
+.controls{position:fixed; left:0; right:0; bottom:0; z-index:40; background:var(--surface);
+  border-top:1px solid var(--line); padding:10px 20px calc(10px + env(safe-area-inset-bottom,0px));
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
+.controls .bar{flex:1 1 180px; height:4px; border-radius:3px; background:var(--surface-3);
+  overflow:hidden; min-width:120px;}
+.controls .bar i{display:block; height:100%; width:0; background:var(--accent);
+  transition:width .18s linear;}
+button{font-family:var(--ui); font-size:12px; color:var(--ink); background:var(--surface-2);
+  border:1px solid var(--line-strong); border-radius:6px; padding:6px 13px; cursor:pointer;
+  line-height:1.6;}
+button:hover{background:var(--surface-3);}
+button:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+button[aria-pressed="true"]{background:var(--accent-deep); border-color:var(--accent-deep); color:#fff;}
+.speeds{display:flex; gap:4px;}
+.speeds button{padding:6px 9px; font-variant-numeric:tabular-nums;}
+.clock{font-family:var(--ui); font-size:11.5px; color:var(--ink-3); font-variant-numeric:tabular-nums;
+  white-space:nowrap;}
+
+.rise{animation:rise .42s cubic-bezier(.2,.7,.3,1) both;}
+@keyframes rise{from{opacity:0; transform:translateY(9px)} to{opacity:1; transform:none}}
+@media (prefers-reduced-motion:reduce){
+  .rise{animation:none}
+  .spin{animation:none}
+  .caret{animation:none}
+}
+@media (max-width:560px){
+  .wrap{padding-block:20px 150px;}
+  .node{padding-left:34px;}
+  .trace::before{left:9px;}
+  .node::before{left:3px;}
+}
+</style>
+</head>
+<body>
+
+
+<header class="topbar">
+  <span class="dot" aria-hidden="true"></span>
+  <span class="brand"><b>Neuron</b><span>エージェント検索</span></span>
+  <span class="tag">DEMO</span>
+</header>
+
+<main class="wrap">
+  <section class="promptbox">
+    <div class="who">生産技術部 第2グループ／AL-2ライン立ち上げ担当</div>
+    <p id="prompt"></p>
+  </section>
+  <div class="trace" id="trace"></div>
+  <div id="answer"></div>
+</main>
+
+<div class="controls">
+  <button id="play" type="button">一時停止</button>
+  <button id="restart" type="button">最初から</button>
+  <div class="speeds" role="group" aria-label="再生速度">
+    <button type="button" data-sp="1" aria-pressed="true">1x</button>
+    <button type="button" data-sp="1.5" aria-pressed="false">1.5x</button>
+    <button type="button" data-sp="2" aria-pressed="false">2x</button>
+  </div>
+  <div class="bar" role="progressbar" aria-label="再生の進行"><i id="prog"></i></div>
+  <span class="clock" id="clock">0:00</span>
+</div>
+<div class="tip" id="tip" role="status"></div>
+
+<script>
+(function(){
+"use strict";
+var REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var PROMPT = "AL-2ラインの締結工程で、リワークでワークを一度治具から外して入れ直すと、締付本数のカウントがずれる可能性があるとの指摘が現場から出ています。過去の他ラインで、ネジ締付のポカヨケをすり抜けた事例や、本数カウントを誤った事例がないか調べてください。原因として考えられるものと、立ち上げ中の今のうちに確認すべきことを整理してください。";
+
+var trace = document.getElementById("trace");
+var answer = document.getElementById("answer");
+var promptEl = document.getElementById("prompt");
+var progEl = document.getElementById("prog");
+var clockEl = document.getElementById("clock");
+var playBtn = document.getElementById("play");
+var tip = document.getElementById("tip");
+
+promptEl.textContent = PROMPT;
+
+/* ---------------- helpers ---------------- */
+function el(tag, cls, html){
+  var e = document.createElement(tag);
+  if(cls) e.className = cls;
+  if(html != null) e.innerHTML = html;
+  return e;
+}
+var stick = true;
+window.addEventListener("scroll", function(){
+  var atEnd = window.innerHeight + window.scrollY >= document.body.offsetHeight - 220;
+  stick = atEnd;
+}, {passive:true});
+function follow(node){
+  if(!stick) return;
+  window.scrollTo({top: document.body.scrollHeight, behavior: REDUCED ? "auto" : "smooth"});
+}
+function appear(parent, node){
+  if(!REDUCED) node.classList.add("rise");
+  parent.appendChild(node);
+  follow(node);
+  return node;
+}
+
+/* ---------------- playback engine ---------------- */
+var beats = [], total = 0, token = 0, paused = false, speed = 1, elapsed = 0;
+function beat(delay, fn){ beats.push({d:delay, fn:fn}); total += delay; }
+function wait(ms, my){
+  return new Promise(function(res){
+    var left = ms;
+    (function tick(){
+      if(my !== token) return;
+      if(paused){ setTimeout(tick, 60); return; }
+      var step = Math.min(60, left);
+      left -= step * speed; elapsed += step * speed;
+      paint();
+      if(left <= 0) res(); else setTimeout(tick, step);
+    })();
+  });
+}
+function paint(){
+  var p = Math.min(1, elapsed/total);
+  progEl.style.width = (p*100).toFixed(1) + "%";
+  var s = Math.round(elapsed/1000);
+  clockEl.textContent = Math.floor(s/60) + ":" + String(s%60).padStart(2,"0");
+}
+async function run(){
+  var my = ++token; elapsed = 0; paused = false;
+  playBtn.textContent = "一時停止";
+  trace.innerHTML = ""; answer.innerHTML = "";
+  for(var i=0;i<beats.length;i++){
+    await wait(beats[i].d, my);
+    if(my !== token) return;
+    beats[i].fn();
+  }
+  elapsed = total; paint();
+  playBtn.textContent = "再生";
+  paused = true;
+}
+
+/* ---------------- search node builder ---------------- */
+var nodes = {};
+function makeNode(id, kicker){
+  var n = el("div","node live");
+  n.appendChild(el("div","kicker", kicker));
+  var card = el("div","card");
+  n.appendChild(card);
+  nodes[id] = {node:n, card:card};
+  appear(trace, n);
+  return nodes[id];
+}
+var GLASS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.4 15.4 21 21"/></svg>';
+function addQuery(id, q, scope){
+  var c = nodes[id].card;
+  var box = el("div","qbox");
+  var qt = el("div","q", q + '<span class="caret2"></span>');
+  var btn = el("button","qbtn", GLASS);
+  btn.type = "button"; btn.tabIndex = -1; btn.setAttribute("aria-hidden","true");
+  box.appendChild(qt); box.appendChild(btn);
+  nodes[id].btn = btn; nodes[id].qt = qt;
+  c.appendChild(box);
+  if(scope) c.appendChild(el("div","scope", "絞り込み： <em>"+scope+"</em>"));
+  follow(c);
+}
+function addSearching(id){
+  var c = nodes[id].card;
+  var btn = nodes[id].btn, qt = nodes[id].qt;
+  if(qt){ var cr = qt.querySelector(".caret2"); if(cr) cr.remove(); }
+  if(btn){
+    btn.classList.add("press");
+    setTimeout(function(){ btn.classList.remove("press"); btn.classList.add("done"); }, 260);
+  }
+  var s = el("div","status");
+  s.appendChild(el("span","spin"));
+  s.appendChild(el("span",null,"検索中…"));
+  nodes[id].status = s;
+  c.appendChild(s); follow(c);
+}
+function addHits(id, text){
+  var s = nodes[id].status;
+  s.innerHTML = "";
+  s.appendChild(el("span","hit", text));
+  follow(s);
+}
+function addDocs(id, list){
+  var c = nodes[id].card;
+  var d = el("div","docs");
+  list.forEach(function(x){
+    var chip = el("div","doc" + (x.key ? " key" : ""));
+    chip.appendChild(el("span","kind", x.kind));
+    chip.appendChild(el("code",null,x.id));
+    chip.appendChild(el("span",null,x.t));
+    d.appendChild(chip);
+  });
+  c.appendChild(d); follow(c);
+}
+function addNote(id, html){
+  nodes[id].card.appendChild(el("div","note", html)); follow(nodes[id].card);
+}
+function addJudge(id, html){
+  var j = el("div","judge","<span class=\"lbl\">エージェントの判断</span>" + html);
+  nodes[id].card.appendChild(j);
+  nodes[id].node.classList.remove("live");
+  nodes[id].node.classList.add("done");
+  follow(j);
+}
+
+/* ---------------- distribution chart ---------------- */
+var YEARS = [2018,2019,2020,2021,2022,2023,2024,2025,2026];
+var SERIES = [
+  {name:"第二工場 SM-1", v:"--s2", data:{2018:1,2019:1,2020:2,2021:1}},
+  {name:"本社工場 MC-1／MC-2／AL-1", v:"--s1", data:{2019:1,2020:1,2022:1,2024:1}}
+];
+function showTip(e, text){
+  tip.textContent = text; tip.classList.add("on");
+  var r = e.currentTarget.getBoundingClientRect();
+  tip.style.left = Math.max(8, Math.min(window.innerWidth - tip.offsetWidth - 8, r.left + r.width/2 - tip.offsetWidth/2)) + "px";
+  tip.style.top = (r.top - tip.offsetHeight - 8) + "px";
+}
+function hideTip(){ tip.classList.remove("on"); }
+function addChart(id){
+  var c = nodes[id].card;
+  var box = el("div","chart");
+  box.appendChild(el("h4",null,"再投入時のカウント継続に関する報告件数（ライン別・年別）"));
+  box.appendChild(el("div","sub","文書本体は取得せず、件数の分布のみを集計"));
+  var lg = el("div","legend");
+  SERIES.forEach(function(s){
+    lg.insertAdjacentHTML("beforeend",
+      "<span><i style=\"background:var("+s.v+")\"></i>"+s.name+"</span>");
+  });
+  box.appendChild(lg);
+
+  var sc = el("div","gscroll");
+  var g = el("div","grid");
+  SERIES.forEach(function(s){
+    g.appendChild(el("div","rowlab", s.name));
+    YEARS.forEach(function(y){
+      var n = s.data[y] || 0;
+      var cell = el("div","cell" + (n ? " on" : ""));
+      for(var i=0;i<n;i++){
+        var m = el("span","mk");
+        m.style.background = "var("+s.v+")";
+        cell.appendChild(m);
+      }
+      if(n){
+        cell.addEventListener("mouseenter", function(e){ showTip(e, s.name+"　"+y+"年　"+n+"件"); });
+        cell.addEventListener("mouseleave", hideTip);
+      }
+      g.appendChild(cell);
+    });
+  });
+  g.appendChild(el("div","rowlab",""));
+  YEARS.forEach(function(y){ g.appendChild(el("div","yr", y)); });
+  g.appendChild(el("div","rowlab",""));
+  var mk = el("div","mark");
+  mk.appendChild(el("span","cutline"));
+  g.appendChild(mk);
+  sc.appendChild(g);
+  box.appendChild(sc);
+  box.appendChild(el("div","cutlab","2021年6月15日　SM-1 締付管理ユニットの設備改造（MNT-2021-047）。第二工場の最後の報告は同年6月9日"));
+
+  var det = el("details","tblview");
+  det.appendChild(el("summary",null,"数値で見る"));
+  var rows = SERIES.map(function(s){
+    return "<tr><td>"+s.name+"</td>" + YEARS.map(function(y){
+      return "<td style=\"text-align:center\">"+(s.data[y]||0)+"</td>"; }).join("") + "</tr>";
+  }).join("");
+  det.insertAdjacentHTML("beforeend",
+    "<div class=\"tw\" style=\"margin-top:8px\"><table><thead><tr><th>ライン</th>" +
+    YEARS.map(function(y){return "<th style=\"text-align:center\">"+y+"</th>";}).join("") +
+    "</tr></thead><tbody>"+rows+"</tbody></table></div>");
+  box.appendChild(det);
+
+  c.appendChild(box); follow(c);
+}
+
+/* ---------------- answer sections ---------------- */
+function sect(html){ appear(answer, el("section","answer rise", html)); }
+
+/* ================= timeline ================= */
+beat(1400, function(){ makeNode("s1","検索 1"); });
+beat(600,  function(){ addQuery("s1", "締付 AND (未締め OR 締め忘れ OR トルク不足)", "不具合・是正処置報告"); });
+beat(900,  function(){ addSearching("s1"); });
+beat(1600, function(){ addHits("s1", "2件ヒット"); });
+beat(600,  function(){ addDocs("s1", [
+  {kind:"NCR", id:"NCR-2019-008", t:"空回し検出のしきい値が緩く客先流出"},
+  {kind:"NCR", id:"NCR-2020-014", t:"未締め1本／原因は作業者の手順逸脱"}
+]); });
+beat(1400, function(){ addNote("s1", "NCR-2020-014 の調査結果欄に「<strong>本件はリワーク品ではなく、通常流動の初回投入品である</strong>」と明記。いずれも今回の条件（再投入時のカウント継続）とは合致しない。"); });
+beat(1700, function(){ addJudge("s1", "不良として顕在化した記録だけでは、ポカヨケをすり抜ける条件は分からない。<strong>寸前で止まった事例＝ヒヤリハット報告へ対象を広げる。</strong>"); });
+
+beat(1100, function(){ makeNode("s2","検索 2"); });
+beat(600,  function(){ addQuery("s2", "(入れ直 OR 再投入 OR やり直し OR リワーク OR 取り外し)\n  AND (カウント OR カウンタ OR 本数 OR ランプ OR 完了)", "ヒヤリハット報告"); });
+beat(600,  function(){ addNote("s2", "報告の様式が拠点で異なる（本社工場＝Word個票／第二工場＝Excel一覧表）。技術用語ではなく、<strong>現場が書いた口語</strong>を検索語に含めて捕捉する。"); });
+beat(900,  function(){ addSearching("s2"); });
+beat(1700, function(){ addHits("s2", "9件ヒット（2拠点・5ライン）"); });
+beat(600,  function(){ addDocs("s2", [
+  {kind:"ヒヤリ", id:"HH-2024-018", t:"AL-1／リワーク後に3本で完了判定", key:true},
+  {kind:"ヒヤリ", id:"HH-2022-031", t:"MC-2／前ワークの記録に追記された", key:true},
+  {kind:"ヒヤリ", id:"HH-2019-107", t:"MC-1／2本目で完了ランプ点灯"},
+  {kind:"ヒヤリ", id:"HH-2020-033", t:"MC-1／入れ直しで本数が異常"},
+  {kind:"ヒヤリ", id:"HH-S-2021-022", t:"SM-1／カウンタが残存"},
+  {kind:"ヒヤリ", id:"HH-S-2020-041", t:"SM-1／締め忘れに気づかず流しかけた"},
+  {kind:"ヒヤリ", id:"HH-S-2020-027", t:"SM-1／3本目で完了判定"},
+  {kind:"ヒヤリ", id:"HH-S-2019-014", t:"SM-1／2本で完了ランプ"},
+  {kind:"ヒヤリ", id:"HH-S-2018-009", t:"SM-1／本数が合わないのに完了"}
+]); });
+beat(1800, function(){ addJudge("s2", "9件のうち<strong>8件が同一構造</strong>の事象。残る1件（HH-2022-031）は締付データの紐付けに関するもので、系統が異なる。"); });
+
+beat(1100, function(){ makeNode("s3","検索 3"); });
+beat(600,  function(){ addQuery("s3", "ライン別・年別のファセット集計（rows:0）"); });
+beat(900,  function(){ addSearching("s3"); });
+beat(1500, function(){ addChart("s3"); });
+beat(2300, function(){ addJudge("s3", "第二工場 SM-1 は<strong>2021年6月以降ゼロ件</strong>。一方、本社工場は2024年まで断続的に続いている。<strong>第二工場側で2021年半ばに対策が入った</strong>という仮説を立て、その時期の記録を探索する。"); });
+
+beat(1100, function(){ makeNode("s4","検索 4"); });
+beat(600,  function(){ addQuery("s4", "(在荷センサ OR クランプ解除) AND (リセット OR カウンタ)", "保全・設備改造記録／作業標準"); });
+beat(900,  function(){ addSearching("s4"); });
+beat(1600, function(){ addHits("s4", "2件ヒット"); });
+beat(600,  function(){ addDocs("s4", [
+  {kind:"改造", id:"MNT-2021-047", t:"2021/6/15　SM-1 締付管理ユニットのパラメータ変更", key:true},
+  {kind:"標準", id:"STD-2021-03 第2版", t:"2021/7/20　5.3項「リワーク品の再投入」を新設", key:true}
+]); });
+beat(1500, function(){ addNote("s4", "在荷センサOFFと治具クランプ解除をカウンタのリセット条件に追加。再投入時の締付結果を新規レコード化。検証は再投入20回を実施し全件リセットを確認。"); });
+beat(1700, function(){ addJudge("s4", "第二工場は<strong>設備（MNT）と運用（STD）の両面</strong>で対策していた。では、なぜ本社工場には展開されていないのか。"); });
+
+beat(1100, function(){ makeNode("s5","検索 5"); });
+beat(600,  function(){ addQuery("s5", "水平展開 AND (対象外 OR 機種 OR 他ライン)", "議事録・設計審査記録"); });
+beat(900,  function(){ addSearching("s5"); });
+beat(1600, function(){ addHits("s5", "2件ヒット"); });
+beat(600,  function(){ addDocs("s5", [
+  {kind:"議事録", id:"DR-2021-11", t:"2021/8/24　水平展開検討会", key:true},
+  {kind:"議事録", id:"DR-2021-12", t:"2021/11/16　水平展開検討会（第2回）", key:true}
+]); });
+beat(1900, function(){ addNote("s5", "DR-2021-11：本社工場は締付管理ユニットが<strong>東海精機工業 TQ-500 で機種が異なり</strong>、同等の対策にはI/O拡張ユニットの追加（2ラインで約180万円・各2日停止）が必要。このため<strong>今回の展開対象外</strong>と決議。代替として作業標準の改訂を検討し「次回会議で報告する」とされた。"); });
+beat(2100, function(){ addNote("s5", "DR-2021-12：その次回会議にあたる。「決議事項3について組立課より報告があった」との記載はあるが、<strong>報告の内容が記録されていない</strong>。決議は「現行の運用状況を踏まえて対応する」のみで、備考に「議事メモをもとに作成した簡易版」とある。"); });
+beat(1900, function(){ addJudge("s5", "議事録は残っているが、<strong>代替策が実施されたのか見送られたのかは、記載内容からは判断できない</strong>。文書の記述で判断できない以上、<strong>作業標準の現物で裏を取る。</strong>"); });
+
+beat(1100, function(){ makeNode("s6","検索 6"); });
+beat(600,  function(){ addQuery("s6", "締結工程 AND (作業標準 OR 改訂履歴 OR カウンタ)", "作業標準／設備仕様・取説／保全記録"); });
+beat(900,  function(){ addSearching("s6"); });
+beat(1600, function(){ addHits("s6", "4件ヒット"); });
+beat(600,  function(){ addDocs("s6", [
+  {kind:"標準", id:"STD-2019-11", t:"MC-1／第1版のまま。改訂履歴は2019年の制定1行のみ", key:true},
+  {kind:"標準", id:"STD-2026-02", t:"AL-2 暫定版／リワークの記載なし", key:true},
+  {kind:"仕様", id:"SPEC-AL2-004", t:"TQ-500 取説 第4章　カウンタのクリア条件", key:true},
+  {kind:"保全ログ", id:"2026/7/2", t:"AL-2 据付・初期設定（AL-1の設定値を複写）", key:true}
+]); });
+beat(2000, function(){ addNote("s6", "本社工場の作業標準は<strong>第1版のまま改訂されていない</strong>。議事録では判断できなかったが、少なくとも<strong>作業標準への反映は行われていない</strong>ことが、現物の状態から確認できる。"); });
+beat(1900, function(){ addJudge("s6", "取説には「在荷センサ・クランプ解除は<strong>標準設定ではクリア条件に含まれない</strong>」と明記。AL-2 はその状態の AL-1 から設定値を複写して立ち上げている。"); });
+
+beat(1100, function(){ makeNode("s7","検索 7　自己点検"); });
+beat(600,  function(){ addNote("s7", "リワークという条件に絞って調べたが、<strong>同じ構造のすり抜けは他の条件でも起こりうる</strong>と判断し、条件を広げて再検索する。"); });
+beat(700,  function(){ addQuery("s7", "(停電 OR 瞬停 OR 非常停止 OR 段取り替え OR 型替え)\n  AND (カウンタ OR 本数)"); });
+beat(900,  function(){ addSearching("s7"); });
+beat(1600, function(){ addHits("s7", "2件ヒット"); });
+beat(600,  function(){ addDocs("s7", [
+  {kind:"ヒヤリ", id:"HH-2023-052", t:"2023/8/21　MC-2／瞬停復帰後にカウンタが残存", key:true},
+  {kind:"仕様", id:"SPEC-AL2-004", t:"4.4項　20ms未満の電圧低下では電源再投入によるクリアが行われない"}
+]); });
+beat(1900, function(){ addJudge("s7", "現象と取説の記載が整合する。<strong>停電・非常停止からの復帰も確認範囲に加える必要がある。</strong>"); });
+
+/* ---- answer ---- */
+beat(1600, function(){
+  appear(answer, el("div","done-bar","<span class=\"badge\">検索完了</span>計7回の検索で、ヒヤリハット報告・不具合報告・保全記録・作業標準・設備仕様・議事録の<b>6種類の文書群を横断</b>し、関連する<b>20件</b>の文書を特定しました。"));
+});
+beat(1200, function(){
+  sect("<h2>調査結果</h2><p class=\"lead\">ご指摘の事象について、<strong>同じ構造の事例が2018年以降、両拠点で9件報告されています</strong>。いずれも工程内で発見されており、社内不良・客先流出には至っていません。裏を返すと、<strong>不具合報告やQCデータには痕跡が残らず、ヒヤリハット報告にしか記録がない</strong>タイプの事象です。</p><p class=\"lead\">第二工場では2021年に設備側で対策が完了し、以降ゼロ件になっています。一方、本社工場は締付管理ユニットの機種が異なることを理由に展開対象外とされ、その後の代替策も記録上は追跡されていません。<strong>AL-2ラインは、その本社工場側の設定をAL-1から複写して立ち上げられています。</strong></p>");
+});
+beat(1600, function(){
+  sect("<h3>AL-2ラインの設備仕様との照合</h3><div class=\"quote\"><span class=\"src\">SPEC-AL2-004　TQ-500 取扱説明書 第4章より</span>4.3　カウンタのクリア条件<br>本数カウンタは、次のいずれかの条件でクリアされます。<br>（1）設定本数に到達し、完了信号を出力したとき／（2）外部リセット入力（端子X12）がONしたとき／（3）制御電源を再投入したとき<br><br>4.4　ご注意<br>ワーク在荷センサ入力および治具クランプ解除信号は、標準設定では本数カウンタのクリア条件に含まれません。<strong>ワークを途中で取り外して再度セットした場合、カウンタは取り外し前の値を保持したまま計数を継続します。</strong></div><p style=\"margin-top:12px\">この記述は、現場から上がっている指摘の内容と一致します。ただし、AL-2の実機でパラメータ P-214／P-215 がどう設定されているかは文書からは確認できないため、<strong>現地での確認が必要です</strong>。</p>");
+});
+beat(1700, function(){
+  sect("<h3>原因候補（1つに断定できません）</h3><div class=\"causes\">" +
+  "<div class=\"cause\"><div class=\"n\">候補 ①</div><div class=\"t\">本数カウンタのリセット条件に在荷センサ・クランプ解除が含まれていない</div><div class=\"e\"><span>根拠：</span>SPEC-AL2-004 4.3〜4.4／MNT-2021-047／HH-2019-107／HH-2024-018</div></div>" +
+  "<div class=\"cause\"><div class=\"n\">候補 ②</div><div class=\"t\">締付結果とワークIDの紐付けが再投入時に引き継がれない（P-230：連続追記）</div><div class=\"e\"><span>根拠：</span>HH-2022-031／SPEC-AL2-004（P-230）／MNT-2021-047</div></div>" +
+  "<div class=\"cause\"><div class=\"n\">候補 ③</div><div class=\"t\">リワーク品の再投入手順が作業標準に定義されていない（運用側）</div><div class=\"e\"><span>根拠：</span>STD-2026-02 暫定版に記載なし／STD-2019-11 にも記載なし／STD-2021-03 5.3（対策済みの例）</div></div>" +
+  "<div class=\"cause\"><div class=\"n\">候補 ④</div><div class=\"t\">工具側の空回し検出条件が緩く、着座していない締付がカウントされる</div><div class=\"e\"><span>根拠：</span>NCR-2019-008（同型工具での実績）／HH-2024-018（1本が座面に着いていなかった）</div></div>" +
+  "<div class=\"cause extra\"><div class=\"n\">別系統</div><div class=\"t\">停電・瞬停・非常停止からの復帰時にカウンタが残存する</div><div class=\"e\"><span>根拠：</span>HH-2023-052／SPEC-AL2-004 4.4</div></div>" +
+  "</div><p style=\"margin-top:12px\"><strong>①と③は排他ではなく、両方が同時に成立している可能性が高い</strong>と考えられます。第二工場は設備と運用の両方を実施して発生が止まっています。</p>");
+});
+beat(1700, function(){
+  sect("<h3>現地確認チェックリスト</h3><div class=\"tw\"><table><thead><tr><th>#</th><th>確認すること</th><th>確認方法</th><th>該当した場合</th><th>根拠</th></tr></thead><tbody>" +
+  "<tr class=\"hl\"><td>1</td><td>I/O拡張ユニット（TQ-500-EX）が装着されているか。P-214 の設定値</td><td>制御盤内の実機確認</td><td>未装着なら①が確定。拡張ユニットの追加を検討</td><td><code>SPEC-AL2-004</code></td></tr>" +
+  "<tr><td>2</td><td>3本締めた状態で外し、再投入して4本目を締めたときに完了信号が出るか</td><td>実機での再現試験</td><td>出るなら①が実機で成立</td><td><code>MNT-2021-047</code></td></tr>" +
+  "<tr><td>3</td><td>再投入したワークの締付データが新規レコードになるか（P-230）</td><td>管理システムでレコード確認</td><td>連続追記なら②。P-230 を「1」に変更</td><td><code>HH-2022-031</code></td></tr>" +
+  "<tr><td>4</td><td>締付角度の下限値が、座面に着かない締付をNGにできる値か</td><td>締付プログラム設定値の照合</td><td>緩ければ④。設定値を見直し</td><td><code>NCR-2019-008</code></td></tr>" +
+  "<tr><td>5</td><td>瞬停・非常停止からの復帰時にカウンタがクリアされるか</td><td>復帰手順でカウンタ表示を確認</td><td>残存するなら復帰手順に外部リセットを組み込む</td><td><code>HH-2023-052</code></td></tr>" +
+  "</tbody></table></div><p style=\"margin-top:12px\">いずれも<strong>AL-1ラインでも同じ確認が必要</strong>です。AL-2はAL-1の設定を複写しているためです。</p>");
+});
+beat(1700, function(){
+  sect("<h3>立ち上げ中の今だから選べる対策</h3><div class=\"tw\"><table><thead><tr><th>対策</th><th>内容</th><th>費用・工期の目安</th><th>実施できるタイミング</th></tr></thead><tbody>" +
+  "<tr class=\"hl\"><td>設備改造</td><td>TQ-500-EX を追加し、P-214／P-215 を設定。カウンタを自動リセット</td><td>DR-2021-11 の見積で2ライン約180万円・各2日停止。<strong>AL-2は量産前のためライン停止ロスが発生しない</strong></td><td>量産移行判定（2026年10月）まで</td></tr>" +
+  "<tr><td>パラメータ変更</td><td>P-230 を「1」に変更し、再投入時の締付結果を新規レコード化</td><td>費用なし。設定変更のみ</td><td>即時</td></tr>" +
+  "<tr><td>作業標準の改訂</td><td>STD-2026-02 暫定版に、STD-2021-03 5.3項に相当する再投入手順を追加</td><td>費用なし。暫定版のため改訂の手間が小さい</td><td>正式版制定まで</td></tr>" +
+  "<tr><td>検査の追加</td><td>最終検査で締付本数を全数確認</td><td>恒常的な工数増</td><td>量産開始後でも可</td></tr>" +
+  "</tbody></table></div><p style=\"margin-top:12px\">量産開始後は同じ対策でもライン停止が伴います。<strong>停止ロスが発生しない今のタイミングは、費用対効果の判断が変わる局面</strong>といえます。実施の可否・優先順位のご判断は生産技術部および関係部門でお願いします。</p>");
+});
+beat(1700, function(){
+  sect("<h3>今回わからなかったこと</h3><ul class=\"unknowns\">" +
+  "<li>DR-2021-12（2021年11月16日）は残っていますが、<strong>報告の内容が記録されていません</strong>。決議は「現行の運用状況を踏まえて対応する」のみで、備考に「議事メモをもとに作成した簡易版」とあります。本社工場向けの代替策が検討されたのか見送られたのかは、記載内容からは判断できません。当時の出席者への確認が必要です。<br>※ ただし STD-2019-11 が第1版のままであることから、作業標準への反映が行われなかったことは確認できます。</li>" +
+  "<li>AL-2実機のパラメータ設定値は文書からは確認できません。据付記録には「AL-1の設定値を複写」とあるのみです。</li>" +
+  "<li>第二工場の2018年以前のヒヤリハット記録は一覧表に含まれていません。電子化されていない可能性があります。</li>" +
+  "<li>HH-2024-018 の「生産技術部へ申し送りする」以降の記録が見つかりません。申し送りが行われたかどうかも未確認です。</li>" +
+  "</ul>");
+});
+
+beat(1800, function(){
+  sect("<h3>調査報告書の作成</h3><p>以上の内容を、10月の量産移行判定（第3回設計審査）にそのまま提出できる形に整理し、Word形式の報告書として作成しました。</p>" +
+  "<div class=\"filecard\"><div class=\"ic\">DOCX</div><div><div class=\"nm\">AL-2ライン締結工程_本数カウント事象_調査報告書.docx</div>" +
+  "<div class=\"mt\">全6ページ／生産技術部 第2グループ／文書番号 RPT-PE-2026-014</div></div></div>" +
+  "<ul class=\"toc\">" +
+  "<li><b>1</b>調査の背景と目的</li><li><b>2</b>調査方法</li><li><b>3</b>調査結果の要約</li>" +
+  "<li><b>4</b>確認された過去事例</li><li><b>5</b>第二工場で発生が止まった経緯</li>" +
+  "<li><b>6</b>AL-2ラインの設備仕様との照合</li><li><b>7</b>原因候補</li>" +
+  "<li><b>8</b>現地確認チェックリスト</li><li><b>9</b>対策案の比較</li>" +
+  "<li><b>10</b>本調査で確認できなかった事項</li><li><b>11</b>参照文書一覧</li></ul>" +
+  "<p style=\"margin-top:14px\">参照した20件は、文書番号・日付・表題を一覧にして巻末に添付しています。<strong>第10章には、確認できなかった事項をそのまま記載しています。</strong>報告書は原因の断定を行わず、現地確認の結果を書き込めば量産移行判定の資料になる構成としています。</p>" +
+  "<div class=\"foot\">登場する企業・ライン・製品・文書ID・型式・金額はすべて架空です。<br>本デモは原因の断定を行いません。根拠文書と切り分け手順を提示し、判断は人が行う設計としています。</div>");
+});
+
+/* ---------------- controls ---------------- */
+playBtn.addEventListener("click", function(){
+  if(elapsed >= total){ run(); return; }
+  paused = !paused;
+  playBtn.textContent = paused ? "再生" : "一時停止";
+});
+document.getElementById("restart").addEventListener("click", function(){
+  stick = true; window.scrollTo({top:0, behavior:"auto"}); run();
+});
+Array.prototype.forEach.call(document.querySelectorAll(".speeds button"), function(b){
+  b.addEventListener("click", function(){
+    speed = parseFloat(b.dataset.sp);
+    Array.prototype.forEach.call(document.querySelectorAll(".speeds button"), function(x){
+      x.setAttribute("aria-pressed", String(x === b));
+    });
+  });
+});
+paint();
+setTimeout(run, 900);
+})();
+</script>
+
+</body>
+</html>
