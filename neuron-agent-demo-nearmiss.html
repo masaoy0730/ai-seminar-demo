@@ -409,6 +409,7 @@ function addNote(id, html){
   nodes[id].card.appendChild(el("div","note", html)); follow(nodes[id].card);
 }
 function addJudge(id, html){
+  stopSpinner(id);
   var j = el("div","judge","<span class=\"lbl\">エージェントの判断</span>" + html);
   nodes[id].card.appendChild(j);
   nodes[id].node.classList.remove("live");
@@ -429,7 +430,12 @@ function showTip(e, text){
   tip.style.top = (r.top - tip.offsetHeight - 8) + "px";
 }
 function hideTip(){ tip.classList.remove("on"); }
+function stopSpinner(id){
+  var st = nodes[id] && nodes[id].status;
+  if(st && st.querySelector(".spin")) st.innerHTML = '<span class="hit">集計完了</span>';
+}
 function addChart(id){
+  stopSpinner(id);
   var c = nodes[id].card;
   var box = el("div","chart");
   box.appendChild(el("h4",null,"再投入時のカウント継続に関する報告件数（ライン別・年別）"));
@@ -521,7 +527,8 @@ beat(1800, function(){ addJudge("s2", "9件のうち<strong>8件が同一構造<
 beat(1100, function(){ makeNode("s3","検索 3"); });
 beat(600,  function(){ addQuery("s3", "ライン別・年別のファセット集計（rows:0）"); });
 beat(900,  function(){ addSearching("s3"); });
-beat(1500, function(){ addChart("s3"); });
+beat(1500, function(){ addHits("s3", "9件を ライン別・年別に集計"); });
+beat(500,  function(){ addChart("s3"); });
 beat(2300, function(){ addJudge("s3", "第二工場 SM-1 は<strong>2021年6月以降ゼロ件</strong>。一方、本社工場は2024年まで断続的に続いている。<strong>第二工場側で2021年半ばに対策が入った</strong>という仮説を立て、その時期の記録を探索する。"); });
 
 beat(1100, function(){ makeNode("s4","検索 4"); });
