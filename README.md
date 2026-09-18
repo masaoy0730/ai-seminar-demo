@@ -8,6 +8,7 @@ neuronのエージェント検索のイメージデモ
 https://masaoy0730.github.io/ai-seminar-demo/neuron-search-demo.html
 
 研究論文シナリオ
+https://masaoy0730.github.io/ai-seminar-demo/euron-agent-demo-battery.html
 https://masaoy0730.github.io/ai-seminar-demo/neuron-agent-demo-al.html
 
 ヒヤリハットシナリオ
