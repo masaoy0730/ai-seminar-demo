@@ -2,10 +2,12 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>エージェント検索 自動デモ｜協働ロボットセルの安全設計</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Roboto+Mono:wght@400;500&display=swap');
 :root{
+  --k:1;                          /* 再生速度に応じたアニメーションの倍率（1/速度） */
   --bg:#f5f6f8; --surface:#fff; --border:#e2e5ea; --border-strong:#cdd3db;
   --text:#1d2430; --muted:#697586;
   --accent:#2f6df6; --accent-dark:#2255d0; --accent-soft:#eaf1ff;
@@ -17,7 +19,7 @@
 html,body{margin:0;}
 body{
   background:var(--bg);color:var(--text);
-  font-family:system-ui,-apple-system,"Segoe UI",'Hiragino Sans','Noto Sans JP',sans-serif;
+  font-family:'BIZ UDPGothic','BIZ UDPゴシック','Noto Sans JP','Hiragino Sans',system-ui,-apple-system,sans-serif;
   font-size:14px;line-height:1.7;-webkit-font-smoothing:antialiased;
   padding:18px 16px 28px;
 }
@@ -33,16 +35,23 @@ body{
 
 /* ---------- ステージ ---------- */
 .stage{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
-.viewport{position:relative;overflow:hidden;}
-.log{height:clamp(560px, calc(100vh - 160px), 1040px);overflow-y:auto;padding:18px 20px 28px;scroll-behavior:smooth;}
+.viewport{position:relative;overflow:hidden;display:flex;flex-direction:column;
+  height:clamp(560px, calc(100vh - 160px), 1040px);}
+.log{order:1;flex:1 1 auto;min-height:0;overflow-y:auto;overflow-anchor:none;padding:18px 20px 24px;scroll-behavior:smooth;}
+/* 入力バー（画面下に固定） */
+.bottombar{order:2;flex:none;position:relative;z-index:3;border-top:1px solid var(--border);
+  background:var(--surface);padding:14px 20px 16px;}
+.bottombar .blk{display:block;margin-bottom:0;}
+.bottombar .steplabel{display:none;}
+.viewport.split .bottombar{padding-right:396px;}
 .log::-webkit-scrollbar{width:10px;}
 .log::-webkit-scrollbar-thumb{background:#d8dde4;border-radius:6px;border:3px solid var(--surface);}
 
 .blk{display:none;margin-bottom:16px;}
 .blk.show{display:block;}
-.blk.anim{animation:rise .45s cubic-bezier(.2,.8,.3,1) both;}
+.blk.anim{animation:rise calc(.45s * var(--k)) cubic-bezier(.2,.8,.3,1) both;}
 @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-.blk.pending .prompt,.blk.pending .card{opacity:0;}
+.blk.pending .prompt,.blk.pending .card,.blk.pending .rstatus{opacity:0;}
 
 .steplabel{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:3px 10px;margin-bottom:8px;}
 .card{border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;background:var(--surface);transition:opacity .35s ease;}
@@ -52,6 +61,7 @@ body{
 .prompt{display:flex;gap:12px;align-items:center;border:1px solid var(--border-strong);border-radius:var(--radius);padding:14px 16px;background:#fff;transition:opacity .35s ease;}
 .prompt .ico{flex:none;width:30px;height:30px;border-radius:8px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;}
 .prompt p{flex:1;min-width:0;margin:0;font-size:16px;font-weight:700;line-height:1.65;}
+.prompt p.ph{color:#9AA3AE;font-weight:400;}
 
 /* リポジトリ */
 .repos{display:flex;flex-wrap:wrap;gap:8px;}
@@ -59,11 +69,41 @@ body{
 .repo svg{color:var(--accent);}
 .repo .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);}
 
+/* ---------- 質問バブル（右揃え） ---------- */
+.qask{display:flex;justify-content:flex-end;margin:2px 0 14px;opacity:0;transition:opacity .38s ease;}
+.qask.on{opacity:1;}
+.qask-t{max-width:76%;background:#eaf1ff;border:1px solid #c3d8fb;border-radius:16px 16px 5px 16px;
+  padding:12px 18px;font-size:17px;font-weight:700;line-height:1.6;color:var(--text);
+  box-shadow:0 3px 10px rgba(47,109,246,.10);
+  transform:translateY(6px);transition:transform .38s cubic-bezier(.2,.8,.3,1);}
+.qask.on .qask-t{transform:none;}
+
+/* ---------- 検索対象のリポジトリ（1行表示） ---------- */
+.rstatus{display:flex;align-items:center;gap:9px;font-size:13.5px;color:var(--muted);transition:opacity .35s ease;}
+.rstatus b{color:var(--text);}
+.rstatus .sp{width:13px;height:13px;border-radius:50%;flex:none;
+  border:2px solid rgba(47,109,246,.25);border-top-color:var(--accent);animation:rspin calc(.8s * var(--k)) linear infinite;}
+@keyframes rspin{to{transform:rotate(360deg)}}
+.rstatus .ck{display:none;width:15px;height:15px;flex:none;color:var(--ok);}
+.rstatus .m2{display:none;}
+.rstatus.done .sp{display:none;}
+.rstatus.done .ck{display:flex;}
+.rstatus.done .m1{display:none;}
+.rstatus.done .m2{display:inline;}
+
+/* ---------- 再生速度 ---------- */
+.spd{display:flex;gap:5px;flex:none;}
+.spd button{border:1px solid var(--border-strong);background:var(--surface);color:var(--muted);
+  font-family:inherit;font-size:11.5px;font-weight:700;border-radius:999px;padding:4px 10px;cursor:pointer;
+  transition:background-color .15s ease,color .15s ease,border-color .15s ease;}
+.spd button:hover{background:var(--bg);color:var(--text);}
+.spd button.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+
 /* ---------- 検索プロセス（フロー＋検索カード） ---------- */
 .proc{display:grid;grid-template-columns:300px 1fr;gap:18px;align-items:start;}
 .searches > *{display:none;}
 .searches > *.show{display:block;}
-.searches > *.anim{animation:rise .35s cubic-bezier(.2,.8,.3,1) both;}
+.searches > *.anim{animation:rise calc(.35s * var(--k)) cubic-bezier(.2,.8,.3,1) both;}
 .scard{border:1px solid var(--border);border-radius:8px;padding:9px 12px;margin-bottom:7px;background:var(--surface);}
 .blkhead{display:flex;align-items:center;gap:10px;margin-bottom:5px;}
 .blkhead .t{font-size:13px;font-weight:700;}
@@ -104,20 +144,20 @@ body{
 .fcount{position:absolute;left:0;top:40px;width:52px;text-align:center;font-size:11px;font-weight:700;color:var(--accent-dark);background:var(--accent-soft);border-radius:999px;padding:2px 0;opacity:0;transition:opacity .3s ease;}
 .flow.counting .fcount{opacity:1;}
 
-.blk.anim .fb,.blk.anim .ar,.blk.anim .f4sub,.blk.anim .nolabel,.blk.anim .nohead{animation:fin .42s ease both;}
+.blk.anim .fb,.blk.anim .ar,.blk.anim .f4sub,.blk.anim .nolabel,.blk.anim .nohead{animation:fin calc(.42s * var(--k)) ease both;}
 @keyframes fin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.blk.anim .f1{animation-delay:.14s}
-.blk.anim .a1{animation-delay:.40s}
-.blk.anim .f2{animation-delay:.66s}
-.blk.anim .a2{animation-delay:.92s}
-.blk.anim .f3{animation-delay:1.18s}
-.blk.anim .a3{animation-delay:1.44s}
-.blk.anim .f4{animation-delay:1.70s}
-.blk.anim .f4sub{animation-delay:2.06s}
-.blk.anim .nolabel{animation-delay:2.40s}
-.blk.anim .nopath{animation:draw 1.05s linear 2.50s both;}
+.blk.anim .f1{animation-delay:calc(.14s * var(--k))}
+.blk.anim .a1{animation-delay:calc(.40s * var(--k))}
+.blk.anim .f2{animation-delay:calc(.66s * var(--k))}
+.blk.anim .a2{animation-delay:calc(.92s * var(--k))}
+.blk.anim .f3{animation-delay:calc(1.18s * var(--k))}
+.blk.anim .a3{animation-delay:calc(1.44s * var(--k))}
+.blk.anim .f4{animation-delay:calc(1.70s * var(--k))}
+.blk.anim .f4sub{animation-delay:calc(2.06s * var(--k))}
+.blk.anim .nolabel{animation-delay:calc(2.40s * var(--k))}
+.blk.anim .nopath{animation:draw calc(1.05s * var(--k)) linear calc(2.50s * var(--k)) both;}
 @keyframes draw{from{stroke-dashoffset:600}to{stroke-dashoffset:0}}
-.blk.anim .nohead{animation-delay:3.60s}
+.blk.anim .nohead{animation-delay:calc(3.60s * var(--k))}
 .blk.anim .f5,.blk.anim .ya,.blk.anim .yeslabel{animation:none;}
 /* YES／回答する は検索完了まで出さない */
 .flow .ya,.flow .yeslabel,.flow .f5{opacity:0 !important;}
@@ -126,12 +166,12 @@ body{
 @keyframes popin{0%{transform:scale(.86)}62%{transform:scale(1.07)}100%{transform:scale(1)}}
 @keyframes glow{0%{box-shadow:0 0 0 0 rgba(47,109,246,.55)}70%{box-shadow:0 0 0 18px rgba(47,109,246,0)}100%{box-shadow:0 0 0 0 rgba(47,109,246,0)}}
 @keyframes ydrop{0%{transform:translateY(-6px)}100%{transform:translateY(0)}}
-.flow.emph .f5{animation:popin .55s cubic-bezier(.2,1.4,.4,1) both, glow 1.5s ease-out .3s 2;}
-.flow.emph .ya{animation:ydrop .5s ease both;}
+.flow.emph .f5{animation:popin calc(.55s * var(--k)) cubic-bezier(.2,1.4,.4,1) both, glow calc(1.5s * var(--k)) ease-out calc(.3s * var(--k)) 2;}
+.flow.emph .ya{animation:ydrop calc(.5s * var(--k)) ease both;}
 /* 検索を繰り返すたびに光らせる */
-.flow.pulse .f2{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-dark);animation:ring .9s ease-out;}
+.flow.pulse .f2{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-dark);animation:ring calc(.9s * var(--k)) ease-out;}
 @keyframes ring{0%{box-shadow:0 0 0 0 rgba(47,109,246,.45)}100%{box-shadow:0 0 0 12px rgba(47,109,246,0)}}
-.flow.pulse .nopath{animation:draw .8s linear;}
+.flow.pulse .nopath{animation:draw calc(.8s * var(--k)) linear;}
 
 /* ---------- 回答 ---------- */
 .answer-head{display:flex;align-items:center;gap:10px;padding-bottom:10px;border-bottom:2px solid var(--text);margin-bottom:12px;}
@@ -171,14 +211,14 @@ ul.acts li{margin-bottom:5px;}
 .ask{margin:10px 0 0;font-size:12.5px;color:var(--muted);background:var(--bg);border:1px dashed var(--border-strong);border-radius:8px;padding:9px 12px;}
 
 
-/* ---------- 成果物（PPTX）とプレビューパネル ---------- */
+/* ---------- 成果物（報告書）とプレビューパネル ---------- */
 .sldesc{margin:0 0 10px;font-size:15px;line-height:1.9;}
 ol.sllist{margin:0 0 12px;padding-left:22px;font-size:13.5px;line-height:1.85;}
 ol.sllist li{margin-bottom:2px;}
 .slnote{margin:0;font-size:13px;line-height:1.85;color:var(--muted);}
 
 .dlcard{display:flex;align-items:center;gap:12px;border:1px solid var(--border-strong);border-radius:12px;background:#fff;padding:10px 12px;max-width:620px;box-shadow:0 1px 2px rgba(16,24,40,.05);}
-.dlico{flex:none;width:40px;height:40px;border-radius:10px;background:#f3d9c6;color:#b4500f;display:flex;align-items:center;justify-content:center;}
+.dlico{flex:none;width:40px;height:40px;border-radius:10px;background:#cfe0f7;color:#1d4f96;display:flex;align-items:center;justify-content:center;}
 .dlmeta{flex:1;min-width:0;}
 .dlname{font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .dlsub{font-size:11.5px;color:var(--muted);}
@@ -199,6 +239,9 @@ ol.sllist li{margin-bottom:2px;}
 .pvbody::-webkit-scrollbar-thumb{background:#dfe3e9;border-radius:6px;border:2px solid #fbfbfa;}
 
 .sl{position:relative;flex:none;aspect-ratio:16/9;border:1px solid var(--border-strong);border-radius:7px;background:#fff;overflow:hidden;box-shadow:0 1px 3px rgba(16,24,40,.09);padding:10px 12px;}
+/* Word報告書のページは縦長で表示する */
+.sl.pg-doc{aspect-ratio:1/1.414;padding:13px 14px;}
+.sl.pg-doc h5{border-bottom-color:var(--text);}
 .sl .pg{position:absolute;right:6px;bottom:5px;font-size:7px;font-weight:700;color:#fff;background:rgba(29,36,48,.7);border-radius:5px;padding:2px 6px;letter-spacing:.03em;}
 .sl h5{margin:0 0 5px;font-size:9px;font-weight:700;line-height:1.35;padding-bottom:4px;border-bottom:1.5px solid var(--accent);}
 .sl p{margin:0;font-size:7px;line-height:1.5;color:#41506a;}
@@ -219,13 +262,6 @@ ol.sllist li{margin-bottom:2px;}
   .viewport.split .log{padding-right:20px;padding-bottom:268px;}
   .pvbody{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:start;}
 }
-
-.jd{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:1px 9px;white-space:nowrap;}
-.jd.ng{color:var(--err);background:var(--err-soft);}
-.jd.ck{color:var(--warn);background:var(--warn-soft);}
-.jd.ok{color:var(--ok);background:var(--ok-soft);}
-.lead + .lead{margin-top:10px;}
-td .lay{font-weight:700;color:var(--muted);font-size:11.5px;white-space:nowrap;}
 
 /* 関連ファイル（回答の右段） */
 .ansgrid{display:grid;grid-template-columns:1fr;gap:0;align-items:start;}
@@ -248,6 +284,23 @@ td .lay{font-weight:700;color:var(--muted);font-size:11.5px;white-space:nowrap;}
 .rfpv{display:inline-block;margin-left:6px;font-size:8.5px;font-weight:700;color:#fff;background:#8a93a2;border-radius:4px;padding:1px 5px;vertical-align:1.5px;}
 .rfsnip{font-size:10.5px;color:var(--muted);line-height:1.6;margin-top:3px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
 .rfsrc{color:#7d879a;}
+
+/* ---------- 検索カード内の件数分布 ---------- */
+.dist{margin:7px 0 6px;border:1px solid var(--border);border-radius:7px;background:#fbfcfd;padding:9px 10px 7px;}
+.dist .dh{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:7px;}
+.dist .dlgd{display:flex;gap:12px;font-size:10.5px;color:var(--muted);margin-bottom:6px;}
+.dist .dlgd i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;vertical-align:0px;}
+.dgrid{display:grid;grid-template-columns:104px repeat(9,minmax(0,1fr));gap:0 3px;align-items:center;min-width:390px;}
+.dscroll{overflow-x:auto;}
+.drow{font-size:10.5px;color:var(--muted);white-space:nowrap;padding-right:6px;}
+.dcell{height:20px;display:flex;align-items:center;justify-content:center;gap:2px;border-radius:3px;}
+.dcell.on{background:rgba(105,117,134,.09);}
+.dmk{width:7px;height:7px;border-radius:50%;}
+.dyr{font-size:9.5px;color:#94a0ae;text-align:center;font-variant-numeric:tabular-nums;padding-top:3px;}
+.dcut{grid-column:5 / span 1;position:relative;height:0;}
+.dcut i{position:absolute;right:-2px;top:-49px;width:2px;height:49px;
+  background:repeating-linear-gradient(#c0392f 0 3px,transparent 3px 6px);}
+.dnote{margin-top:6px;font-size:10.5px;color:#c0392f;}
 
 /* ---------- 拡大表示（スポットライト） ---------- */
 .spot{position:absolute;inset:0;z-index:5;pointer-events:none;display:flex;align-items:center;justify-content:center;padding:28px;}
@@ -285,8 +338,6 @@ td .lay{font-weight:700;color:var(--muted);font-size:11.5px;white-space:nowrap;}
 .sendbtn.pressed{transform:scale(.93);background:var(--accent-dark);box-shadow:0 0 0 rgba(47,109,246,0);}
 .big-cap{font-size:15px;font-weight:700;color:var(--accent-dark);margin-bottom:16px;padding-left:12px;border-left:4px solid var(--accent);}
 .big-repos{display:flex;flex-direction:column;gap:10px;}
-.big-repos.two{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.big-repos.two .big-repo{font-size:19px;padding:13px 16px;}
 .big-repo{display:flex;align-items:center;justify-content:center;gap:12px;font-size:22px;font-weight:700;background:var(--accent-soft);border:1px solid #bed3fb;border-radius:999px;padding:14px 20px;}
 .big-repo .dot{width:10px;height:10px;border-radius:50%;background:var(--ok);}
 .big-repo svg{color:var(--accent);}
@@ -317,15 +368,17 @@ td .lay{font-weight:700;color:var(--muted);font-size:11.5px;white-space:nowrap;}
   .logo{height:30px;}
   .vr{height:18px;}
   .topbar{gap:10px;}
-  .log{height:calc(100vh - 190px);padding:14px 13px 24px;}
+  .viewport{height:calc(100vh - 190px);}
+  .log{padding:14px 13px 20px;}
+  .bottombar{padding:11px 13px 13px;}
+  .qask-t{font-size:15px;padding:10px 14px;max-width:88%;}
+  .spd button{font-size:11px;padding:3px 8px;}
   .spot{padding:14px;align-items:flex-start;padding-top:60px;}
   .big{padding:16px;border-radius:12px;}
   .big-q{font-size:17px;gap:10px;}
   .big-q .ico{width:28px;height:28px;}
   .big-cap{font-size:13px;margin-bottom:12px;}
   .big-repo{font-size:15px;padding:11px 16px;}
-  .big-repos.two{grid-template-columns:1fr;gap:9px;}
-  .big-repos.two .big-repo{font-size:14px;padding:10px 14px;}
   .chap{display:none;}
   .player{gap:9px;padding:9px 10px;}
 }
@@ -338,453 +391,435 @@ td .lay{font-weight:700;color:var(--muted);font-size:11.5px;white-space:nowrap;}
   .blk.anim .nopath{stroke-dashoffset:0 !important;}
   .log{scroll-behavior:auto;}
 }
+
+/* ---------- 判定バッジ・層ラベル（安全設計デモ） ---------- */
+.jd{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:1px 9px;white-space:nowrap;}
+.jd.ng{color:var(--err);background:var(--err-soft);}
+.jd.ck{color:var(--warn);background:var(--warn-soft);}
+.jd.ok{color:var(--ok);background:var(--ok-soft);}
+td .lay{font-weight:700;color:var(--muted);font-size:11.5px;white-space:nowrap;}
+.doc h4 .jd{margin-left:4px;vertical-align:1px;}
+.ansroll .jd{font-size:13px;}
 </style>
 </head>
 <body>
 <div class="app">
-
   <div class="topbar">
-    <img class="logo" src="data:image/png;base64,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" alt="Neuron Enterprise Search">
+    <img class="logo" src="data:image/png;base64,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" alt="Neuron Enterprise Search">
     <span class="vr" aria-hidden="true"></span>
     <div class="brand">エージェント検索 <span>｜ 自動デモ</span></div>
     <div class="badge">イメージデモ</div>
   </div>
 
   <div class="stage">
-   <div class="viewport" id="vp">
-    <div class="log" id="log">
+    <div class="viewport" id="vp">
 
-      <!-- 01 プロンプト -->
-      <section class="blk" data-dur="6" data-label="プロンプト" data-spot="q" data-hold="3200">
-        <div class="steplabel">01 ／ プロンプト</div>
-        <div class="prompt">
-          <span class="ico" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg></span>
-          <p>新設する MC-3 組立セルの安全設計について、国内法令と国際規格の両面から適合状況を確認して。安全柵なしで成立するか、不足している対応も指摘して。確認結果はPPTXのスライドにしてください。</p>
-          <button class="sendbtn" id="promptSend" type="button" tabindex="-1" aria-hidden="true">検索<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M12 5l7 7-7 7"/></svg></button>
-        </div>
-      </section>
-
-      <!-- 02 リポジトリ -->
-      <section class="blk" data-dur="5.5" data-label="検索対象のリポジトリ" data-spot="r" data-hold="2800">
-        <div class="steplabel">02 ／ 検索対象</div>
-        <div class="card">
-          <p style="margin:0 0 10px;font-size:13px;color:var(--muted);">社内の4つのリポジトリを横断して検索します。</p>
-          <div class="repos">
-            <span class="repo"><span class="dot"></span>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M5 7h14"/><path d="M5 7 2 15a3.5 3.5 0 0 0 6 0z"/><path d="M19 7l-3 8a3.5 3.5 0 0 0 6 0z"/><path d="M8 21h8"/></svg>
-              法令・通達 原文DB</span>
-            <span class="repo"><span class="dot"></span>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H19v18H6.5A2.5 2.5 0 0 0 4 22z"/><path d="M8 7h7M8 11h7"/></svg>
-              産業規格 原文DB</span>
-            <span class="repo"><span class="dot"></span>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-7.5L10.6 4.6A2 2 0 0 0 9.2 4H4a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1z"/></svg>
-              社内設計基準・標準</span>
-            <span class="repo"><span class="dot"></span>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 3h6v3H9z"/><path d="M9 11h6M9 15h4"/></svg>
-              DR記録・不適合報告</span>
+      <div class="bottombar">
+        <section class="blk show" data-dur="7.2" data-label="プロンプト" data-spot="q" data-hold="3200">
+          <div class="prompt">
+            <span class="ico" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg></span>
+            <p>新設する MC-3 組立セルの安全設計について、国内法令と国際規格の両面から適合状況を確認して。安全柵なしで成立するか、不足している対応も指摘して。確認結果はPPTXのスライドにしてください。</p>
+            <button class="sendbtn" id="promptSend" type="button" tabindex="-1" aria-hidden="true">検索<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M12 5l7 7-7 7"/></svg></button>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
 
-      <!-- 03 検索プロセス（フロー＋検索1〜5＋完了） -->
-      <section class="blk" id="proc" data-dur="4.4" data-label="エージェントの処理フロー">
-        <div class="steplabel">03 ／ 検索プロセス</div>
-        <div class="card tint">
-          <h3 class="sec">必要な情報がそろうまで検索を繰り返す</h3>
-          <div class="proc">
-            <div class="flowwrap">
-              <div class="flow" id="flow">
-                <svg class="flowsvg" viewBox="0 0 280 348" fill="none" aria-hidden="true">
-                  <path class="nopath" d="M56 233 H16 V90 H44" stroke="#9a6200" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-                  <polygon class="nohead" points="44,83.5 57,90 44,96.5" fill="#9a6200"/>
-                </svg>
-                <div class="fb f1">目的（質問内容）</div>
-                <span class="ar a1"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 2h6v12h5l-8 8-8-8h5z"/></svg></span>
-                <div class="fb f2">Neuronで検索を実行</div>
-                <span class="fcount">検索 <b id="fcnum">1</b></span>
-                <span class="ar a2"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 2h6v12h5l-8 8-8-8h5z"/></svg></span>
-                <div class="fb f3">検索結果を確認</div>
-                <span class="ar a3"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 2h6v12h5l-8 8-8-8h5z"/></svg></span>
-                <div class="fb f4">情報は足りたか？<span class="f4sub">足りなければ 検索に戻る</span></div>
-                <span class="nolabel">NO</span>
-                <span class="ar ya"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 2h6v12h5l-8 8-8-8h5z"/></svg></span>
-                <span class="yeslabel">YES</span>
-                <div class="fb f5">回答する</div>
-              </div>
-            </div>
+      <div id="log" class="log">
 
-            <div class="searches">
+        <div class="qask" id="ask"><div class="qask-t" id="askT"></div></div>
 
-              <div class="scard" data-dur="1.3" data-label="検索 1／5" data-pulse="1">
-                <div class="blkhead"><span class="t">検索 1</span><span class="hit">67件ヒット</span></div>
-                <code class="q">協働ロボット <b class="op">AND</b> (安全柵 <b class="op">OR</b> 囲い) <b class="op">AND</b> 設計基準</code>
-                <ul class="notes">
-                  <li>ヒットの内訳は<b>社内設計基準・標準が 41件</b>と大半。最上位の『ロボット設備安全設計基準』を確認。</li>
-                  <li>同基準が根拠として <b>ISO 10218-1/-2:2011 および ISO/TS 15066:2016 を引用</b>していることを検知。</li>
-                  <li class="turn"><em>方針転換</em>　社内基準の記述をそのまま適合根拠とするのは危険と判断し、引用元の法令・規格の原文にあたり直す。</li>
-                </ul>
-              </div>
+        <section class="blk" data-dur="5.5" data-label="検索対象のリポジトリ" data-spot="r" data-hold="2800">
+          <div class="steplabel">02 ／ 検索対象</div>
+          <div class="rstatus">
+            <span class="sp" aria-hidden="true"></span>
+            <span class="ck" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+            <span><b>4つのリポジトリ</b><span class="m1">を横断検索しています…</span><span class="m2">を横断検索しました</span></span>
+          </div>
+        </section>
 
-              <div class="scard" data-dur="1.3" data-label="検索 2／5" data-pulse="2">
-                <div class="blkhead"><span class="t">検索 2</span><span class="hit">12件</span></div>
-                <code class="q">労働安全衛生規則 <b class="op">AND</b> 産業用ロボット <b class="op">AND</b> (第150条の4 <b class="op">OR</b> 運転中の危険)
-＋ 対象を法令・通達の原文に限定</code>
-                <ul class="notes">
-                  <li>第150条の4本文、第36条第31号（産業用ロボットの定義）、平成25年12月24日付 <b>基発1224第2号</b>を特定。</li>
-                  <li><b>安全柵を省略できる法的根拠は規格ではなく「通達」</b>であり、成立条件はリスクアセスメントの実施と記録であることを確認。</li>
-                  <li>社内基準には通達への言及がないため、確認事項として記録。</li>
-                </ul>
-              </div>
-
-              <div class="scard" data-dur="1.3" data-label="検索 3／5" data-pulse="3">
-                <div class="blkhead"><span class="t">検索 3</span><span class="hit">29件</span></div>
-                <code class="q">(ISO 10218 <b class="op">OR</b> TS 15066) <b class="op">AND</b> (生体力学 <b class="op">OR</b> 接触 <b class="op">OR</b> 圧力) <b class="op">AND</b> 改訂</code>
-                <ul class="notes">
-                  <li><b>2025年2月に ISO 10218-1/-2 が14年ぶりに改訂</b>され、ISO/TS 15066 の内容が統合されたことを検知。クラス分類（Class I／II）とサイバーセキュリティ要件も追加。</li>
-                  <li class="turn"><em>前提の差し替え</em>　検索1の社内基準が旧版参照のままと確定。以降は2025年版を基準に評価する。</li>
-                </ul>
-              </div>
-
-              <div class="scard" data-dur="1.3" data-label="検索 4／5" data-pulse="4">
-                <div class="blkhead"><span class="t">検索 4</span><span class="hit">18件</span></div>
-                <code class="q">(協働 <b class="op">OR</b> 柵レス) <b class="op">AND</b> (接触 <b class="op">OR</b> 挟まれ) <b class="op">AND</b> (エンドエフェクタ <b class="op">OR</b> ハンド <b class="op">OR</b> ワーク <b class="op">OR</b> 治具)
-＋ 対象を過去のDR記録・不適合報告に絞り込み</code>
-                <ul class="notes">
-                  <li>過去3年で<b>ロボット本体ではなくツール・ワーク側に起因する指摘が 11件</b>（DR差し戻し 7件、量産後の不適合 4件）。</li>
-                  <li>社外規格だけでは見えない<b>自社の再発パターン</b>を、今回の設計の点検項目として取り込み。</li>
-                </ul>
-              </div>
-
-              <div class="scard" data-dur="1.4" data-label="検索 5／5" data-pulse="5">
-                <div class="blkhead"><span class="t">検索 5</span><span class="hit">9件</span></div>
-                <code class="q">(教示 <b class="op">OR</b> 保全 <b class="op">OR</b> 段取替え) <b class="op">AND</b> (第150条の3 <b class="op">OR</b> 第150条の5 <b class="op">OR</b> 特別教育)
-＋ 図面・仕様書との突合</code>
-                <ul class="notes">
-                  <li class="turn"><em>自己点検</em>　ここまでの調査が<b>「自動運転中」の措置に偏っている</b>と判断し、教示・保守時の措置と特別教育の要件を追加確認。</li>
-                  <li>速度・間隔監視（SSM）併用時の最小距離算出（ISO 13855）と、レイアウト図の作業者動線を照合。</li>
-                </ul>
-              </div>
-
-              <div data-dur="4.6" data-label="検索完了" data-final="1">
-                <div class="done">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                  <p>計5回の検索で <b>135件</b>を走査、法令・規格の原文 <b>6件</b>、社内文書 <b>9件</b>を根拠として採用しました。</p>
+        <section class="blk" id="proc" data-dur="4.4" data-label="エージェントの処理フロー">
+          <div class="steplabel">03 ／ 検索プロセス</div>
+          <div class="card tint">
+            <h3 class="sec">必要な情報がそろうまで検索を繰り返す</h3>
+            <div class="proc">
+              <div class="flowwrap">
+                <div class="flow" id="flow">
+                  <svg class="flowsvg" viewBox="0 0 280 348" fill="none" aria-hidden="true">
+                    <path class="nopath" d="M56 233 H16 V90 H44" stroke="#9a6200" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                    <polygon class="nohead" points="44,83.5 57,90 44,96.5" fill="#9a6200"/>
+                  </svg>
+                  <div class="fb f1">目的（質問内容）</div>
+                  <span class="ar a1"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 2h6v12h5l-8 8-8-8h5z"/></svg></span>
+                  <div class="fb f2">Neuronで検索を実行</div>
+                  <span class="fcount">検索 <b id="fcnum">1</b></span>
+                  <span class="ar a2"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 2h6v12h5l-8 8-8-8h5z"/></svg></span>
+                  <div class="fb f3">検索結果を確認</div>
+                  <span class="ar a3"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 2h6v12h5l-8 8-8-8h5z"/></svg></span>
+                  <div class="fb f4">情報は足りたか？<span class="f4sub">足りなければ 検索に戻る</span></div>
+                  <span class="nolabel">NO</span>
+                  <span class="ar ya"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 2h6v12h5l-8 8-8-8h5z"/></svg></span>
+                  <span class="yeslabel">YES</span>
+                  <div class="fb f5">回答する</div>
                 </div>
               </div>
 
+              <div class="searches">
+
+                <div class="scard" data-dur="1.3" data-label="検索 1／5" data-pulse="1">
+                  <div class="blkhead"><span class="t">検索 1</span><span class="hit">67件ヒット</span></div>
+                  <code class="q">協働ロボット <b class="op">AND</b> (安全柵 <b class="op">OR</b> 囲い) <b class="op">AND</b> 設計基準</code>
+                  <ul class="notes">
+                    <li>ヒットの内訳は<b>社内設計基準・標準が 41件</b>と大半。最上位の『ロボット設備安全設計基準』を確認。</li>
+                    <li>同基準が根拠として <b>ISO 10218-1/-2:2011 および ISO/TS 15066:2016 を引用</b>していることを検知。</li>
+                    <li class="turn"><em>方針転換</em>　社内基準の記述をそのまま適合根拠とするのは危険と判断し、引用元の法令・規格の原文にあたり直す。</li>
+                  </ul>
+                </div>
+
+                <div class="scard" data-dur="1.3" data-label="検索 2／5" data-pulse="2">
+                  <div class="blkhead"><span class="t">検索 2</span><span class="hit">12件</span></div>
+                  <code class="q">労働安全衛生規則 <b class="op">AND</b> 産業用ロボット <b class="op">AND</b> (第150条の4 <b class="op">OR</b> 運転中の危険)
+＋ 対象を法令・通達の原文に限定</code>
+                  <ul class="notes">
+                    <li>第150条の4本文、第36条第31号（産業用ロボットの定義）、平成25年12月24日付 <b>基発1224第2号</b>を特定。</li>
+                    <li><b>安全柵を省略できる法的根拠は規格ではなく「通達」</b>であり、成立条件はリスクアセスメントの実施と記録であることを確認。</li>
+                    <li>社内基準には通達への言及がないため、確認事項として記録。</li>
+                  </ul>
+                </div>
+
+                <div class="scard" data-dur="1.3" data-label="検索 3／5" data-pulse="3">
+                  <div class="blkhead"><span class="t">検索 3</span><span class="hit">29件</span></div>
+                  <code class="q">(ISO 10218 <b class="op">OR</b> TS 15066) <b class="op">AND</b> (生体力学 <b class="op">OR</b> 接触 <b class="op">OR</b> 圧力) <b class="op">AND</b> 改訂</code>
+                  <ul class="notes">
+                    <li><b>2025年2月に ISO 10218-1/-2 が14年ぶりに改訂</b>され、ISO/TS 15066 の内容が統合されたことを検知。クラス分類（Class I／II）とサイバーセキュリティ要件も追加。</li>
+                    <li class="turn"><em>前提の差し替え</em>　検索1の社内基準が旧版参照のままと確定。以降は2025年版を基準に評価する。</li>
+                  </ul>
+                </div>
+
+                <div class="scard" data-dur="1.3" data-label="検索 4／5" data-pulse="4">
+                  <div class="blkhead"><span class="t">検索 4</span><span class="hit">18件</span></div>
+                  <code class="q">(協働 <b class="op">OR</b> 柵レス) <b class="op">AND</b> (接触 <b class="op">OR</b> 挟まれ) <b class="op">AND</b> (エンドエフェクタ <b class="op">OR</b> ハンド <b class="op">OR</b> ワーク <b class="op">OR</b> 治具)
+＋ 対象を過去のDR記録・不適合報告に絞り込み</code>
+                  <ul class="notes">
+                    <li>過去3年で<b>ロボット本体ではなくツール・ワーク側に起因する指摘が 11件</b>（DR差し戻し 7件、量産後の不適合 4件）。</li>
+                    <li>社外規格だけでは見えない<b>自社の再発パターン</b>を、今回の設計の点検項目として取り込み。</li>
+                  </ul>
+                </div>
+
+                <div class="scard" data-dur="1.4" data-label="検索 5／5" data-pulse="5">
+                  <div class="blkhead"><span class="t">検索 5</span><span class="hit">9件</span></div>
+                  <code class="q">(教示 <b class="op">OR</b> 保全 <b class="op">OR</b> 段取替え) <b class="op">AND</b> (第150条の3 <b class="op">OR</b> 第150条の5 <b class="op">OR</b> 特別教育)
+＋ 図面・仕様書との突合</code>
+                  <ul class="notes">
+                    <li class="turn"><em>自己点検</em>　ここまでの調査が<b>「自動運転中」の措置に偏っている</b>と判断し、教示・保守時の措置と特別教育の要件を追加確認。</li>
+                    <li>速度・間隔監視（SSM）併用時の最小距離算出（ISO 13855）と、レイアウト図の作業者動線を照合。</li>
+                  </ul>
+                </div>
+
+                <div data-dur="4.6" data-label="検索完了" data-final="1">
+                  <div class="done">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                    <p>計5回の検索で <b>135件</b>を走査し、法令・通達・規格の原文 <b>6件</b>と社内文書 <b>9件</b>を根拠として採用しました。</p>
+                  </div>
+                </div>
+
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- 04 調査結果リード -->
-      <div class="ansgrid" id="ansGrid">
-      <div class="anscol">
-      <div id="answerWrap">
-      <section class="blk" data-dur="1.9" data-label="調査結果" data-ans="1" data-panel="files">
-        <div class="steplabel">04 ／ 回答</div>
-        <div class="answer-head">
-          <h2>調査結果</h2>
-          <span class="by">エージェント検索の回答</span>
-        </div>
-        <p class="lead">MC-3 組立セルは、<b>安全柵なしでの運用そのものは法令上成立し得ます</b>。ただしそれは規格適合によってではなく、<b>リスクアセスメントの実施とその記録</b>によって成立するものです。</p>
-        <p class="lead">現時点の設計内容を照合した結果、<b>2件の不適合と4件の要確認事項</b>を検出しました。特に、適合根拠としている社内設計基準が旧版の規格を参照しており、<b>判定の前提が最新ではない</b>点が最も重い指摘です。</p>
-      </section>
+        <div class="ansgrid" id="ansGrid">
+        <div class="anscol">
+        <div id="answerWrap">
 
-      <!-- 章1 -->
-      <section class="blk" data-dur="2.6" data-label="1. 参照した根拠文書" data-ans="1" data-panel="files">
-        <h3 class="sec">1. 参照した根拠文書</h3>
-        <div class="tblwrap">
-          <table>
-            <thead><tr><th>層</th><th>文書・格納先</th><th>本件での位置づけ</th></tr></thead>
-            <tbody>
-              <tr><td><span class="lay">法令</span></td><td>労働安全衛生規則 第150条の4（運転中の危険の防止）<br><code>法令原文DB</code></td><td>安全柵の要否を定める本条</td></tr>
-              <tr><td><span class="lay">法令</span></td><td>同 第150条の3／第150条の5、第36条第31号<br><code>法令原文DB</code></td><td>教示・検査時の措置、産業用ロボットの定義・特別教育</td></tr>
-              <tr><td><span class="lay">通達</span></td><td>平成25年12月24日付 基発1224第2号<br><code>法令原文DB</code></td><td><b>柵レス運用を可能にする解釈の根拠</b></td></tr>
-              <tr><td><span class="lay">通達</span></td><td>同 基安安発1224第1号（留意事項）<br><code>法令原文DB</code></td><td>リスクアセスメント運用時の留意事項</td></tr>
-              <tr><td><span class="lay">規格</span></td><td>ISO 10218-1:2025 ／ ISO 10218-2:2025<br><code>規格原文DB</code></td><td>ロボット本体／アプリケーションの安全要求（2025年2月改訂）</td></tr>
-              <tr><td><span class="lay">規格</span></td><td>ISO 12100、ISO 13849-1:2023、ISO 13855<br><code>規格原文DB</code></td><td>リスクアセスメント手順、安全機能のPL、最小距離算出</td></tr>
-              <tr><td><span class="lay">社内</span></td><td>ロボット設備安全設計基準 <code>STD-SAF-2019-004</code><br><code>社内標準DB</code></td><td><b>参照規格が2011／2016年版のまま（要改訂）</b></td></tr>
-              <tr><td><span class="lay">社内</span></td><td>協働運転セル リスクアセスメント実施要領 <code>STD-SAF-2021-011</code><br><code>社内標準DB</code></td><td>評価手順・記録様式</td></tr>
-              <tr><td><span class="lay">社内</span></td><td>MC-2 セル DR2 議事録 <code>DR-MC2-2023-04</code><br><code>DR記録DB</code></td><td>ハンド爪形状の差し戻し事例</td></tr>
-              <tr><td><span class="lay">社内</span></td><td>MC-2 セル 不適合報告 <code>NCR-2024-0137</code><br><code>不適合報告DB</code></td><td>搬送ワーク角部での接触事象</td></tr>
-              <tr><td><span class="lay">社内</span></td><td>旧A棟セル DR3 議事録 <code>DR-A3-2022-09</code><br><code>DR記録DB</code></td><td>座位作業者の頭部高さに関する指摘</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+        <section class="blk" data-dur="1.4" data-label="調査結果" data-panel="files" data-scroll="#answerWrap">
+          <div class="steplabel">04 ／ 回答</div>
+          <div class="answer-head">
+            <h2>調査結果</h2>
+            <span class="by">エージェント検索の回答</span>
+          </div>
+          <p class="lead">MC-3 組立セルは、<b>安全柵なしでの運用そのものは法令上成立し得ます</b>。ただしそれは規格適合によってではなく、<b>リスクアセスメントの実施とその記録</b>によって成立するものです。</p>
+          <p class="lead">現時点の設計内容を照合した結果、<b>2件の不適合と4件の要確認事項</b>を検出しました。特に、適合根拠としている社内設計基準が旧版の規格を参照しており、<b>判定の前提が最新ではない</b>点が最も重い指摘です。</p>
+        </section>
 
-      <!-- 章2 -->
-      <section class="blk" data-dur="2.1" data-label="2. 適合性の判定" data-ans="1" data-panel="files">
-        <h3 class="sec">2. 適合性の判定</h3>
-        <div class="tblwrap">
-          <table>
-            <thead><tr><th>#</th><th>確認項目</th><th>判定</th><th>根拠</th></tr></thead>
-            <tbody>
-              <tr><td class="idx">1</td><td>安全柵なし運用の法的成立性</td><td><span class="jd ok">条件付き適合</span></td><td>規則第150条の4／基発1224第2号</td></tr>
-              <tr><td class="idx">2</td><td>リスクアセスメントの実施と記録</td><td><span class="jd ck">要確認</span></td><td>同通達／STD-SAF-2021-011</td></tr>
-              <tr><td class="idx">3</td><td>接触評価の対象範囲（ツール・ワーク）</td><td><span class="jd ng">不適合</span></td><td>ISO 10218-2:2025／NCR-2024-0137</td></tr>
-              <tr><td class="idx">4</td><td>参照規格の版</td><td><span class="jd ng">不適合</span></td><td>STD-SAF-2019-004 が旧版参照</td></tr>
-              <tr><td class="idx">5</td><td>頭部・顔面への接触可能性</td><td><span class="jd ck">要確認</span></td><td>ISO 10218-2:2025／DR-A3-2022-09</td></tr>
-              <tr><td class="idx">6</td><td>安全機能のPL／カテゴリ妥当性</td><td><span class="jd ck">要確認</span></td><td>ISO 13849-1:2023</td></tr>
-              <tr><td class="idx">7</td><td>教示・保全時の措置と特別教育</td><td><span class="jd ck">要確認</span></td><td>規則第150条の3／第150条の5／第36条第31号</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+        <section class="blk" data-dur="0.45" data-label="1. 参照した根拠文書" data-panel="files" data-noscroll="1">
+          <h3 class="sec">1. 参照した根拠文書</h3>
+          <div class="tblwrap">
+            <table>
+              <thead><tr><th>層</th><th>文書・格納先</th><th>本件での位置づけ</th></tr></thead>
+              <tbody>
+                <tr><td><span class="lay">法令</span></td><td>労働安全衛生規則 第150条の4（運転中の危険の防止）<br><code>法令原文DB</code></td><td>安全柵の要否を定める本条</td></tr>
+                <tr><td><span class="lay">法令</span></td><td>同 第150条の3／第150条の5、第36条第31号<br><code>法令原文DB</code></td><td>教示・検査時の措置、産業用ロボットの定義・特別教育</td></tr>
+                <tr><td><span class="lay">通達</span></td><td>平成25年12月24日付 基発1224第2号<br><code>法令原文DB</code></td><td><b>柵レス運用を可能にする解釈の根拠</b></td></tr>
+                <tr><td><span class="lay">通達</span></td><td>同 基安安発1224第1号（留意事項）<br><code>法令原文DB</code></td><td>リスクアセスメント運用時の留意事項</td></tr>
+                <tr><td><span class="lay">規格</span></td><td>ISO 10218-1:2025 ／ ISO 10218-2:2025<br><code>規格原文DB</code></td><td>ロボット本体／アプリケーションの安全要求（2025年2月改訂）</td></tr>
+                <tr><td><span class="lay">規格</span></td><td>ISO 12100、ISO 13849-1:2023、ISO 13855<br><code>規格原文DB</code></td><td>リスクアセスメント手順、安全機能のPL、最小距離算出</td></tr>
+                <tr><td><span class="lay">社内</span></td><td>ロボット設備安全設計基準 <code>STD-SAF-2019-004</code><br><code>社内標準DB</code></td><td><b>参照規格が2011／2016年版のまま（要改訂）</b></td></tr>
+                <tr><td><span class="lay">社内</span></td><td>協働運転セル リスクアセスメント実施要領 <code>STD-SAF-2021-011</code><br><code>社内標準DB</code></td><td>評価手順・記録様式</td></tr>
+                <tr><td><span class="lay">社内</span></td><td>MC-2 セル DR2 議事録 <code>DR-MC2-2023-04</code><br><code>DR記録DB</code></td><td>ハンド爪形状の差し戻し事例</td></tr>
+                <tr><td><span class="lay">社内</span></td><td>MC-2 セル 不適合報告 <code>NCR-2024-0137</code><br><code>不適合報告DB</code></td><td>搬送ワーク角部での接触事象</td></tr>
+                <tr><td><span class="lay">社内</span></td><td>旧A棟セル DR3 議事録 <code>DR-A3-2022-09</code><br><code>DR記録DB</code></td><td>座位作業者の頭部高さに関する指摘</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
 
-      <!-- 章3a -->
-      <section class="blk" data-dur="3.2" data-label="3. 重点論点 ①〜③" data-ans="1" data-panel="files">
-        <h3 class="sec">3. 重点論点</h3>
-        <div class="docs">
-          <div class="doc">
-            <h4>① 安全柵なしの根拠は「規格適合」ではなく「通達＋リスクアセスメント」　<span class="jd ok">条件付き適合</span></h4>
-            <p>規則第150条の4は、運転中の産業用ロボットに接触して危険が生ずるおそれのあるときは、さく又は囲いを設ける等の措置を講じなければならないと定めています。これに対し基発1224第2号は、法第28条の2によるリスクアセスメントに基づく措置を実施し、危険の生ずるおそれがなくなったと評価できるときは本条に該当しないとしました。</p>
+        <section class="blk" data-dur="0.45" data-label="2. 適合性の判定" data-panel="files" data-noscroll="1">
+          <h3 class="sec">2. 適合性の判定</h3>
+          <div class="tblwrap">
+            <table>
+              <thead><tr><th>#</th><th>確認項目</th><th>判定</th><th>根拠</th></tr></thead>
+              <tbody>
+                <tr><td class="idx">1</td><td>安全柵なし運用の法的成立性</td><td><span class="jd ok">条件付き適合</span></td><td>規則第150条の4／基発1224第2号</td></tr>
+                <tr><td class="idx">2</td><td>リスクアセスメントの実施と記録</td><td><span class="jd ck">要確認</span></td><td>同通達／STD-SAF-2021-011</td></tr>
+                <tr><td class="idx">3</td><td>接触評価の対象範囲（ツール・ワーク）</td><td><span class="jd ng">不適合</span></td><td>ISO 10218-2:2025／NCR-2024-0137</td></tr>
+                <tr><td class="idx">4</td><td>参照規格の版</td><td><span class="jd ng">不適合</span></td><td>STD-SAF-2019-004 が旧版参照</td></tr>
+                <tr><td class="idx">5</td><td>頭部・顔面への接触可能性</td><td><span class="jd ck">要確認</span></td><td>ISO 10218-2:2025／DR-A3-2022-09</td></tr>
+                <tr><td class="idx">6</td><td>安全機能のPL／カテゴリ妥当性</td><td><span class="jd ck">要確認</span></td><td>ISO 13849-1:2023</td></tr>
+                <tr><td class="idx">7</td><td>教示・保全時の措置と特別教育</td><td><span class="jd ck">要確認</span></td><td>規則第150条の3／第150条の5／第36条第31号</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="blk" data-dur="0.45" data-label="3. 重点論点 ①〜③" data-panel="files" data-noscroll="1">
+          <h3 class="sec">3. 重点論点</h3>
+          <div class="docs">
+            <div class="doc">
+              <h4>① 安全柵なしの根拠は「規格適合」ではなく「通達＋リスクアセスメント」　<span class="jd ok">条件付き適合</span></h4>
+              <p>規則第150条の4は、運転中の産業用ロボットに接触して危険が生ずるおそれのあるときは、さく又は囲いを設ける等の措置を講じなければならないと定めています。これに対し基発1224第2号は、法第28条の2によるリスクアセスメントに基づく措置を実施し、危険の生ずるおそれがなくなったと評価できるときは本条に該当しないとしました。</p>
+              <ul>
+                <li>柵レスの成否は、<b>「危険がなくなったと評価できる」ことを事業者が示せるか</b>にかかっています。</li>
+                <li>本セルのロボットは各軸 80 W 超であり第150条の4の対象です。<b>「協働ロボットだから対象外」ではありません。</b></li>
+                <li><span class="key">要点</span>適合の実体はリスクアセスメントの記録そのものです。設計仕様書ではなく、記録が残るかどうかが問われます。</li>
+              </ul>
+            </div>
+            <div class="doc">
+              <h4>② 適合根拠としている社内基準が旧版を参照している　<span class="jd ng">不適合</span></h4>
+              <p>STD-SAF-2019-004 は ISO 10218-1/-2:2011 と ISO/TS 15066:2016 を引用していますが、2025年2月に ISO 10218-1:2025／-2:2025 が発行され、PLを要求する機能、ロボットクラスの分類、サイバーセキュリティ要件が追加、協働アプリケーションの安全要求事項（ISO/TS 15066）が本文・附属書に統合されました。</p>
+              <ul>
+                <li>ロボットの最大能力に基づく<b>クラス分類（Class I／Class II）</b>が新設され、協働モードと組み合わせて安全要件が再整理。社内基準の分類体系には対応項目がありません。</li>
+                <li>「ロボットシステム」から<b>「ロボットアプリケーション」</b>へ用語が変更され、ワーク・タスク・プログラム・付帯機械まで対象範囲に含まれます（論点③に直結）。</li>
+                <li><span class="key">要点</span>社内基準の改訂を待たず、本件は2025年版を直接参照して評価すべきです。基準そのものの改訂起票も必要です。</li>
+              </ul>
+            </div>
+            <div class="doc">
+              <h4>③ 接触評価の対象がロボット本体に限定されている　<span class="jd ng">不適合</span></h4>
+              <p>設計仕様書の接触力評価はロボットアーム各リンクのみを対象としています。しかし過去のDR記録・不適合報告では、ツール・ワーク側に起因する指摘が 11件と多数を占めます。</p>
+              <ul>
+                <li><code>DR-MC2-2023-04</code>：ハンド爪の切削エッジが鋭利で、接触時に切創のおそれ → DR差し戻し。</li>
+                <li><code>NCR-2024-0137</code>：搬送中ワークの角部が作業者前腕に接触 → 量産後の不適合。</li>
+                <li>生体力学的限界値は<b>鈍的な接触形状を前提</b>としており、鋭利な形状や特異点近傍での接触は力の制限では担保できません。</li>
+                <li><span class="key">要点</span>評価対象を<b>ロボットアプリケーション全体（ハンド・ワーク・治具を含む）</b>へ広げる必要があります。自社で最も繰り返されている失敗パターンでもあります。</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="blk" data-dur="0.45" data-label="3. 重点論点 ④⑤" data-panel="files" data-noscroll="1">
+          <div class="docs">
+            <div class="doc">
+              <h4>④ 頭部・顔面への接触可能性が未評価　<span class="jd ck">要確認</span></h4>
+              <p>生体力学的限界値は部位ごとに定められ、接触時間 0.5 秒を境に過渡的接触と準静的接触を区分します。一方で<b>頭部と顔面は「適用不可」</b>とされており、頭部への衝突は避けなければなりません。</p>
+              <ul>
+                <li>レイアウト図ではロボット可動範囲の上端が床面から 1,450 mm。立位作業者の頭部には届きませんが、<code>DR-A3-2022-09</code> では<b>座位・かがみ姿勢</b>の作業者について同種の指摘が出ています。</li>
+                <li>本セルは部品箱の段取替えでかがみ動作が発生する設計です。<b>この姿勢での頭部高さが評価されていません。</b></li>
+                <li>しきい値は ISO 15066-1（生体力学的しきい値）として新規格の検討も進行中で、数値の根拠文書が移る可能性があります。<b>社内基準に数値を直接転記する運用はリスク</b>です。</li>
+                <li><span class="key">要点</span>力の制限で守れない部位が存在します。ここは<b>レイアウトと姿勢の設計で回避</b>するしかありません。</li>
+              </ul>
+            </div>
+            <div class="doc">
+              <h4>⑤ 運転中以外の作業への措置　<span class="jd ck">要確認</span></h4>
+              <p>本調査の主対象である第150条の4は自動運転中の規定です。教示等のために運転する場合、および運転中に検査等を行う場合は、第150条の3および第150条の5により別途必要な措置を講ずべきこととされています。</p>
+              <ul>
+                <li>柵レスであっても、教示・保全時の措置（運転停止、起動スイッチの施錠・表示等）と、規則第36条第31号に基づく<b>特別教育</b>の要件は別途成立します。</li>
+                <li><span class="cau">留意</span>段取替え頻度が高い設計のため、<b>運用設計と教育計画を設備設計と同時に確定</b>しておくべきです。</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="blk" data-dur="0.45" data-label="4. 指摘事項サマリ" data-panel="files" data-noscroll="1">
+          <h3 class="sec">4. 指摘事項サマリ</h3>
+          <div class="tblwrap">
+            <table>
+              <thead><tr><th>区分</th><th>内容</th><th>対応の主体</th></tr></thead>
+              <tbody>
+                <tr><td><span class="jd ng">不適合</span></td><td>接触評価の対象がロボット本体のみ。ハンド・ワーク・治具が未評価</td><td>設計（本人）</td></tr>
+                <tr><td><span class="jd ng">不適合</span></td><td>適合根拠の社内基準 STD-SAF-2019-004 が 2011／2016年版参照のまま</td><td>安全統括部門（基準改訂）</td></tr>
+                <tr><td><span class="jd ck">要確認</span></td><td>リスクアセスメント記録の様式・保管が要領どおりか</td><td>設計＋安全管理者</td></tr>
+                <tr><td><span class="jd ck">要確認</span></td><td>かがみ姿勢時の頭部高さと可動範囲の関係</td><td>設計（本人）</td></tr>
+                <tr><td><span class="jd ck">要確認</span></td><td>安全機能のPL／カテゴリが ISO 13849-1:2023 で妥当か</td><td>制御設計</td></tr>
+                <tr><td><span class="jd ck">要確認</span></td><td>教示・保全時の措置と特別教育の計画</td><td>生産技術＋製造部門</td></tr>
+                <tr><td><span class="jd ok">参考</span></td><td>EU向け輸出の可能性がある場合、機械規則 (EU) 2023/1230（2027年1月20日全面適用）でサイバーセキュリティ要件が加わる</td><td>輸出管理＋設計</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="blk" data-dur="2.8" data-label="5. 次のアクション候補" data-panel="files" data-noscroll="1">
+          <h3 class="sec">5. 次のアクション候補</h3>
+          <ul class="acts">
+            <li>ハンド爪形状とワーク角部を含めた接触力の実測計画を、DR2 の前に立てる</li>
+            <li>かがみ姿勢を含む作業者姿勢ごとに、可動範囲との干渉を3Dで再検証する</li>
+            <li>STD-SAF-2019-004 の改訂を安全統括部門へ起票する（本件だけの問題ではないため）</li>
+            <li>リスクアセスメント記録を STD-SAF-2021-011 の様式で整備し、DR2 の提出物に加える</li>
+          </ul>
+          <p class="ask"><b>さらに確認しますか？</b>　「EU輸出を前提に再確認する」「ISO 13849-1 のPL算出を詳しく見る」「過去の不適合報告の全件を見る」などをご指示ください。最終的な適合判断は事業者・安全管理者・認証機関が行うものです。</p>
+        </section>
+        </div><!-- /#answerWrap -->
+
+        <div data-dur="12" data-label="回答を読む" data-panel="files" data-scrollrun="1" data-slow="1"></div>
+
+        <div data-dur="2.2" data-label="5. 次のアクション候補" data-panel="files"></div>
+
+        <section class="blk" data-dur="4.6" data-label="スライドの説明" data-panel="files">
+          <p class="sldesc">確認結果を <b>7 枚のスライド</b> にまとめました。1 枚目を表紙、2 枚目に結論サマリを置き、3 枚目以降で本文と同じ順に展開しています。</p>
+          <ol class="sllist">
+            <li>表紙 － 対象設備・確認の観点・作成日</li>
+            <li>結論サマリ － 柵レスの成立条件と、不適合2件・要確認4件</li>
+            <li>参照した根拠文書 － 法令4・規格2・社内5</li>
+            <li>適合性の判定 － 7項目の判定と根拠</li>
+            <li>重点論点① ② － 通達＋RAの位置づけ／社内基準の版</li>
+            <li>重点論点③〜⑤ － 評価範囲・頭部接触・運転中以外の措置</li>
+            <li>指摘事項サマリと次のアクション</li>
+          </ol>
+          <p class="slnote">表とテキストはすべて編集可能な PowerPoint オブジェクトで作成しています。プレビュー画面で各ページを確認できます。</p>
+        </section>
+
+        <section class="blk" data-dur="3.4" data-label="PPTXをダウンロード" data-panel="files">
+          <div class="dlcard">
+            <div class="dlico"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h5"/><path d="M9 13h3a1.6 1.6 0 0 1 0 3.2H9z"/><path d="M9 13v5.5"/></svg></div>
+            <div class="dlmeta">
+              <div class="dlname">MC-3組立セル_安全設計_適合性確認.pptx</div>
+              <div class="dlsub">プレゼンテーション ・ 7 スライド ・ 1.2 MB</div>
+            </div>
+            <span class="dlbtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg>ダウンロード</span>
+          </div>
+        </section>
+
+        <div data-dur="6.5" data-label="スライドのプレビュー" data-panel="slides" data-pscroll="1"></div>
+
+        <div data-dur="4" data-label="関連ファイル" data-panel="files" data-scroll="#answerWrap"></div>
+
+        </div><!-- /.anscol -->
+
+        <aside class="rfcol" id="rfCol">
+          <div class="rfhead">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-7.5L10.6 4.6A2 2 0 0 0 9.2 4H4a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1z"/></svg>
+            <b>関連ファイル</b><span>回答候補のファイル一覧 ・ 14 件</span>
+          </div>
+          <div class="rfitem cur"><span class="rfck on"></span><div class="rftxt"><div class="rfname">労働安全衛生規則 第150条の4（運転中の危険の防止）<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">法令原文DB</span>　運転中の産業用ロボットに接触して危険が生ずるおそれのあるときは、さく又は囲いを設ける等の措置を講じなければならない。</div></div></div>
+          <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">労働安全衛生規則 第150条の3／第150条の5、第36条第31号<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">法令原文DB</span>　教示等・検査等の作業時の措置、産業用ロボットの定義および特別教育の対象業務。</div></div></div>
+          <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">平成25年12月24日付 基発1224第2号<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">法令原文DB</span>　リスクアセスメントに基づく措置により危険のおそれがなくなったと評価できるときは第150条の4に該当しない。</div></div></div>
+          <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">平成25年12月24日付 基安安発1224第1号（留意事項）<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">法令原文DB</span>　リスクアセスメント運用時の留意事項。記録の作成・保存に関する考え方。</div></div></div>
+          <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">ISO 10218-1:2025 ／ ISO 10218-2:2025<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">規格原文DB</span>　2025年2月改訂。ISO/TS 15066 の内容を統合。クラス分類（Class I／II）とサイバーセキュリティ要件を追加。</div></div></div>
+          <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">ISO 12100 ／ ISO 13849-1:2023 ／ ISO 13855<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">規格原文DB</span>　リスクアセスメント手順、安全関連制御システムのPL、保護装置の最小距離算出。</div></div></div>
+          <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">ロボット設備安全設計基準 STD-SAF-2019-004<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">社内標準DB</span>　参照規格が ISO 10218-1/-2:2011 および ISO/TS 15066:2016 のまま。クラス分類に対応項目なし。</div></div></div>
+          <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">協働運転セル リスクアセスメント実施要領 STD-SAF-2021-011<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">社内標準DB</span>　評価手順と記録様式。記録の保管期間・承認フローを規定。</div></div></div>
+          <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">MC-2 セル DR2 議事録 DR-MC2-2023-04<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">DR記録DB</span>　ハンド爪の切削エッジが鋭利で接触時に切創のおそれ。DR差し戻し。</div></div></div>
+          <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">MC-2 セル 不適合報告 NCR-2024-0137<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">不適合報告DB</span>　搬送中ワークの角部が作業者前腕に接触。量産後の不適合として起票。</div></div></div>
+          <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">旧A棟セル DR3 議事録 DR-A3-2022-09<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">DR記録DB</span>　座位・かがみ姿勢の作業者について頭部高さと可動範囲の関係を指摘。</div></div></div>
+          <div class="rfitem"><span class="rfck"></span><div class="rftxt"><div class="rfname">ISO/TS 15066:2016（協働ロボット 技術仕様書）<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">規格原文DB</span>　2025年版 ISO 10218 に統合済み。単独の適合根拠としては採用せず参考扱い。</div></div></div>
+          <div class="rfitem"><span class="rfck"></span><div class="rftxt"><div class="rfname">機械規則 (EU) 2023/1230<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">規格原文DB</span>　2027年1月20日全面適用。EU輸出時にサイバーセキュリティ要件が加わる。今回は参考。</div></div></div>
+          <div class="rfitem"><span class="rfck"></span><div class="rftxt"><div class="rfname">MC-1 セル 設備仕様書 SPEC-MC1-2021-02<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">社内標準DB</span>　安全柵ありの設計。柵レス前提の本件とは条件が異なるため採用せず。</div></div></div>
+        </aside>
+        </div>
+
+      </div><!-- /#log -->
+
+      <div class="spot" id="spot" aria-hidden="true"><div class="spot-bg"></div><div class="spot-in" id="spotIn"></div></div>
+
+      <aside class="preview" id="pvPanel" aria-hidden="true">
+        <div class="pvhead">
+          <div class="dlico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h5"/><path d="M9 13h3a1.6 1.6 0 0 1 0 3.2H9z"/><path d="M9 13v5.5"/></svg></div>
+          <div class="pvtitle">
+            <b>MC-3組立セル_安全設計_適合性確認.pptx</b>
+            <span>PPTX ・ 7 スライド</span>
+          </div>
+          <span class="pvicon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg></span>
+          <span class="pvicon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></span>
+        </div>
+        <div class="pvbody" id="pvBody">
+
+          <div class="sl cover">
+            <div class="bar"></div>
+            <h5>MC-3 組立セル<br>安全設計 適合性確認</h5>
+            <p>国内法令（労働安全衛生規則・通達）と国際規格（ISO 10218 ほか）による照合</p>
+            <p>2026-09 ／ エージェント検索による自動作成</p>
+            <span class="pg">Page 1 / 7</span>
+          </div>
+
+          <div class="sl">
+            <h5>結論サマリ</h5>
             <ul>
-              <li>柵レスの成否は、<b>「危険がなくなったと評価できる」ことを事業者が示せるか</b>にかかっています。</li>
-              <li>本セルのロボットは各軸 80 W 超であり第150条の4の対象です。<b>「協働ロボットだから対象外」ではありません。</b></li>
-              <li><span class="key">要点</span>適合の実体はリスクアセスメントの記録そのものです。設計仕様書ではなく、記録が残るかどうかが問われます。</li>
+              <li><b>安全柵なしの運用は法令上成立し得る</b>。ただし根拠は規格適合ではなく「通達＋リスクアセスメントの記録」</li>
+              <li>現設計に対し <b>不適合 2件・要確認 4件</b>を検出</li>
+              <li>最も重い指摘は、適合根拠の社内基準が <b>旧版規格を参照</b>していること</li>
             </ul>
+            <span class="pg">Page 2 / 7</span>
           </div>
-          <div class="doc">
-            <h4>② 適合根拠としている社内基準が旧版を参照している　<span class="jd ng">不適合</span></h4>
-            <p>STD-SAF-2019-004 は ISO 10218-1/-2:2011 と ISO/TS 15066:2016 を引用していますが、2025年2月に ISO 10218-1:2025／-2:2025 が発行され、PLを要求する機能、ロボットクラスの分類、サイバーセキュリティ要件が追加、協働アプリケーションの安全要求事項（ISO/TS 15066）が本文・附属書に統合されました。</p>
+
+          <div class="sl">
+            <h5>1. 参照した根拠文書</h5>
+            <table>
+              <tbody><tr><th>層</th><th>文書</th><th>位置づけ</th></tr>
+              <tr><td>法令</td><td>安衛則 第150条の4 ほか</td><td>柵の要否</td></tr>
+              <tr><td>通達</td><td>基発1224第2号</td><td>柵レスの根拠</td></tr>
+              <tr><td>規格</td><td>ISO 10218-1/-2:2025</td><td>2025年2月改訂</td></tr>
+              <tr><td>規格</td><td>ISO 12100／13849-1／13855</td><td>RA・PL・距離</td></tr>
+              <tr><td>社内</td><td>STD-SAF-2019-004 ほか5件</td><td>旧版参照（要改訂）</td></tr>
+            </tbody></table>
+            <span class="pg">Page 3 / 7</span>
+          </div>
+
+          <div class="sl">
+            <h5>2. 適合性の判定</h5>
+            <table>
+              <tbody><tr><th>#</th><th>確認項目</th><th>判定</th></tr>
+              <tr><td>1</td><td>安全柵なし運用の法的成立性</td><td>条件付き適合</td></tr>
+              <tr><td>2</td><td>リスクアセスメントの実施と記録</td><td>要確認</td></tr>
+              <tr><td>3</td><td>接触評価の対象範囲</td><td>不適合</td></tr>
+              <tr><td>4</td><td>参照規格の版</td><td>不適合</td></tr>
+              <tr><td>5</td><td>頭部・顔面への接触可能性</td><td>要確認</td></tr>
+              <tr><td>6</td><td>安全機能のPL／カテゴリ</td><td>要確認</td></tr>
+              <tr><td>7</td><td>教示・保全時の措置と特別教育</td><td>要確認</td></tr>
+            </tbody></table>
+            <span class="pg">Page 4 / 7</span>
+          </div>
+
+          <div class="sl">
+            <h5>3. 重点論点 ①②</h5>
+            <div class="two">
+              <div><span class="chip">① 柵レスの根拠</span><p>規格適合ではなく通達＋RA。80W超でも対象外にはならない。実体はRAの記録。</p></div>
+              <div><span class="chip">② 社内基準の版</span><p>2011/2016年版を参照。Class I/II・用語変更に未対応。2025年版で直接評価する。</p></div>
+            </div>
+            <span class="pg">Page 5 / 7</span>
+          </div>
+
+          <div class="sl">
+            <h5>3. 重点論点 ③〜⑤</h5>
+            <div class="two">
+              <div><span class="chip">③ 評価範囲</span><p>本体のみ評価。ハンド・ワーク・治具の指摘が過去11件。</p></div>
+              <div><span class="chip">④ 頭部・顔面</span><p>限界値は適用不可。かがみ姿勢の頭部高さが未評価。</p></div>
+              <div><span class="chip">⑤ 運転中以外</span><p>教示・保全の措置と特別教育は別途成立。</p></div>
+            </div>
+            <span class="pg">Page 6 / 7</span>
+          </div>
+
+          <div class="sl">
+            <h5>4. 指摘事項サマリ／5. 次のアクション</h5>
             <ul>
-              <li>ロボットの最大能力に基づく<b>クラス分類（Class I／Class II）</b>が新設され、協働モードと組み合わせて安全要件が再整理。社内基準の分類体系には対応項目がありません。</li>
-              <li>「ロボットシステム」から<b>「ロボットアプリケーション」</b>へ用語が変更され、ワーク・タスク・プログラム・付帯機械まで対象範囲に含まれます（論点③に直結）。</li>
-              <li><span class="key">要点</span>社内基準の改訂を待たず、本件は2025年版を直接参照して評価すべきです。基準そのものの改訂起票も必要です。</li>
+              <li>不適合2件：接触評価の範囲／社内基準の参照版</li>
+              <li>要確認4件：RA記録・かがみ姿勢・PL妥当性・教示保全</li>
+              <li>DR2 前に接触力の実測計画を立てる／3Dで干渉再検証</li>
+              <li>STD-SAF-2019-004 の改訂を安全統括部門へ起票</li>
             </ul>
+            <span class="pg">Page 7 / 7</span>
           </div>
-          <div class="doc">
-            <h4>③ 接触評価の対象がロボット本体に限定されている　<span class="jd ng">不適合</span></h4>
-            <p>設計仕様書の接触力評価はロボットアーム各リンクのみを対象としています。しかし過去のDR記録・不適合報告では、ツール・ワーク側に起因する指摘が 11件と多数を占めます。</p>
-            <ul>
-              <li><code>DR-MC2-2023-04</code>：ハンド爪の切削エッジが鋭利で、接触時に切創のおそれ → DR差し戻し。</li>
-              <li><code>NCR-2024-0137</code>：搬送中ワークの角部が作業者前腕に接触 → 量産後の不適合。</li>
-              <li>生体力学的限界値は<b>鈍的な接触形状を前提</b>としており、鋭利な形状や特異点近傍での接触は力の制限では担保できません。</li>
-              <li><span class="key">要点</span>評価対象を<b>ロボットアプリケーション全体（ハンド・ワーク・治具を含む）</b>へ広げる必要があります。自社で最も繰り返されている失敗パターンでもあります。</li>
-            </ul>
-          </div>
+
         </div>
-      </section>
-
-      <!-- 章3b -->
-      <section class="blk" data-dur="2.6" data-label="3. 重点論点 ④⑤" data-ans="1" data-panel="files">
-        <div class="docs">
-          <div class="doc">
-            <h4>④ 頭部・顔面への接触可能性が未評価　<span class="jd ck">要確認</span></h4>
-            <p>生体力学的限界値は部位ごとに定められ、接触時間 0.5 秒を境に過渡的接触と準静的接触を区分します。一方で<b>頭部と顔面は「適用不可」</b>とされており、頭部への衝突は避けなければなりません。</p>
-            <ul>
-              <li>レイアウト図ではロボット可動範囲の上端が床面から 1,450 mm。立位作業者の頭部には届きませんが、<code>DR-A3-2022-09</code> では<b>座位・かがみ姿勢</b>の作業者について同種の指摘が出ています。</li>
-              <li>本セルは部品箱の段取替えでかがみ動作が発生する設計です。<b>この姿勢での頭部高さが評価されていません。</b></li>
-              <li>しきい値は ISO 15066-1（生体力学的しきい値）として新規格の検討も進行中で、数値の根拠文書が移る可能性があります。<b>社内基準に数値を直接転記する運用はリスク</b>です。</li>
-              <li><span class="key">要点</span>力の制限で守れない部位が存在します。ここは<b>レイアウトと姿勢の設計で回避</b>するしかありません。</li>
-            </ul>
-          </div>
-          <div class="doc">
-            <h4>⑤ 運転中以外の作業への措置　<span class="jd ck">要確認</span></h4>
-            <p>本調査の主対象である第150条の4は自動運転中の規定です。教示等のために運転する場合、および運転中に検査等を行う場合は、第150条の3および第150条の5により別途必要な措置を講ずべきこととされています。</p>
-            <ul>
-              <li>柵レスであっても、教示・保全時の措置（運転停止、起動スイッチの施錠・表示等）と、規則第36条第31号に基づく<b>特別教育</b>の要件は別途成立します。</li>
-              <li><span class="cau">留意</span>段取替え頻度が高い設計のため、<b>運用設計と教育計画を設備設計と同時に確定</b>しておくべきです。</li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <!-- 章4 -->
-      <section class="blk" data-dur="2.2" data-label="4. 指摘事項サマリ" data-ans="1" data-panel="files">
-        <h3 class="sec">4. 指摘事項サマリ</h3>
-        <div class="tblwrap">
-          <table>
-            <thead><tr><th>区分</th><th>内容</th><th>対応の主体</th></tr></thead>
-            <tbody>
-              <tr><td><span class="jd ng">不適合</span></td><td>接触評価の対象がロボット本体のみ。ハンド・ワーク・治具が未評価</td><td>設計（本人）</td></tr>
-              <tr><td><span class="jd ng">不適合</span></td><td>適合根拠の社内基準 STD-SAF-2019-004 が 2011／2016年版参照のまま</td><td>安全統括部門（基準改訂）</td></tr>
-              <tr><td><span class="jd ck">要確認</span></td><td>リスクアセスメント記録の様式・保管が要領どおりか</td><td>設計＋安全管理者</td></tr>
-              <tr><td><span class="jd ck">要確認</span></td><td>かがみ姿勢時の頭部高さと可動範囲の関係</td><td>設計（本人）</td></tr>
-              <tr><td><span class="jd ck">要確認</span></td><td>安全機能のPL／カテゴリが ISO 13849-1:2023 で妥当か</td><td>制御設計</td></tr>
-              <tr><td><span class="jd ck">要確認</span></td><td>教示・保全時の措置と特別教育の計画</td><td>生産技術＋製造部門</td></tr>
-              <tr><td><span class="jd ok">参考</span></td><td>EU向け輸出の可能性がある場合、機械規則 (EU) 2023/1230（2027年1月20日全面適用）でサイバーセキュリティ要件が加わる</td><td>輸出管理＋設計</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- 章5 -->
-      <section class="blk" data-dur="1.7" data-label="5. 次のアクション候補" data-ans="1" data-panel="files">
-        <h3 class="sec">5. 次のアクション候補</h3>
-        <ul class="acts">
-          <li>ハンド爪形状とワーク角部を含めた接触力の実測計画を、DR2 の前に立てる</li>
-          <li>かがみ姿勢を含む作業者姿勢ごとに、可動範囲との干渉を3Dで再検証する</li>
-          <li>STD-SAF-2019-004 の改訂を安全統括部門へ起票する（本件だけの問題ではないため）</li>
-          <li>リスクアセスメント記録を STD-SAF-2021-011 の様式で整備し、DR2 の提出物に加える</li>
-        </ul>
-        <p class="ask"><b>さらに確認しますか？</b>　「EU輸出を前提に再確認する」「ISO 13849-1 のPL算出を詳しく見る」「過去の不適合報告の全件を見る」などをご指示ください。最終的な適合判断は事業者・安全管理者・認証機関が行うものです。</p>
-      </section>
-      </div><!-- /#answerWrap -->
-
-      <!-- 10 回答の先頭に戻って関連ファイルを表示 -->
-      <div data-dur="6" data-label="関連ファイル" data-panel="files" data-scroll="#answerWrap"></div>
-
-      <!-- 11 5. 次のアクション候補まで一気にスクロール -->
-      <div data-dur="2.4" data-label="回答の読み返し" data-panel="files" data-scrollrun="1"></div>
-
-      <!-- 12 拡大表示を閉じたあとの間 -->
-      <div data-dur="1.5" data-label="PPTXを作成" data-panel="files"></div>
-
-      <!-- 11 スライドの説明 -->
-      <section class="blk" data-dur="4.4" data-label="スライドの説明" data-panel="files">
-        <p class="sldesc">確認結果を <b>7 枚のスライド</b> にまとめました。1 枚目を表紙、2 枚目に結論サマリを置き、3 枚目以降で本文と同じ順に展開しています。</p>
-        <ol class="sllist">
-          <li>表紙 － 対象設備・確認の観点・作成日</li>
-          <li>結論サマリ － 柵レスの成立条件と、不適合2件・要確認4件</li>
-          <li>参照した根拠文書 － 法令4・規格2・社内5</li>
-          <li>適合性の判定 － 7項目の判定と根拠</li>
-          <li>重点論点① ② － 通達＋RAの位置づけ／社内基準の版</li>
-          <li>重点論点③〜⑤ － 評価範囲・頭部接触・運転中以外の措置</li>
-          <li>指摘事項サマリと次のアクション</li>
-        </ol>
-        <p class="slnote">表とテキストはすべて編集可能な PowerPoint オブジェクトで作成しています。プレビュー画面で各ページを確認できます。</p>
-      </section>
-
-      <!-- 12 ダウンロード -->
-      <section class="blk" data-dur="3.4" data-label="PPTXをダウンロード" data-panel="files">
-        <div class="dlcard">
-          <div class="dlico"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h5"/><path d="M9 13h3a1.6 1.6 0 0 1 0 3.2H9z"/><path d="M9 13v5.5"/></svg></div>
-          <div class="dlmeta">
-            <div class="dlname">MC-3組立セル_安全設計_適合性確認.pptx</div>
-            <div class="dlsub">プレゼンテーション ・ 7 スライド ・ 1.2 MB</div>
-          </div>
-          <span class="dlbtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg>ダウンロード</span>
-        </div>
-      </section>
-
-      <!-- 13 右側プレビューパネル -->
-      <div data-dur="6" data-label="スライドのプレビュー" data-panel="slides" data-pscroll="1"></div>
-
-      <!-- 14 プレビューを閉じて関連ファイルに戻る -->
-      <div data-dur="4" data-label="関連ファイル" data-panel="files" data-scroll="#answerWrap"></div>
-
-      </div><!-- /.anscol -->
-
-      <aside class="rfcol" id="rfCol">
-        <div class="rfhead">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-7.5L10.6 4.6A2 2 0 0 0 9.2 4H4a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1z"/></svg>
-          <b>関連ファイル</b><span>回答候補のファイル一覧 ・ 14 件</span>
-        </div>
-        <div class="rfitem cur"><span class="rfck on"></span><div class="rftxt"><div class="rfname">労働安全衛生規則 第150条の4（運転中の危険の防止）<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">法令原文DB</span>　運転中の産業用ロボットに接触して危険が生ずるおそれのあるときは、さく又は囲いを設ける等の措置を講じなければならない。</div></div></div>
-        <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">労働安全衛生規則 第150条の3／第150条の5、第36条第31号<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">法令原文DB</span>　教示等・検査等の作業時の措置、産業用ロボットの定義および特別教育の対象業務。</div></div></div>
-        <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">平成25年12月24日付 基発1224第2号<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">法令原文DB</span>　リスクアセスメントに基づく措置により危険のおそれがなくなったと評価できるときは第150条の4に該当しない。</div></div></div>
-        <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">平成25年12月24日付 基安安発1224第1号（留意事項）<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">法令原文DB</span>　リスクアセスメント運用時の留意事項。記録の作成・保存に関する考え方。</div></div></div>
-        <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">ISO 10218-1:2025 ／ ISO 10218-2:2025<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">規格原文DB</span>　2025年2月改訂。ISO/TS 15066 の内容を統合。クラス分類（Class I／II）とサイバーセキュリティ要件を追加。</div></div></div>
-        <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">ISO 12100 ／ ISO 13849-1:2023 ／ ISO 13855<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">規格原文DB</span>　リスクアセスメント手順、安全関連制御システムのPL、保護装置の最小距離算出。</div></div></div>
-        <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">ロボット設備安全設計基準 STD-SAF-2019-004<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">社内標準DB</span>　参照規格が ISO 10218-1/-2:2011 および ISO/TS 15066:2016 のまま。クラス分類に対応項目なし。</div></div></div>
-        <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">協働運転セル リスクアセスメント実施要領 STD-SAF-2021-011<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">社内標準DB</span>　評価手順と記録様式。記録の保管期間・承認フローを規定。</div></div></div>
-        <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">MC-2 セル DR2 議事録 DR-MC2-2023-04<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">DR記録DB</span>　ハンド爪の切削エッジが鋭利で接触時に切創のおそれ。DR差し戻し。</div></div></div>
-        <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">MC-2 セル 不適合報告 NCR-2024-0137<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">不適合報告DB</span>　搬送中ワークの角部が作業者前腕に接触。量産後の不適合として起票。</div></div></div>
-        <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">旧A棟セル DR3 議事録 DR-A3-2022-09<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">DR記録DB</span>　座位・かがみ姿勢の作業者について頭部高さと可動範囲の関係を指摘。</div></div></div>
-        <div class="rfitem"><span class="rfck"></span><div class="rftxt"><div class="rfname">ISO/TS 15066:2016（協働ロボット 技術仕様書）<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">規格原文DB</span>　2025年版 ISO 10218 に統合済み。単独の適合根拠としては採用せず参考扱い。</div></div></div>
-        <div class="rfitem"><span class="rfck"></span><div class="rftxt"><div class="rfname">機械規則 (EU) 2023/1230<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">規格原文DB</span>　2027年1月20日全面適用。EU輸出時にサイバーセキュリティ要件が加わる。今回は参考。</div></div></div>
-        <div class="rfitem"><span class="rfck"></span><div class="rftxt"><div class="rfname">MC-1 セル 設備仕様書 SPEC-MC1-2021-02<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">社内標準DB</span>　安全柵ありの設計。柵レス前提の本件とは条件が異なるため採用せず。</div></div></div>
       </aside>
-      </div><!-- /.ansgrid -->
-
-    </div><!-- /.log -->
-
-    <div class="spot" id="spot" aria-hidden="true"><div class="spot-bg"></div><div class="spot-in" id="spotIn"></div></div>
-
-
-    <aside class="preview" id="pvPanel" aria-hidden="true">
-      <div class="pvhead">
-        <div class="dlico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h5"/><path d="M9 13h3a1.6 1.6 0 0 1 0 3.2H9z"/><path d="M9 13v5.5"/></svg></div>
-        <div class="pvtitle">
-          <b>MC-3組立セル_安全設計_適合性確認.pptx</b>
-          <span>PPTX ・ 7 スライド</span>
-        </div>
-        <span class="pvicon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg></span>
-        <span class="pvicon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></span>
-      </div>
-      <div class="pvbody" id="pvBody">
-        <div class="sl cover">
-          <div class="bar"></div>
-          <h5>MC-3 組立セル<br>安全設計 適合性確認</h5>
-          <p>国内法令（労働安全衛生規則・通達）と国際規格（ISO 10218 ほか）による照合</p>
-          <p>2026-09 ／ エージェント検索による自動作成</p>
-          <span class="pg">Page 1 / 7</span>
-        </div>
-
-        <div class="sl">
-          <h5>結論サマリ</h5>
-          <ul>
-            <li><b>安全柵なしの運用は法令上成立し得る</b>。ただし根拠は規格適合ではなく「通達＋リスクアセスメントの記録」</li>
-            <li>現設計に対し <b>不適合 2件・要確認 4件</b>を検出</li>
-            <li>最も重い指摘は、適合根拠の社内基準が <b>旧版規格を参照</b>していること</li>
-          </ul>
-          <span class="pg">Page 2 / 7</span>
-        </div>
-
-        <div class="sl">
-          <h5>1. 参照した根拠文書</h5>
-          <table>
-            <tr><th>層</th><th>文書</th><th>位置づけ</th></tr>
-            <tr><td>法令</td><td>安衛則 第150条の4 ほか</td><td>柵の要否</td></tr>
-            <tr><td>通達</td><td>基発1224第2号</td><td>柵レスの根拠</td></tr>
-            <tr><td>規格</td><td>ISO 10218-1/-2:2025</td><td>2025年2月改訂</td></tr>
-            <tr><td>規格</td><td>ISO 12100／13849-1／13855</td><td>RA・PL・距離</td></tr>
-            <tr><td>社内</td><td>STD-SAF-2019-004 ほか5件</td><td>旧版参照（要改訂）</td></tr>
-          </table>
-          <span class="pg">Page 3 / 7</span>
-        </div>
-
-        <div class="sl">
-          <h5>2. 適合性の判定</h5>
-          <table>
-            <tr><th>#</th><th>確認項目</th><th>判定</th></tr>
-            <tr><td>1</td><td>安全柵なし運用の法的成立性</td><td>条件付き適合</td></tr>
-            <tr><td>2</td><td>リスクアセスメントの実施と記録</td><td>要確認</td></tr>
-            <tr><td>3</td><td>接触評価の対象範囲</td><td>不適合</td></tr>
-            <tr><td>4</td><td>参照規格の版</td><td>不適合</td></tr>
-            <tr><td>5</td><td>頭部・顔面への接触可能性</td><td>要確認</td></tr>
-            <tr><td>6</td><td>安全機能のPL／カテゴリ</td><td>要確認</td></tr>
-            <tr><td>7</td><td>教示・保全時の措置と特別教育</td><td>要確認</td></tr>
-          </table>
-          <span class="pg">Page 4 / 7</span>
-        </div>
-
-        <div class="sl">
-          <h5>3. 重点論点 ①②</h5>
-          <div class="two">
-            <div><span class="chip">① 柵レスの根拠</span><p>規格適合ではなく通達＋RA。80W超でも対象外にはならない。実体はRAの記録。</p></div>
-            <div><span class="chip">② 社内基準の版</span><p>2011/2016年版を参照。Class I/II・用語変更に未対応。2025年版で直接評価する。</p></div>
-          </div>
-          <span class="pg">Page 5 / 7</span>
-        </div>
-
-        <div class="sl">
-          <h5>3. 重点論点 ③〜⑤</h5>
-          <div class="two">
-            <div><span class="chip">③ 評価範囲</span><p>本体のみ評価。ハンド・ワーク・治具の指摘が過去11件。</p></div>
-            <div><span class="chip">④ 頭部・顔面</span><p>限界値は適用不可。かがみ姿勢の頭部高さが未評価。</p></div>
-            <div><span class="chip">⑤ 運転中以外</span><p>教示・保全の措置と特別教育は別途成立。</p></div>
-          </div>
-          <span class="pg">Page 6 / 7</span>
-        </div>
-
-        <div class="sl">
-          <h5>4. 指摘事項サマリ／5. 次のアクション</h5>
-          <ul>
-            <li>不適合2件：接触評価の範囲／社内基準の参照版</li>
-            <li>要確認4件：RA記録・かがみ姿勢・PL妥当性・教示保全</li>
-            <li>DR2 前に接触力の実測計画を立てる／3Dで干渉再検証</li>
-            <li>STD-SAF-2019-004 の改訂を安全統括部門へ起票</li>
-          </ul>
-          <span class="pg">Page 7 / 7</span>
-        </div>
-
-      </div>
-    </aside>
-   </div><!-- /.viewport -->
+    </div><!-- /#vp -->
 
     <div class="player">
       <button class="pbtn" id="pp" type="button" aria-label="再生"></button>
@@ -792,7 +827,12 @@ td .lay{font-weight:700;color:var(--muted);font-size:11.5px;white-space:nowrap;}
         <div class="rail"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
       </div>
       <div class="meta">
-        <span class="chap" id="chap">プロンプト</span>
+        <div class="spd" id="spd">
+          <button type="button" data-r="1" class="on">×1</button>
+          <button type="button" data-r="1.5">×1.5</button>
+          <button type="button" data-r="2">×2</button>
+        </div>
+        <span class="chap" id="chap"></span>
         <span class="time"><span id="cur">0:00</span> / <span id="tot">0:00</span></span>
         <button class="pbtn ghost" id="rst" type="button" aria-label="最初から再生">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
@@ -803,10 +843,19 @@ td .lay{font-weight:700;color:var(--muted);font-size:11.5px;white-space:nowrap;}
 
   <p class="foot">※ 法令・通達・規格名は実在します。社内文書ID（STD-／DR-／NCR-／SPEC-）・セル名・寸法・件数はすべて架空のデモ用データです。</p>
 </div>
-
 <script>
 (function () {
   var log = document.getElementById('log');
+  var askEl = document.getElementById('ask'), askT = document.getElementById('askT');
+  var spdBox = document.getElementById('spd');
+  var promptP = document.querySelector('.bottombar .prompt p');
+  var QUERY_TEXT = promptP ? promptP.textContent : '';
+  var PLACEHOLDER = '質問を入力してください';
+  if (askT) askT.textContent = QUERY_TEXT;
+  var rstatus = document.querySelector('.rstatus');
+  /* 再生速度（×1／×1.5／×2）— アニメーションは --k で追従 */
+  var rate = 1;
+  function ms(v) { return Math.max(1, Math.round(v / rate)); }
   var pp = document.getElementById('pp'), rst = document.getElementById('rst');
   var track = document.getElementById('track'), fill = document.getElementById('fill');
   var knob = document.getElementById('knob'), ticks = document.getElementById('ticks');
@@ -828,7 +877,7 @@ td .lay{font-weight:700;color:var(--muted);font-size:11.5px;white-space:nowrap;}
         '</div></div>';
     },
     r: function () {
-      return '<div class="big"><div class="big-cap">社内リポジトリを横断検索</div><div class="big-repos two">' +
+      return '<div class="big"><div class="big-cap">社内リポジトリを横断検索</div><div class="big-repos">' +
         '<span class="big-repo"><span class="dot"></span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M5 7h14"/><path d="M5 7 2 15a3.5 3.5 0 0 0 6 0z"/><path d="M19 7l-3 8a3.5 3.5 0 0 0 6 0z"/><path d="M8 21h8"/></svg>法令・通達 原文DB</span>' +
         '<span class="big-repo"><span class="dot"></span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H19v18H6.5A2.5 2.5 0 0 0 4 22z"/><path d="M8 7h7M8 11h7"/></svg>産業規格 原文DB</span>' +
         '<span class="big-repo"><span class="dot"></span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-7.5L10.6 4.6A2 2 0 0 0 9.2 4H4a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1z"/></svg>社内設計基準・標準</span>' +
@@ -836,10 +885,10 @@ td .lay{font-weight:700;color:var(--muted);font-size:11.5px;white-space:nowrap;}
         '</div></div>';
     }
   };
-  var SPOT_TARGET = { q: '.prompt', r: '.card' };
+  var SPOT_TARGET = { q: '.prompt', r: '.rstatus' };
 
   /* ---- タイムライン ---- */
-  var nodes = [].slice.call(log.querySelectorAll('[data-dur]'));
+  var nodes = [].slice.call(document.getElementById('vp').querySelectorAll('[data-dur]'));
   var steps = nodes.map(function (el) {
     return {
       el: el, dur: parseFloat(el.dataset.dur || '4') * 1000, label: el.dataset.label || '',
@@ -850,6 +899,11 @@ td .lay{font-weight:700;color:var(--muted);font-size:11.5px;white-space:nowrap;}
   });
   var starts = [], total = 0;
   steps.forEach(function (s) { starts.push(total); total += s.dur; });
+  /* 質問バブルが出る時刻（= プロンプトの拡大表示が閉じ、検索を押した約1秒後） */
+  var askAt = Infinity;
+  steps.forEach(function (s, i) {
+    if (s.spot === 'q') askAt = starts[i] + SPOT_IN + s.hold + SPOT_OUT + 450 + 1000;
+  });
 
   function fmt(ms) { var s = Math.max(0, Math.round(ms / 1000)); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
   totEl.textContent = fmt(total);
@@ -866,7 +920,7 @@ td .lay{font-weight:700;color:var(--muted);font-size:11.5px;white-space:nowrap;}
   var ansEnd = ansIdx.length ? starts[ansIdx[ansIdx.length - 1]] + steps[ansIdx[ansIdx.length - 1]].dur : Infinity;
   var ANS_IN = 300, ANS_OUT = 600;
 
-  /* 右サイドパネル（関連ファイル／スライドプレビュー） */
+  /* 右サイドパネル（関連ファイル／報告書プレビュー） */
   var vp = document.getElementById('vp');
   var ansGrid = document.getElementById('ansGrid');
   var pvPanel = document.getElementById('pvPanel');
@@ -902,9 +956,11 @@ td .lay{font-weight:700;color:var(--muted);font-size:11.5px;white-space:nowrap;}
   var FINAL_DELAY = 1500;
   var finalIdx = -1;
   steps.forEach(function (s, i) { if (s.final) finalIdx = i; });
+  function setRepoDone(on) { if (rstatus) rstatus.classList.toggle('done', on); }
   function driveFinal() {
     if (finalIdx < 0) return;
     var on = t >= starts[finalIdx] + FINAL_DELAY;
+    setRepoDone(on);
     if (on === flow.classList.contains('final')) return;
     flow.classList.toggle('final', on);
     if (on) { flow.classList.remove('emph'); void flow.offsetWidth; flow.classList.add('emph'); }
@@ -924,7 +980,7 @@ td .lay{font-weight:700;color:var(--muted);font-size:11.5px;white-space:nowrap;}
     else {
       spotIn.style.transition = 'none'; spotIn.style.opacity = '0';
       void spotIn.offsetWidth;
-      spotIn.style.transition = 'opacity ' + ANS_IN + 'ms ease';
+      spotIn.style.transition = 'opacity ' + ms(ANS_IN) + 'ms ease';
       spot.classList.add('on'); spotIn.style.opacity = '1';
     }
     ansOpen = true;
@@ -933,9 +989,9 @@ td .lay{font-weight:700;color:var(--muted);font-size:11.5px;white-space:nowrap;}
     if (!ansOpen) return;
     if (instant) { spot.classList.remove('ans'); spotIn.className = 'spot-in'; clearSpot(); }
     else {
-      spotIn.style.transition = 'opacity ' + ANS_OUT + 'ms ease';
+      spotIn.style.transition = 'opacity ' + ms(ANS_OUT) + 'ms ease';
       spotIn.style.opacity = '0'; spot.classList.remove('on');
-      setTimeout(function () { if (!ansOpen) { spot.classList.remove('ans'); spotIn.className = 'spot-in'; clearSpot(); } }, ANS_OUT);
+      setTimeout(function () { if (!ansOpen) { spot.classList.remove('ans'); spotIn.className = 'spot-in'; clearSpot(); } }, ms(ANS_OUT));
     }
     ansOpen = false; ansRoll = null;
   }
@@ -974,6 +1030,17 @@ td .lay{font-weight:700;color:var(--muted);font-size:11.5px;white-space:nowrap;}
     spotIn.innerHTML = '';
   }
 
+  /* 質問バブルの表示／入力バーの文字 */
+  var ASK_AFTER_TAP = 1000;                 /* 「検索」を押してからバブルが出るまで */
+  function setAsk(on) {
+    if (!askEl) return;
+    askEl.classList.toggle('on', on);
+    if (promptP) {
+      promptP.textContent = on ? PLACEHOLDER : QUERY_TEXT;
+      promptP.classList.toggle('ph', on);
+    }
+  }
+
   function applyPhase(s, phase) {
     var sec = s.el;
     if (phase === 'in') {
@@ -983,7 +1050,7 @@ td .lay{font-weight:700;color:var(--muted);font-size:11.5px;white-space:nowrap;}
       spotIn.style.transition = 'none';
       spotIn.style.transform = 'scale(.94)'; spotIn.style.opacity = '0';
       void spotIn.offsetWidth;
-      spotIn.style.transition = 'transform ' + SPOT_IN + 'ms cubic-bezier(.2,.85,.3,1), opacity ' + SPOT_IN + 'ms ease';
+      spotIn.style.transition = 'transform ' + ms(SPOT_IN) + 'ms cubic-bezier(.2,.85,.3,1), opacity ' + ms(SPOT_IN) + 'ms ease';
       spotIn.style.transform = 'scale(1)'; spotIn.style.opacity = '1';
       if (s.spot === 'q') setTimeout(function () {
         var bq = document.getElementById('bigq'); if (bq) bq.classList.add('focus');
@@ -991,6 +1058,8 @@ td .lay{font-weight:700;color:var(--muted);font-size:11.5px;white-space:nowrap;}
     } else if (phase === 'tap') {
       var btn = document.getElementById('promptSend');
       if (btn) { btn.classList.add('pressed'); setTimeout(function () { btn.classList.remove('pressed'); }, 300); }
+    } else if (phase === 'ask') {
+      setAsk(true);
     } else if (phase === 'out') {
       var tgt = sec.querySelector(SPOT_TARGET[s.spot]);
       var r1 = spotIn.getBoundingClientRect(), r2 = tgt.getBoundingClientRect();
@@ -998,7 +1067,7 @@ td .lay{font-weight:700;color:var(--muted);font-size:11.5px;white-space:nowrap;}
       if (!isFinite(sc) || sc <= 0) sc = .25;
       var dx = (r2.left + r2.width / 2) - (r1.left + r1.width / 2);
       var dy = (r2.top + r2.height / 2) - (r1.top + r1.height / 2);
-      spotIn.style.transition = 'transform ' + SPOT_OUT + 'ms cubic-bezier(.4,0,.2,1), opacity ' + SPOT_OUT + 'ms ease';
+      spotIn.style.transition = 'transform ' + ms(SPOT_OUT) + 'ms cubic-bezier(.4,0,.2,1), opacity ' + ms(SPOT_OUT) + 'ms ease';
       spotIn.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(' + sc + ')';
       spotIn.style.opacity = '0';
       spot.classList.remove('on');
@@ -1032,10 +1101,15 @@ td .lay{font-weight:700;color:var(--muted);font-size:11.5px;white-space:nowrap;}
     flow.classList.remove('emph');
     flow.classList.remove('pulse');
     fcnum.textContent = maxPulse || 1;
+    setAsk(t >= askAt);
+    setRepoDone(finalIdx >= 0 && t >= starts[finalIdx] + FINAL_DELAY);
     shown = i;
     runIdx = -1;
     drivePanels(true);
-    placeScroll(i, false);
+    placeScroll(i, false, true);
+    if (steps[i].el.dataset.scrollrun) {      /* 途中から再生してもスクロールが続くように */
+      runIdx = i; runFrom = answerTop(); runTo = maxScroll();
+    }
   }
 
   /* 指定ステップの表示位置（通常／回答の先頭へ／末尾まで一気に） */
@@ -1047,10 +1121,26 @@ td .lay{font-weight:700;color:var(--muted);font-size:11.5px;white-space:nowrap;}
     if (smooth) log.scrollTo({ top: v, behavior: 'smooth' });
     else { log.style.scrollBehavior = 'auto'; log.scrollTop = v; log.style.scrollBehavior = ''; }
   }
-  function placeScroll(i, smooth) {
+  /* スクロールの始点（回答の先頭） */
+  function answerTop() {
+    var aw = log.querySelector('#answerWrap');
+    return aw ? Math.max(0, contentTop(aw) - 12) : 0;
+  }
+  function runSpan(i) { return steps[i].dur * (steps[i].el.dataset.slow ? .85 : .5); }
+  function placeScroll(i, smooth, seek) {
     var el = steps[i].el, d = el.dataset;
+    if (!log.contains(el)) return;            /* 入力バー内のステップはスクロール対象外 */
+    if (d.noscroll) {                         /* 回答本文：再生中は先頭のまま動かさない */
+      if (seek) setScroll(answerTop(), false);   /* 頭出し時は回答の先頭に合わせる */
+      return;
+    }
     if (d.scroll) { var tg = log.querySelector(d.scroll); if (tg) { setScroll(contentTop(tg) - 12, smooth); return; } }
-    if (d.scrollrun) { setScroll(maxScroll(), smooth); return; }
+    if (d.scrollrun) {                        /* 読み進め中：途中でも位置を合わせる */
+      var p = Math.min(1, Math.max(0, (t - starts[i]) / runSpan(i)));
+      var from = answerTop(), to = maxScroll();
+      setScroll(from + (to - from) * p, smooth);
+      return;
+    }
     ensureVisible(el, smooth);
   }
 
@@ -1060,16 +1150,19 @@ td .lay{font-weight:700;color:var(--muted);font-size:11.5px;white-space:nowrap;}
     if (s.pulse) pulseFlow(s.pulse);
     if (s.spot) { s.phase = null; }
     shown = i; userScrolled = false;
-    if (s.el.dataset.scrollrun) { runIdx = i; runFrom = log.scrollTop; runTo = maxScroll(); }
+    if (s.el.dataset.scrollrun) { runIdx = i; runFrom = log.scrollTop; runTo = maxScroll(); userScrolled = false; }
     else placeScroll(i, true);
   }
 
-  /* 「5. 次のアクション候補」まで一気に送る */
+  /* 末尾まで一気に送る */
   function driveRun(i) {
     if (i !== runIdx) return false;
-    var p = (t - starts[i]) / (steps[i].dur * .5);
+    var slow = !!steps[i].el.dataset.slow;
+    var p = (t - starts[i]) / runSpan(i);
     p = Math.min(1, Math.max(0, p));
-    var e = p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+    /* ゆっくり読ませる区間は、ほぼ等速（前後だけなめらかに） */
+    var e = slow ? (p < .12 ? (p * p) / .0288 * .12 : (p > .88 ? 1 - Math.pow(1 - p, 2) / .0288 * .12 : p))
+                 : (p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2);
     scrollLock = Date.now() + 400;
     log.style.scrollBehavior = 'auto';
     log.scrollTop = runFrom + (Math.min(runTo, maxScroll()) - runFrom) * e;
@@ -1082,7 +1175,6 @@ td .lay{font-weight:700;color:var(--muted);font-size:11.5px;white-space:nowrap;}
     return el.getBoundingClientRect().top - log.getBoundingClientRect().top + log.scrollTop;
   }
 
-  /* 新しく表示した要素が必ず画面に入るようにスクロールする */
   /* 下からせり上がるプレビュー（スマホ）に隠れる高さ */
   function bottomInset() {
     if (!vp || !vp.classList.contains('split') || !pvPanel) return 0;
@@ -1091,6 +1183,7 @@ td .lay{font-weight:700;color:var(--muted);font-size:11.5px;white-space:nowrap;}
     return Math.max(0, Math.min(lr.height - 80, lr.bottom - r.top));
   }
 
+  /* 新しく表示した要素が必ず画面に入るようにスクロールする */
   function ensureVisible(el, smooth) {
     if (!el) return;
     var top = contentTop(el);
@@ -1110,6 +1203,7 @@ td .lay{font-weight:700;color:var(--muted);font-size:11.5px;white-space:nowrap;}
   function autoScroll(i) {
     if (userScrolled || Date.now() < scrollLock) return;
     var el = steps[i].el;
+    if (!log.contains(el) || el.dataset.noscroll || el.dataset.scroll) return;
     var top = contentTop(el) - 10;
     var over = el.offsetHeight - (log.clientHeight - bottomInset()) + 24;
     if (over <= 0) return;
@@ -1131,14 +1225,15 @@ td .lay{font-weight:700;color:var(--muted);font-size:11.5px;white-space:nowrap;}
     else if (p < SPOT_IN + s.hold) ph = 'hold';
     else if (p < settled) ph = 'out';
     else if (s.spot === 'q' && p < settled + 450) ph = 'done';
-    else if (s.spot === 'q') ph = 'tap';
+    else if (s.spot === 'q' && p < settled + 450 + ASK_AFTER_TAP) ph = 'tap';
+    else if (s.spot === 'q') ph = 'ask';
     else ph = 'done';
     if (ph !== s.phase) { applyPhase(s, ph); s.phase = ph; }
   }
 
   function tick(now) {
     if (!playing) return;
-    var dt = now - last; last = now;
+    var dt = (now - last) * rate; last = now;
     t = Math.min(total, t + dt);
     var i = indexAt(t);
     drivePanels(false);
@@ -1167,6 +1262,18 @@ td .lay{font-weight:700;color:var(--muted);font-size:11.5px;white-space:nowrap;}
   function seekTo(ratio) {
     t = Math.min(total, Math.max(0, ratio * total));
     syncTo(indexAt(t)); driveAns(true); paint();
+  }
+
+  /* 再生速度 */
+  if (spdBox) {
+    var spdBtns = [].slice.call(spdBox.querySelectorAll('button'));
+    spdBtns.forEach(function (b) {
+      b.addEventListener('click', function () {
+        rate = parseFloat(b.getAttribute('data-r')) || 1;
+        document.documentElement.style.setProperty('--k', (1 / rate).toFixed(3));
+        spdBtns.forEach(function (o) { o.classList.toggle('on', o === b); });
+      });
+    });
   }
 
   pp.addEventListener('click', toggle);
@@ -1201,5 +1308,6 @@ td .lay{font-weight:700;color:var(--muted);font-size:11.5px;white-space:nowrap;}
   document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden' && playing) pause(); });
 })();
 </script>
+
 </body>
 </html>
