@@ -20,5 +20,5 @@ https://masaoy0730.github.io/ai-seminar-demo/neuron-agent-demo-nearmiss.html
 https://masaoy0730.github.io/ai-seminar-demo/euron-agent-demo-safety.html
 
 図面検索
-https://masaoy0730.github.io/ai-seminar-demo/euron-agent-demo-cad.html
+https://masaoy0730.github.io/ai-seminar-demo/neuron-agent-demo-cad.html
 
