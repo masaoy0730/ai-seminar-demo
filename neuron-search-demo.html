@@ -47,6 +47,9 @@
   -webkit-font-smoothing:antialiased;
 }
 .nrn-demo *{box-sizing:border-box;}
+/* ブラウザの表示領域に収める（拡大はしない） */
+.nrn-fit{position:relative;width:100%;}
+.nrn-demo{transform-origin:top center;}
 .nrn-num{font-family:'Roboto Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums;}
 
 /* ---------- ヘッダー（青地の上） ---------- */
@@ -84,7 +87,7 @@
 .nrn-demo.is-typing .nrn-caret{animation:nrn-blink 1s steps(1,end) infinite;}
 @keyframes nrn-blink{0%,49%{opacity:1}50%,100%{opacity:0}}
 .nrn-btn{
-  flex:none;border:0;border-radius:9px;background:var(--nrn-accent);color:#fff;
+  flex:none;border:0;border-radius:9px;background:var(--nrn-blue);color:#fff;
   font-family:inherit;font-size:14px;font-weight:700;letter-spacing:.1em;
   padding:9px 20px;cursor:default;transition:transform .18s ease, filter .18s ease;
 }
@@ -103,12 +106,13 @@
 .nrn-ask.on .nrn-ask-t{opacity:1;transform:none;}
 
 /* ---------- 再生コントロール ---------- */
-.nrn-ctl{display:flex;align-items:center;gap:13px;flex-wrap:wrap;
-  background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.30);border-radius:13px;padding:8px 13px;}
-.nrn-scn{display:flex;align-items:center;gap:7px;flex:none;}
+.nrn-ctl{display:flex;align-items:center;gap:11px;flex-wrap:nowrap;
+  background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.30);border-radius:13px;padding:8px 12px;}
+.nrn-scn{display:flex;align-items:center;gap:6px;flex:0 1 auto;min-width:0;}
 .nrn-scn-label{font-size:11px;font-weight:700;letter-spacing:.08em;color:rgba(255,255,255,.92);white-space:nowrap;}
 .nrn-scn-b{border:1px solid rgba(255,255,255,.38);background:rgba(255,255,255,.12);color:#fff;
-  font-family:inherit;font-size:12px;font-weight:400;border-radius:999px;padding:5px 12px;cursor:pointer;white-space:nowrap;
+  font-family:inherit;font-size:12px;font-weight:400;border-radius:999px;padding:5px 11px;cursor:pointer;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;
   transition:background-color .2s ease, color .2s ease, border-color .2s ease;}
 .nrn-scn-b:hover{background:rgba(255,255,255,.26);}
 .nrn-scn-b.on{background:#fff;color:var(--nrn-navy);font-weight:700;border-color:#fff;}
@@ -120,7 +124,7 @@
   transition:filter .15s ease, transform .15s ease;}
 .nrn-play:hover{filter:brightness(1.07);}
 .nrn-play:active{transform:scale(.94);}
-.nrn-track{position:relative;flex:1;min-width:120px;height:22px;cursor:pointer;touch-action:none;}
+.nrn-track{position:relative;flex:1 1 auto;min-width:70px;height:22px;cursor:pointer;touch-action:none;}
 .nrn-rail{position:absolute;left:0;right:0;top:9px;height:4px;border-radius:2px;background:rgba(255,255,255,.35);}
 .nrn-fill{position:absolute;left:0;top:9px;height:4px;border-radius:2px;background:var(--nrn-accent);width:0;}
 .nrn-knob{position:absolute;top:5px;left:0;width:12px;height:12px;margin-left:-6px;border-radius:50%;
@@ -284,8 +288,8 @@
 .nrn-demo.is-fading .nrn-body{opacity:0;}
 
 /* ---------- 大きい画面（MacBook Air 13.6インチなど）で少し拡大 ---------- */
-@media (min-width:1080px) and (min-height:720px){
-  .nrn-demo{max-width:960px;padding:18px 22px 14px;border-radius:22px;}
+@media (min-width:1080px){
+  .nrn-demo{max-width:1120px;padding:18px 24px 14px;border-radius:22px;}
   .nrn-head{margin-bottom:11px;}
   .nrn-title{font-size:19.5px;}
   .nrn-sublabel{font-size:15px;}
@@ -339,7 +343,7 @@
   .nrn-qwrap{font-size:14px;}
   .nrn-btn{padding:8px 14px;font-size:13px;letter-spacing:.06em;}
   .nrn-ask-t{font-size:15.5px;padding:10px 14px;max-width:88%;}
-  .nrn-ctl{gap:9px;padding:8px 10px;}
+  .nrn-ctl{gap:9px;padding:8px 10px;flex-wrap:wrap;}
   .nrn-scn{flex:1 1 100%;flex-wrap:wrap;}
   .nrn-scn-b{font-size:11px;padding:4px 10px;}
   .nrn-ctl-div{display:none;}
@@ -762,8 +766,8 @@
     var t = target.getBoundingClientRect();
     var sc = Math.min(t.width / r.width, t.height / r.height);
     if (!isFinite(sc) || sc <= 0) sc = 0.2;
-    var dx = (t.left + t.width / 2) - (r.left + r.width / 2);
-    var dy = (t.top + t.height / 2) - (r.top + r.height / 2);
+    var dx = ((t.left + t.width / 2) - (r.left + r.width / 2)) / SCALE;
+    var dy = ((t.top + t.height / 2) - (r.top + r.height / 2)) / SCALE;
 
     spotIn.style.transition = 'transform ' + ms(SPEED.spotOut) + 'ms cubic-bezier(.4,0,.2,1), opacity ' + ms(SPEED.spotOut) + 'ms ease';
     spotIn.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(' + sc + ')';
@@ -1072,17 +1076,48 @@
   }
   requestAnimationFrame(paint);
 
+  /* =========================================================
+     表示領域に合わせて全体を縮小（はみ出すときだけ。拡大はしない）
+     data-nrn-fit="off" を付けると無効化できます
+     ========================================================= */
+  var SCALE = 1;
+  var holder = null;
+  if (root.getAttribute('data-nrn-fit') !== 'off') {
+    holder = document.createElement('div');
+    holder.className = 'nrn-fit';
+    root.parentNode.insertBefore(holder, root);
+    holder.appendChild(root);
+  }
+  function fit() {
+    if (!holder) return;
+    root.style.transform = 'none';
+    holder.style.height = '';
+    var natW = root.offsetWidth, natH = root.offsetHeight;
+    if (!natW || !natH) return;
+    var vh = window.innerHeight || 800;
+    var top = holder.getBoundingClientRect().top;
+    if (!(top > 0) || top > vh * 0.6) top = 20;      /* 画面外にあるときは上余白20pxと仮定 */
+    var availW = holder.clientWidth || natW;
+    var availH = Math.max(320, vh - top - 14);
+    var sc = Math.min(1, availW / natW, availH / natH);
+    if (sc > 0.995) { SCALE = 1; return; }
+    SCALE = sc;
+    root.style.transform = 'scale(' + sc + ')';
+    holder.style.height = Math.round(natH * sc) + 'px';
+  }
+
   /* 初期化：高さを確定させてから再生 */
   measure();
+  fit();
   if (document.fonts && document.fonts.ready) {
     document.fonts.ready.then(function () {
-      stop(); measure(); idx = 0; if (visible) start();
+      stop(); measure(); fit(); idx = 0; if (visible) start();
     });
   }
   var rz;
   window.addEventListener('resize', function () {
     clearTimeout(rz);
-    rz = setTimeout(function () { stop(); measure(); idx = 0; start(); }, 250);
+    rz = setTimeout(function () { stop(); measure(); fit(); idx = 0; start(); }, 250);
   });
 
   /* 画面に入っている間だけ再生（スクロールアウト・タブ非表示中は停止） */
