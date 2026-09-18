@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Neuron ES エージェント検索イメージデモ</title>
-<style>html,body{margin:0;background:#F2F7FA;} body{padding:40px 16px;}</style>
+<style>html,body{margin:0;background:#F2F7FA;} body{padding:16px;}</style>
 </head>
 <body>
 
@@ -70,7 +70,7 @@
 /* ---------- 検索バー ---------- */
 .nrn-bar{
   display:flex;align-items:center;gap:12px;
-  background:var(--nrn-card);border:1px solid var(--nrn-mono);border-radius:var(--nrn-radius);
+  background:var(--nrn-card);border:1px solid #E1E7EC;border-radius:var(--nrn-radius);
   padding:10px 10px 10px 14px;margin-top:13px;
   box-shadow:0 1px 2px rgba(20,60,90,.06);
   transition:border-color .3s ease, box-shadow .3s ease;
@@ -79,7 +79,7 @@
 .nrn-bar-ico{flex:none;color:var(--nrn-blue);display:flex;}
 .nrn-qwrap{flex:1;min-width:0;display:flex;align-items:center;font-size:15.5px;line-height:1.55;color:var(--nrn-ink);font-weight:400;}
 .nrn-q{white-space:pre-wrap;word-break:break-word;}
-.nrn-q:empty::before{content:'社内のことを、話しことばで聞いてください';color:#9AA3AE;font-weight:400;}
+.nrn-q:empty::before{content:'質問を入力してください';color:#9AA3AE;font-weight:400;}
 .nrn-caret{display:inline-block;width:2px;height:1.15em;background:var(--nrn-accent);margin-left:2px;vertical-align:-.18em;opacity:0;}
 .nrn-demo.is-typing .nrn-caret{animation:nrn-blink 1s steps(1,end) infinite;}
 @keyframes nrn-blink{0%,49%{opacity:1}50%,100%{opacity:0}}
@@ -90,20 +90,53 @@
 }
 .nrn-demo.is-press .nrn-btn{transform:scale(.94);filter:brightness(.92);}
 
-/* ---------- 横断するリポジトリ ---------- */
-.nrn-sources{display:flex;flex-wrap:wrap;gap:6px;margin:11px 0 0;}
-.nrn-chip{
-  display:inline-flex;align-items:center;gap:6px;
-  font-size:12px;font-weight:400;color:var(--nrn-ink-sub);
-  background:var(--nrn-card);border:1px solid var(--nrn-mono);
-  border-radius:999px;padding:5px 11px 5px 9px;
-  transition:color .3s ease, border-color .3s ease, background-color .3s ease;
+/* ---------- 質問バブル（右揃え） ---------- */
+.nrn-ask{display:flex;justify-content:flex-end;margin-bottom:12px;}
+.nrn-ask-t{
+  max-width:76%;background:#E3F3FB;border:1px solid #B7DFF2;
+  border-radius:16px 16px 5px 16px;padding:12px 18px;
+  font-size:17.5px;font-weight:700;line-height:1.55;color:var(--nrn-navy);
+  box-shadow:0 3px 10px rgba(0,120,180,.10);
+  opacity:0;transform:translateY(6px);
+  transition:opacity .38s ease, transform .38s cubic-bezier(.2,.8,.3,1);
 }
-.nrn-chip svg{flex:none;color:#A9B3BC;transition:color .3s ease;}
-.nrn-chip.on{color:var(--nrn-blue-ink);font-weight:700;border-color:#8ED4F0;background:var(--nrn-pale);}
-.nrn-chip.on svg{color:var(--nrn-blue);}
-.nrn-chip .nrn-dot{width:6px;height:6px;border-radius:50%;background:var(--nrn-mono);flex:none;transition:background-color .3s ease, box-shadow .3s ease;}
-.nrn-chip.on .nrn-dot{background:var(--nrn-blue);box-shadow:0 0 0 3px rgba(0,158,222,.20);}
+.nrn-ask.on .nrn-ask-t{opacity:1;transform:none;}
+
+/* ---------- 再生コントロール ---------- */
+.nrn-ctl{display:flex;align-items:center;gap:13px;flex-wrap:wrap;
+  background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.30);border-radius:13px;padding:8px 13px;}
+.nrn-scn{display:flex;align-items:center;gap:7px;flex:none;}
+.nrn-scn-label{font-size:11px;font-weight:700;letter-spacing:.08em;color:rgba(255,255,255,.92);white-space:nowrap;}
+.nrn-scn-b{border:1px solid rgba(255,255,255,.38);background:rgba(255,255,255,.12);color:#fff;
+  font-family:inherit;font-size:12px;font-weight:400;border-radius:999px;padding:5px 12px;cursor:pointer;white-space:nowrap;
+  transition:background-color .2s ease, color .2s ease, border-color .2s ease;}
+.nrn-scn-b:hover{background:rgba(255,255,255,.26);}
+.nrn-scn-b.on{background:#fff;color:var(--nrn-navy);font-weight:700;border-color:#fff;}
+.nrn-scn-b .n{font-family:'Roboto Mono',ui-monospace,monospace;font-size:11px;opacity:.7;margin-right:5px;}
+.nrn-scn-b.on .n{opacity:.55;}
+.nrn-ctl-div{flex:none;width:1px;height:20px;background:rgba(255,255,255,.3);}
+.nrn-play{flex:none;width:32px;height:32px;border-radius:50%;border:0;cursor:pointer;
+  background:var(--nrn-accent);color:#fff;display:flex;align-items:center;justify-content:center;
+  transition:filter .15s ease, transform .15s ease;}
+.nrn-play:hover{filter:brightness(1.07);}
+.nrn-play:active{transform:scale(.94);}
+.nrn-track{position:relative;flex:1;min-width:120px;height:22px;cursor:pointer;touch-action:none;}
+.nrn-rail{position:absolute;left:0;right:0;top:9px;height:4px;border-radius:2px;background:rgba(255,255,255,.35);}
+.nrn-fill{position:absolute;left:0;top:9px;height:4px;border-radius:2px;background:var(--nrn-accent);width:0;}
+.nrn-knob{position:absolute;top:5px;left:0;width:12px;height:12px;margin-left:-6px;border-radius:50%;
+  background:#fff;box-shadow:0 1px 3px rgba(0,40,70,.35);}
+.nrn-time{flex:none;font-size:11.5px;color:rgba(255,255,255,.95);
+  font-family:'Roboto Mono',ui-monospace,monospace;white-space:nowrap;}
+.nrn-sp{flex:none;display:flex;gap:5px;}
+.nrn-sp button{border:1px solid rgba(255,255,255,.45);background:transparent;color:#fff;font-family:inherit;
+  font-size:11.5px;font-weight:700;border-radius:999px;padding:4px 10px;cursor:pointer;
+  transition:background-color .2s ease, color .2s ease;}
+.nrn-sp button:hover{background:rgba(255,255,255,.2);}
+.nrn-sp button.on{background:#fff;color:var(--nrn-navy);border-color:#fff;}
+.nrn-demo :focus-visible{outline:2px solid #fff;outline-offset:2px;}
+/* 一時停止中・頭出し中 */
+.nrn-demo.is-paused *{animation-play-state:paused !important;}
+.nrn-demo.is-seeking *{transition:none !important;animation:none !important;}
 
 /* ---------- ステータス行 ---------- */
 .nrn-status{position:relative;height:22px;margin:0 0 0;font-size:12.5px;color:var(--nrn-ink-sub);}
@@ -184,10 +217,7 @@
 .nrn-cite b{font-weight:700;color:var(--nrn-navy);font-size:11px;}
 
 /* ---------- 再生中のシナリオ表示（青地の上） ---------- */
-.nrn-foot{display:flex;align-items:center;gap:8px;margin-top:9px;padding:0 4px;}
-.nrn-foot-label{font-size:11px;font-weight:700;letter-spacing:.08em;color:rgba(255,255,255,.92);margin-right:2px;}
-.nrn-pip{width:22px;height:4px;border-radius:2px;background:rgba(255,255,255,.42);transition:background-color .4s ease;}
-.nrn-pip.on{background:var(--nrn-accent);}
+.nrn-foot{position:relative;z-index:6;margin-top:8px;padding:0 2px;}
 
 /* ---------- 拡大表示（スポットライト） ---------- */
 .nrn-spot{position:absolute;inset:0;z-index:5;pointer-events:none;display:flex;align-items:center;justify-content:center;padding:24px;}
@@ -253,6 +283,51 @@
 .nrn-body{transition:opacity .45s ease;}
 .nrn-demo.is-fading .nrn-body{opacity:0;}
 
+/* ---------- 大きい画面（MacBook Air 13.6インチなど）で少し拡大 ---------- */
+@media (min-width:1080px) and (min-height:720px){
+  .nrn-demo{max-width:960px;padding:18px 22px 14px;border-radius:22px;}
+  .nrn-head{margin-bottom:11px;}
+  .nrn-title{font-size:19.5px;}
+  .nrn-sublabel{font-size:15px;}
+  .nrn-badge{font-size:12px;padding:4px 12px;}
+  .nrn-window{padding:16px;border-radius:18px;}
+  .nrn-status{height:25px;font-size:14px;}
+  .nrn-status .nrn-row1{height:25px;}
+  .nrn-status .nrn-row2{line-height:25px;}
+  .nrn-spin{width:13px;height:13px;}
+  .nrn-stage{margin-top:8px;}
+  .nrn-answer{padding:14px 21px 13px;}
+  .nrn-avatar{width:46px;height:50px;}
+  .nrn-ans-label{font-size:13.5px;}
+  .nrn-ans-head{margin-bottom:11px;}
+  .nrn-ansbody{min-height:84px;}
+  .nrn-ans-text{font-size:18px;line-height:1.9;}
+  .nrn-item{gap:13px;margin-bottom:11px;}
+  .nrn-k{font-size:13.5px;padding:5px 12px;}
+  .nrn-list li{grid-template-columns:27px 1fr;gap:12px;margin-bottom:7px;}
+  .nrn-list li::before{font-size:13px;line-height:23px;}
+  .nrn-cites{gap:8px;margin-top:12px;padding-top:10px;}
+  .nrn-cite{font-size:13px;padding:7px 12px;}
+  .nrn-cite b{font-size:12.5px;}
+  .nrn-bar{padding:12px 12px 12px 17px;margin-top:13px;gap:14px;}
+  .nrn-bar-ico svg{width:22px;height:22px;}
+  .nrn-qwrap{font-size:17.5px;}
+  .nrn-btn{font-size:15.5px;padding:11px 24px;}
+  .nrn-ask-t{font-size:19px;padding:13px 19px;}
+  .nrn-ask{margin-bottom:10px;}
+  .nrn-foot{margin-top:8px;}
+  .nrn-scn-b{font-size:12.5px;padding:6px 13px;}
+  .nrn-scn-label{font-size:11.5px;}
+  .nrn-time{font-size:12px;}
+  .nrn-big{padding:26px 30px;border-radius:18px;}
+  .nrn-big-query{font-size:28px;gap:16px;}
+  .nrn-big-ico{width:34px;height:34px;}
+  .nrn-big-cap{font-size:23px;margin-bottom:20px;padding-left:14px;}
+  .nrn-big-chip{font-size:17px;}
+  .nrn-big-body{font-size:19.5px;}
+  .nrn-big-body .nrn-k{font-size:15.5px;}
+}
+
 /* ---------- レスポンシブ ---------- */
 @media (max-width:640px){
   .nrn-demo{padding:13px 12px 11px;border-radius:16px;}
@@ -263,10 +338,14 @@
   .nrn-bar{padding:11px;gap:9px;}
   .nrn-qwrap{font-size:14px;}
   .nrn-btn{padding:8px 14px;font-size:13px;letter-spacing:.06em;}
-  .nrn-sources{gap:6px;}
-  .nrn-chip{font-size:10.5px;padding:4px 8px 4px 7px;gap:5px;}
-  .nrn-chip svg{width:11px;height:11px;}
-  .nrn-sources{gap:5px;margin-top:10px;}
+  .nrn-ask-t{font-size:15.5px;padding:10px 14px;max-width:88%;}
+  .nrn-ctl{gap:9px;padding:8px 10px;}
+  .nrn-scn{flex:1 1 100%;flex-wrap:wrap;}
+  .nrn-scn-b{font-size:11px;padding:4px 10px;}
+  .nrn-ctl-div{display:none;}
+  .nrn-track{flex:1 1 60%;min-width:90px;}
+  .nrn-time{font-size:11px;}
+  .nrn-sp button{font-size:11px;padding:3px 8px;}
   .nrn-status{height:44px;}
   .nrn-status .nrn-row2{line-height:1.7;}
   .nrn-answer{padding:13px 13px 11px;}
@@ -304,7 +383,7 @@
 }
 </style>
 
-<div class="nrn-demo" id="nrnDemo" role="img"
+<div class="nrn-demo" id="nrnDemo" role="group"
      aria-label="Neuron Enterprise Search のデモ。自然文で質問すると、ファイルサーバー・文書管理システム・SharePoint Online・Box・Google Drive・Dropbox・イントラネット・desknet's NEO・Garoon・Slack・Jira・データベースを横断検索し、AIエージェントが出典付きで回答します。3つの質問例を順番に再生します。">
   <div class="nrn-body">
 
@@ -315,6 +394,8 @@
     </div>
 
     <div class="nrn-window">
+
+      <div class="nrn-ask"><span class="nrn-ask-t"></span></div>
 
       <div class="nrn-status">
         <span class="nrn-row nrn-row1"><i class="nrn-spin"></i>12の社内リポジトリを横断検索しています…</span>
@@ -343,50 +424,25 @@
         <button class="nrn-btn" type="button" tabindex="-1" aria-hidden="true">検索</button>
       </div>
 
-      <div class="nrn-sources">
-        <span class="nrn-chip"><i class="nrn-dot"></i>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>
-          ファイルサーバー</span>
-        <span class="nrn-chip"><i class="nrn-dot"></i>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h8l4 4v11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M16 3v5h4M3 7v13a1 1 0 0 0 1 1h12"/></svg>
-          文書管理システム</span>
-        <span class="nrn-chip"><i class="nrn-dot"></i>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>
-          SharePoint Online</span>
-        <span class="nrn-chip"><i class="nrn-dot"></i>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>
-          Box</span>
-        <span class="nrn-chip"><i class="nrn-dot"></i>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 19a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 17.7 9.5 3.75 3.75 0 0 1 17.5 19z"/></svg>
-          Google Drive</span>
-        <span class="nrn-chip"><i class="nrn-dot"></i>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 17.7 8.5 3.75 3.75 0 0 1 17.5 18"/><path d="M12 12v8m0 0-2.5-2.5M12 20l2.5-2.5"/></svg>
-          Dropbox</span>
-        <span class="nrn-chip"><i class="nrn-dot"></i>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 3 2.5 15 0 18M12 3c-2.5 3-2.5 15 0 18"/></svg>
-          イントラネット</span>
-        <span class="nrn-chip"><i class="nrn-dot"></i>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M8 14h3M8 17.5h6"/></svg>
-          desknet's NEO</span>
-        <span class="nrn-chip"><i class="nrn-dot"></i>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M9 15l2 2 4-4"/></svg>
-          Garoon</span>
-        <span class="nrn-chip"><i class="nrn-dot"></i>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 13a2 2 0 0 1-2 2H8l-4 3V6a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2z"/><path d="M18 8h1a2 2 0 0 1 2 2v10l-3-2.5h-5a2 2 0 0 1-2-2"/></svg>
-          Slack</span>
-        <span class="nrn-chip"><i class="nrn-dot"></i>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h5M8 16h3"/></svg>
-          Jira</span>
-        <span class="nrn-chip"><i class="nrn-dot"></i>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>
-          データベース</span>
-      </div>
 
     </div>
 
     <div class="nrn-foot">
-      <span class="nrn-foot-label">質問例</span>
-      <i class="nrn-pip"></i><i class="nrn-pip"></i><i class="nrn-pip"></i>
+      <div class="nrn-ctl">
+        <div class="nrn-scn" id="nrnScn"><span class="nrn-scn-label">質問例</span></div>
+        <span class="nrn-ctl-div" aria-hidden="true"></span>
+        <button class="nrn-play" id="nrnPlay" type="button" aria-label="一時停止"></button>
+        <div class="nrn-track" id="nrnTrack" role="slider" tabindex="0"
+             aria-label="再生位置" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div class="nrn-rail"></div><div class="nrn-fill" id="nrnFill"></div><div class="nrn-knob" id="nrnKnob"></div>
+        </div>
+        <span class="nrn-time" id="nrnTime">0:00 / 0:00</span>
+        <div class="nrn-sp" id="nrnSp">
+          <button type="button" data-r="1" class="on">×1</button>
+          <button type="button" data-r="1.5">×1.5</button>
+          <button type="button" data-r="2">×2</button>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -408,6 +464,7 @@
   var PATTERNS = [
     {
       query: 'X-200ラインの異音トラブル、過去の対応事例は？',
+      label: '異音トラブル',
       hits: '18',
       cycle: 11000,           // ← 1つ目だけ尺を固定（PACE倍して使用）
       answer:
@@ -422,6 +479,7 @@
     },
     {
       query: 'ラインZ-12で異音発生、過去の類似対応事例は？',
+      label: 'ラインZ-12',
       hits: '24',
       answer:
         '<div class="nrn-item"><span class="nrn-k">原因分析</span><span class="nrn-v">' +
@@ -439,6 +497,7 @@
     },
     {
       query: 'プレテク触媒の研究報告から、有効に作用した結論の報告を一覧にして',
+      label: 'プレテク触媒',
       hits: '31',
       answer:
         '<ol class="nrn-list">' +
@@ -460,17 +519,19 @@
 
   /* ===== 速度調整（ミリ秒） ===== */
   var SPEED = {
-    startPause:   400,
+    startPause:   660,   // 再生開始からプロンプトの拡大表示まで
     spotIn:       340,   // 拡大表示があらわれる時間
     spotOut:      600,   // 定位置に縮んで戻る時間
     holdQuery:   1100,   // 質問文を大きく見せている時間
     holdRepos:   1500,   // リポジトリを大きく見せている時間（ここだけ1.5倍）
     holdAnsBase: 1200,   // 回答を大きく見せている時間（下限）
     holdAnsChar:    8,   // ＋回答1文字あたり
-    afterQuery:   350,
-    press:        300,
-    afterRepos:   450,
-    beforeAnswer: 450,
+    /* ↓ 場面が切り替わるときの「間」。×1 のとき約1秒になるよう 660×PACE(1.5) で設定 */
+    afterQuery:   660,   // 質問文を入力バーに戻してから「検索」を押すまで（約1.0秒）
+    press:        660,   // 「検索」を押してから質問バブルが出るまで（約1.0秒）
+    afterAsk:    1000,   // 質問バブルが出てからリポジトリの拡大表示まで（約1.5秒）
+    afterRepos:   660,   // リポジトリの拡大表示から処理フローまで（約1.0秒）
+    beforeAnswer:1334,   // 処理フローから回答の拡大表示まで（約2.0秒）
     citeStep:      90,
     fadeOut:      500
   };
@@ -485,7 +546,7 @@
      処理フロー（FLOW）はここでは変倍せず、常に一定の速さで再生します。 */
   var PACE = 1.5;
   ['startPause','holdQuery','holdRepos','holdAnsBase','holdAnsChar',
-   'afterQuery','press','afterRepos','beforeAnswer','citeStep'].forEach(function (k) {
+   'afterQuery','press','afterAsk','afterRepos','beforeAnswer','citeStep'].forEach(function (k) {
     SPEED[k] = Math.round(SPEED[k] * PACE);
   });
   /* 拡大表示（プロンプト／リポジトリ／回答）を消すまでの保持を一律で延長（ミリ秒） */
@@ -501,8 +562,9 @@
 
   var bar     = root.querySelector('.nrn-bar');
   var q       = root.querySelector('.nrn-q');
-  var sources = root.querySelector('.nrn-sources');
-  var chips   = [].slice.call(root.querySelectorAll('.nrn-chip'));
+  var ask     = root.querySelector('.nrn-ask');
+  var askT    = root.querySelector('.nrn-ask-t');
+  var statusEl= root.querySelector('.nrn-status');
   var row1    = root.querySelector('.nrn-row1');
   var row2    = root.querySelector('.nrn-row2');
   var hitEl   = root.querySelector('.nrn-hit.nrn-num');
@@ -512,11 +574,17 @@
   var ansBody = root.querySelector('.nrn-ansbody');
   var ansEl   = root.querySelector('.nrn-ans-text');
   var citeBox = root.querySelector('.nrn-cites');
-  var pips    = [].slice.call(root.querySelectorAll('.nrn-pip'));
   var spot    = root.querySelector('.nrn-spot');
   var spotIn  = root.querySelector('.nrn-spot-inner');
+  /* コントロール */
+  var playBtn = root.querySelector('#nrnPlay');
+  var trackEl = root.querySelector('#nrnTrack');
+  var fillEl  = root.querySelector('#nrnFill');
+  var knobEl  = root.querySelector('#nrnKnob');
+  var timeEl  = root.querySelector('#nrnTime');
+  var scnBox  = root.querySelector('#nrnScn');
+  var spBox   = root.querySelector('#nrnSp');
 
-  var REPOS = chips.map(function (c) { return c.textContent.trim(); });
   PATTERNS.forEach(function (p) {
     p.chars = p.answer.replace(/<[^>]*>/g, '').length;
   });
@@ -598,9 +666,72 @@
     root.classList.remove('is-measuring');
   }
 
-  var token = 0, timer = null, idx = 0;
+  var token = 0, idx = 0;
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  function sleep(ms) { return new Promise(function (r) { timer = setTimeout(r, ms); }); }
+
+  /* ===== 再生クロック =====
+     rate      : 再生速度（×1／×1.5／×2）
+     paused    : 一時停止中
+     seeking   : 頭出し中（内部で高速に早送りして目的の位置まで進める）
+     elapsed   : 現在のシナリオ内の経過（等倍換算のミリ秒）
+     pending   : 進行中の待ち { rest, base, total, resolve, id, t0 }                */
+  var rate = 1, paused = false, seeking = false, wantPaused = false;
+  var elapsed = 0, seekTarget = 0, pending = null;
+  var SEEK_RATE = 100;
+
+  function nowMs() { return (window.performance && performance.now) ? performance.now() : Date.now(); }
+  function curRate() { return seeking ? SEEK_RATE : rate; }
+  /* 拡大・縮小などのCSSトランジションも速度に追従させる */
+  function ms(v) { return Math.max(1, Math.round(v / curRate())); }
+
+  function armPending() {
+    if (!pending || paused) return;
+    pending.t0 = nowMs();
+    var self = pending;
+    pending.id = setTimeout(function () {
+      if (pending !== self) return;
+      pending = null;
+      elapsed = self.base + self.total;
+      afterStep();
+      self.resolve();
+    }, self.rest / curRate());
+  }
+  function disarmPending() {
+    if (!pending || pending.id == null) return;
+    clearTimeout(pending.id);
+    pending.rest = Math.max(0, pending.rest - (nowMs() - pending.t0) * curRate());
+    pending.id = null;
+  }
+  function dropPending() { disarmPending(); pending = null; }
+  function rawSleep(v) {
+    return new Promise(function (res) {
+      if (!(v > 0)) { afterStep(); return res(); }
+      pending = { rest: v, base: elapsed, total: v, resolve: res, id: null, t0: 0 };
+      armPending();
+    });
+  }
+  /* 頭出しの目的地が待ちの途中にあるときは、そこで区切って通常再生に戻す */
+  function sleep(v) {
+    if (seeking && v > 0 && seekTarget > elapsed && elapsed + v > seekTarget) {
+      var head = seekTarget - elapsed;
+      return rawSleep(head).then(function () { return rawSleep(v - head); });
+    }
+    return rawSleep(v);
+  }
+  /* 頭出しの目的地に届いたら通常再生に戻す */
+  function afterStep() {
+    if (seeking && elapsed >= seekTarget) {
+      seeking = false;
+      root.classList.remove('is-seeking');
+      if (wantPaused) setPaused(true);
+    }
+  }
+  /* 進捗表示用の現在位置 */
+  function vnow() {
+    if (!pending) return elapsed;
+    var spent = pending.id != null ? (nowMs() - pending.t0) * curRate() : 0;
+    return pending.base + Math.min(pending.total, (pending.total - pending.rest) + spent);
+  }
 
   function clearSpot() {
     spot.classList.remove('on');
@@ -621,7 +752,7 @@
     spotIn.style.transform = 'scale(.93)';
     spotIn.style.opacity = '0';
     void spotIn.offsetWidth;                       // 反映させる
-    spotIn.style.transition = 'transform ' + SPEED.spotIn + 'ms cubic-bezier(.2,.85,.3,1), opacity ' + SPEED.spotIn + 'ms ease';
+    spotIn.style.transition = 'transform ' + ms(SPEED.spotIn) + 'ms cubic-bezier(.2,.85,.3,1), opacity ' + ms(SPEED.spotIn) + 'ms ease';
     spotIn.style.transform = 'scale(1)';
     spotIn.style.opacity = '1';
 
@@ -634,7 +765,7 @@
     var dx = (t.left + t.width / 2) - (r.left + r.width / 2);
     var dy = (t.top + t.height / 2) - (r.top + r.height / 2);
 
-    spotIn.style.transition = 'transform ' + SPEED.spotOut + 'ms cubic-bezier(.4,0,.2,1), opacity ' + SPEED.spotOut + 'ms ease';
+    spotIn.style.transition = 'transform ' + ms(SPEED.spotOut) + 'ms cubic-bezier(.4,0,.2,1), opacity ' + ms(SPEED.spotOut) + 'ms ease';
     spotIn.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(' + sc + ')';
     spotIn.style.opacity = '0';
     spot.classList.remove('on');
@@ -656,7 +787,7 @@
     spotIn.style.transform = 'scale(.96)';
     spotIn.style.opacity = '0';
     void spotIn.offsetWidth;
-    spotIn.style.transition = 'transform ' + FLOW.fadeIn + 'ms cubic-bezier(.2,.85,.3,1), opacity ' + FLOW.fadeIn + 'ms ease';
+    spotIn.style.transition = 'transform ' + ms(FLOW.fadeIn) + 'ms cubic-bezier(.2,.85,.3,1), opacity ' + ms(FLOW.fadeIn) + 'ms ease';
     spotIn.style.transform = 'scale(1)';
     spotIn.style.opacity = '1';
     await sleep(FLOW.fadeIn);                      if (!alive()) return;
@@ -680,7 +811,7 @@
     path.style.strokeDasharray = len;
     path.style.strokeDashoffset = len;
     void path.getBoundingClientRect();
-    path.style.transition = 'stroke-dashoffset ' + FLOW.draw + 'ms linear';
+    path.style.transition = 'stroke-dashoffset ' + ms(FLOW.draw) + 'ms linear';
     path.style.strokeDashoffset = '0';
     await sleep(FLOW.draw);                        if (!alive()) return;
     g('.nrn-nohead').classList.add('on');
@@ -695,7 +826,7 @@
     g('.nrn-f5').classList.add('on');
     await sleep(FLOW.hold);                        if (!alive()) return;
 
-    spotIn.style.transition = 'transform ' + FLOW.fadeOut + 'ms ease, opacity ' + FLOW.fadeOut + 'ms ease';
+    spotIn.style.transition = 'transform ' + ms(FLOW.fadeOut) + 'ms ease, opacity ' + ms(FLOW.fadeOut) + 'ms ease';
     spotIn.style.transform = 'scale(.97)';
     spotIn.style.opacity = '0';
     spot.classList.remove('on');
@@ -713,16 +844,16 @@
     ansBody.style.minHeight = (p.h || 78) + 'px';
     row1.classList.remove('on');
     row2.classList.remove('on');
-    chips.forEach(function (c) { c.classList.remove('on'); });
-    pips.forEach(function (el, i) { el.classList.toggle('on', i === PATTERNS.indexOf(p)); });
+    ask.classList.remove('on');
+    askT.textContent = p.query;          /* 高さを先に確保しておく（表示は .on で） */
+    markScenario(PATTERNS.indexOf(p));
     return renderCites(p, false);
   }
 
   function finalState(p) {
     var cs = reset(p);
-    q.textContent = p.query;
-    root.classList.add('is-focus', 'is-answered');
-    chips.forEach(function (c) { c.classList.add('on'); });
+    ask.classList.add('on');
+    root.classList.add('is-answered');
     row2.classList.add('on');
     label.textContent = LABEL_DONE;
     ansEl.innerHTML = p.answer;
@@ -732,7 +863,7 @@
   async function run(my) {
     var alive = function () { return my === token; };
     var p = PATTERNS[idx];
-    var t0 = Date.now();
+    elapsed = 0;
     var cs = reset(p);
 
     await sleep(SPEED.startPause);                 if (!alive()) return;
@@ -747,13 +878,18 @@
     /* 2) 検索を実行 */
     root.classList.add('is-press', 'is-searching');
     setTimeout(function () { root.classList.remove('is-press'); }, 180);
-    row1.classList.add('on');
     await sleep(SPEED.press);                      if (!alive()) return;
 
-    /* 3) リポジトリ：大きく見せてから一覧へ */
-    await spotlight(bigRepos(), sources, SPEED.holdRepos, function () {
-      chips.forEach(function (c) { c.classList.add('on'); });
-    }, my);                                        if (!alive()) return;
+    /* 2-b) 質問文を右揃えバブルへ、入力バーは空に戻す */
+    q.textContent = '';
+    root.classList.remove('is-focus');
+    ask.classList.add('on');
+    row1.classList.add('on');
+    await sleep(SPEED.afterAsk);                   if (!alive()) return;
+
+    /* 3) リポジトリ：大きく見せてからステータス行へ */
+    await spotlight(bigRepos(), statusEl, SPEED.holdRepos, null, my);
+    if (!alive()) return;
     await sleep(SPEED.afterRepos);                 if (!alive()) return;
 
     /* 3-b) エージェントの処理フロー（約5秒） */
@@ -783,7 +919,7 @@
 
     /* 7) 保持 → フェードして次のパターンへ */
     var hold = p.cycle
-      ? p.cycle - (Date.now() - t0) - SPEED.fadeOut
+      ? p.cycle - elapsed - SPEED.fadeOut
       : HOLD_BASE + p.chars * HOLD_PER_CHAR;
     await sleep(Math.max(HOLD_MIN, hold));         if (!alive()) return;
     root.classList.add('is-fading');
@@ -794,9 +930,147 @@
 
   function start() {
     if (reduce) { finalState(PATTERNS[0]); return; }
-    token++; clearTimeout(timer); run(token);
+    if (paused) return;
+    token++; dropPending(); run(token);
   }
-  function stop() { token++; clearTimeout(timer); clearSpot(); }
+  function stop() { token++; dropPending(); clearSpot(); }
+
+  /* =========================================================
+     再生コントロール（一時停止／進捗バー／シナリオ選択／速度）
+     ========================================================= */
+  var ICON_PLAY  = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+  var ICON_PAUSE = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+
+  /* シナリオ1本の総尺（run の構成と同じ順番で足し合わせる） */
+  var FLOW_TOTAL = FLOW.fadeIn + FLOW.step * 7 + FLOW.sub + FLOW.no + FLOW.draw +
+                   FLOW.wait + FLOW.yes + FLOW.hold + FLOW.fadeOut;
+  function totalOf(p) {
+    var t = SPEED.startPause
+      + SPEED.spotIn + SPEED.holdQuery + SPEED.spotOut
+      + SPEED.afterQuery
+      + SPEED.press
+      + SPEED.afterAsk
+      + SPEED.spotIn + SPEED.holdRepos + SPEED.spotOut
+      + SPEED.afterRepos
+      + FLOW_TOTAL
+      + SPEED.beforeAnswer
+      + SPEED.spotIn + (SPEED.holdAnsBase + p.chars * SPEED.holdAnsChar) + SPEED.spotOut
+      + p.cites.length * SPEED.citeStep;
+    var hold = p.cycle ? (p.cycle - t - SPEED.fadeOut) : (HOLD_BASE + p.chars * HOLD_PER_CHAR);
+    return t + Math.max(HOLD_MIN, hold) + SPEED.fadeOut;
+  }
+
+  function fmt(v) {
+    var sec = Math.max(0, Math.round(v / 1000));
+    return Math.floor(sec / 60) + ':' + ('0' + (sec % 60)).slice(-2);
+  }
+
+  /* シナリオ選択ボタン */
+  var scnBtns = [];
+  PATTERNS.forEach(function (p, i) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'nrn-scn-b';
+    b.title = p.query;
+    b.innerHTML = '<span class="n">' + (i + 1) + '</span>' + (p.label || ('例' + (i + 1)));
+    b.addEventListener('click', function () { selectScenario(i); });
+    scnBox.appendChild(b);
+    scnBtns.push(b);
+  });
+  function markScenario(i) {
+    scnBtns.forEach(function (b, k) {
+      b.classList.toggle('on', k === i);
+      b.setAttribute('aria-pressed', k === i ? 'true' : 'false');
+    });
+  }
+  function selectScenario(i) {
+    idx = i;
+    seeking = false; root.classList.remove('is-seeking');
+    if (paused) setPaused(false);
+    token++; dropPending(); clearSpot();
+    run(token);
+  }
+
+  /* 一時停止／再生 */
+  function setPaused(v) {
+    if (paused === v) return;
+    paused = v;
+    if (v) disarmPending(); else armPending();
+    root.classList.toggle('is-paused', v);
+    playBtn.innerHTML = v ? ICON_PLAY : ICON_PAUSE;
+    playBtn.setAttribute('aria-label', v ? '再生' : '一時停止');
+  }
+  playBtn.innerHTML = ICON_PAUSE;
+  playBtn.addEventListener('click', function () { setPaused(!paused); });
+
+  /* 速度 */
+  var spBtns = [].slice.call(spBox.querySelectorAll('button'));
+  spBtns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      var v = parseFloat(b.getAttribute('data-r')) || 1;
+      disarmPending();
+      rate = v;
+      armPending();
+      spBtns.forEach(function (o) { o.classList.toggle('on', o === b); });
+    });
+  });
+
+  /* 頭出し（クリック／ドラッグ） */
+  function seekTo(ratio) {
+    var p = PATTERNS[idx];
+    seekTarget = Math.max(0, Math.min(0.995, ratio)) * totalOf(p);
+    if (!seeking) wantPaused = paused;   /* 連続シーク中は最初の状態を保つ */
+    paused = false;
+    seeking = true;
+    root.classList.add('is-seeking');
+    root.classList.remove('is-paused');
+    token++; dropPending(); clearSpot();
+    run(token);
+  }
+  function ratioFrom(e) {
+    var r = trackEl.getBoundingClientRect();
+    return Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+  }
+  var dragging = false, seekWait = 0;
+  trackEl.addEventListener('pointerdown', function (e) {
+    dragging = true;
+    if (trackEl.setPointerCapture) trackEl.setPointerCapture(e.pointerId);
+    seekTo(ratioFrom(e));
+    e.preventDefault();
+  });
+  trackEl.addEventListener('pointermove', function (e) {
+    if (!dragging) return;
+    var t = nowMs();
+    if (t - seekWait < 110) return;          /* 連続ドラッグは間引く */
+    seekWait = t;
+    seekTo(ratioFrom(e));
+  });
+  function endDrag(e) {
+    if (!dragging) return;
+    dragging = false;
+    seekTo(ratioFrom(e));
+  }
+  trackEl.addEventListener('pointerup', endDrag);
+  trackEl.addEventListener('pointercancel', function () { dragging = false; });
+  trackEl.addEventListener('keydown', function (e) {
+    var tot = totalOf(PATTERNS[idx]);
+    if (e.key === 'ArrowRight') { seekTo((vnow() + 1500) / tot); e.preventDefault(); }
+    if (e.key === 'ArrowLeft')  { seekTo((vnow() - 1500) / tot); e.preventDefault(); }
+    if (e.key === ' ' || e.key === 'Enter') { setPaused(!paused); e.preventDefault(); }
+  });
+
+  /* 進捗の描画 */
+  function paint() {
+    var tot = totalOf(PATTERNS[idx]);
+    var v = Math.min(vnow(), tot);
+    var r = tot ? (v / tot) : 0;
+    fillEl.style.width = (r * 100) + '%';
+    knobEl.style.left = (r * 100) + '%';
+    timeEl.textContent = fmt(v) + ' / ' + fmt(tot);
+    trackEl.setAttribute('aria-valuenow', Math.round(r * 100));
+    requestAnimationFrame(paint);
+  }
+  requestAnimationFrame(paint);
 
   /* 初期化：高さを確定させてから再生 */
   measure();
@@ -817,13 +1091,14 @@
     new IntersectionObserver(function (entries) {
       entries.forEach(function (e) {
         visible = e.isIntersecting;
-        if (visible && document.visibilityState !== 'hidden') start(); else stop();
+        if (visible && document.visibilityState !== 'hidden') start();
+        else if (!paused) stop();
       });
     }, { threshold: 0.2 }).observe(root);
   } else { visible = true; start(); }
 
   document.addEventListener('visibilitychange', function () {
-    if (document.visibilityState === 'hidden') stop();
+    if (document.visibilityState === 'hidden') { if (!paused) stop(); }
     else if (visible) start();
   });
 })();
