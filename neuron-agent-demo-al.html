@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>エージェント検索 自動デモ｜アルミニウム表面処理</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Roboto+Mono:wght@400;500&display=swap');
 :root{
+  --k:1;                          /* 再生速度に応じたアニメーションの倍率（1/速度） */
   --bg:#f5f6f8; --surface:#fff; --border:#e2e5ea; --border-strong:#cdd3db;
   --text:#1d2430; --muted:#697586;
   --accent:#2f6df6; --accent-dark:#2255d0; --accent-soft:#eaf1ff;
@@ -17,7 +19,7 @@
 html,body{margin:0;}
 body{
   background:var(--bg);color:var(--text);
-  font-family:system-ui,-apple-system,"Segoe UI",'Hiragino Sans','Noto Sans JP',sans-serif;
+  font-family:'BIZ UDPGothic','BIZ UDPゴシック','Noto Sans JP','Hiragino Sans',system-ui,-apple-system,sans-serif;
   font-size:14px;line-height:1.7;-webkit-font-smoothing:antialiased;
   padding:18px 16px 28px;
 }
@@ -33,16 +35,23 @@ body{
 
 /* ---------- ステージ ---------- */
 .stage{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
-.viewport{position:relative;overflow:hidden;}
-.log{height:clamp(560px, calc(100vh - 160px), 1040px);overflow-y:auto;padding:18px 20px 28px;scroll-behavior:smooth;}
+.viewport{position:relative;overflow:hidden;display:flex;flex-direction:column;
+  height:clamp(560px, calc(100vh - 160px), 1040px);}
+.log{order:1;flex:1 1 auto;min-height:0;overflow-y:auto;overflow-anchor:none;padding:18px 20px 24px;scroll-behavior:smooth;}
+/* 入力バー（画面下に固定） */
+.bottombar{order:2;flex:none;position:relative;z-index:3;border-top:1px solid var(--border);
+  background:var(--surface);padding:14px 20px 16px;}
+.bottombar .blk{display:block;margin-bottom:0;}
+.bottombar .steplabel{display:none;}
+.viewport.split .bottombar{padding-right:396px;}
 .log::-webkit-scrollbar{width:10px;}
 .log::-webkit-scrollbar-thumb{background:#d8dde4;border-radius:6px;border:3px solid var(--surface);}
 
 .blk{display:none;margin-bottom:16px;}
 .blk.show{display:block;}
-.blk.anim{animation:rise .45s cubic-bezier(.2,.8,.3,1) both;}
+.blk.anim{animation:rise calc(.45s * var(--k)) cubic-bezier(.2,.8,.3,1) both;}
 @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-.blk.pending .prompt,.blk.pending .card{opacity:0;}
+.blk.pending .prompt,.blk.pending .card,.blk.pending .rstatus{opacity:0;}
 
 .steplabel{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:3px 10px;margin-bottom:8px;}
 .card{border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;background:var(--surface);transition:opacity .35s ease;}
@@ -52,6 +61,7 @@ body{
 .prompt{display:flex;gap:12px;align-items:center;border:1px solid var(--border-strong);border-radius:var(--radius);padding:14px 16px;background:#fff;transition:opacity .35s ease;}
 .prompt .ico{flex:none;width:30px;height:30px;border-radius:8px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;}
 .prompt p{flex:1;min-width:0;margin:0;font-size:16px;font-weight:700;line-height:1.65;}
+.prompt p.ph{color:#9AA3AE;font-weight:400;}
 
 /* リポジトリ */
 .repos{display:flex;flex-wrap:wrap;gap:8px;}
@@ -59,11 +69,41 @@ body{
 .repo svg{color:var(--accent);}
 .repo .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);}
 
+/* ---------- 質問バブル（右揃え） ---------- */
+.qask{display:flex;justify-content:flex-end;margin:2px 0 14px;opacity:0;transition:opacity .38s ease;}
+.qask.on{opacity:1;}
+.qask-t{max-width:76%;background:#eaf1ff;border:1px solid #c3d8fb;border-radius:16px 16px 5px 16px;
+  padding:12px 18px;font-size:17px;font-weight:700;line-height:1.6;color:var(--text);
+  box-shadow:0 3px 10px rgba(47,109,246,.10);
+  transform:translateY(6px);transition:transform .38s cubic-bezier(.2,.8,.3,1);}
+.qask.on .qask-t{transform:none;}
+
+/* ---------- 検索対象のリポジトリ（1行表示） ---------- */
+.rstatus{display:flex;align-items:center;gap:9px;font-size:13.5px;color:var(--muted);transition:opacity .35s ease;}
+.rstatus b{color:var(--text);}
+.rstatus .sp{width:13px;height:13px;border-radius:50%;flex:none;
+  border:2px solid rgba(47,109,246,.25);border-top-color:var(--accent);animation:rspin calc(.8s * var(--k)) linear infinite;}
+@keyframes rspin{to{transform:rotate(360deg)}}
+.rstatus .ck{display:none;width:15px;height:15px;flex:none;color:var(--ok);}
+.rstatus .m2{display:none;}
+.rstatus.done .sp{display:none;}
+.rstatus.done .ck{display:flex;}
+.rstatus.done .m1{display:none;}
+.rstatus.done .m2{display:inline;}
+
+/* ---------- 再生速度 ---------- */
+.spd{display:flex;gap:5px;flex:none;}
+.spd button{border:1px solid var(--border-strong);background:var(--surface);color:var(--muted);
+  font-family:inherit;font-size:11.5px;font-weight:700;border-radius:999px;padding:4px 10px;cursor:pointer;
+  transition:background-color .15s ease,color .15s ease,border-color .15s ease;}
+.spd button:hover{background:var(--bg);color:var(--text);}
+.spd button.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+
 /* ---------- 検索プロセス（フロー＋検索カード） ---------- */
 .proc{display:grid;grid-template-columns:300px 1fr;gap:18px;align-items:start;}
 .searches > *{display:none;}
 .searches > *.show{display:block;}
-.searches > *.anim{animation:rise .35s cubic-bezier(.2,.8,.3,1) both;}
+.searches > *.anim{animation:rise calc(.35s * var(--k)) cubic-bezier(.2,.8,.3,1) both;}
 .scard{border:1px solid var(--border);border-radius:8px;padding:9px 12px;margin-bottom:7px;background:var(--surface);}
 .blkhead{display:flex;align-items:center;gap:10px;margin-bottom:5px;}
 .blkhead .t{font-size:13px;font-weight:700;}
@@ -104,20 +144,20 @@ body{
 .fcount{position:absolute;left:0;top:40px;width:52px;text-align:center;font-size:11px;font-weight:700;color:var(--accent-dark);background:var(--accent-soft);border-radius:999px;padding:2px 0;opacity:0;transition:opacity .3s ease;}
 .flow.counting .fcount{opacity:1;}
 
-.blk.anim .fb,.blk.anim .ar,.blk.anim .f4sub,.blk.anim .nolabel,.blk.anim .nohead{animation:fin .42s ease both;}
+.blk.anim .fb,.blk.anim .ar,.blk.anim .f4sub,.blk.anim .nolabel,.blk.anim .nohead{animation:fin calc(.42s * var(--k)) ease both;}
 @keyframes fin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.blk.anim .f1{animation-delay:.14s}
-.blk.anim .a1{animation-delay:.40s}
-.blk.anim .f2{animation-delay:.66s}
-.blk.anim .a2{animation-delay:.92s}
-.blk.anim .f3{animation-delay:1.18s}
-.blk.anim .a3{animation-delay:1.44s}
-.blk.anim .f4{animation-delay:1.70s}
-.blk.anim .f4sub{animation-delay:2.06s}
-.blk.anim .nolabel{animation-delay:2.40s}
-.blk.anim .nopath{animation:draw 1.05s linear 2.50s both;}
+.blk.anim .f1{animation-delay:calc(.14s * var(--k))}
+.blk.anim .a1{animation-delay:calc(.40s * var(--k))}
+.blk.anim .f2{animation-delay:calc(.66s * var(--k))}
+.blk.anim .a2{animation-delay:calc(.92s * var(--k))}
+.blk.anim .f3{animation-delay:calc(1.18s * var(--k))}
+.blk.anim .a3{animation-delay:calc(1.44s * var(--k))}
+.blk.anim .f4{animation-delay:calc(1.70s * var(--k))}
+.blk.anim .f4sub{animation-delay:calc(2.06s * var(--k))}
+.blk.anim .nolabel{animation-delay:calc(2.40s * var(--k))}
+.blk.anim .nopath{animation:draw calc(1.05s * var(--k)) linear calc(2.50s * var(--k)) both;}
 @keyframes draw{from{stroke-dashoffset:600}to{stroke-dashoffset:0}}
-.blk.anim .nohead{animation-delay:3.60s}
+.blk.anim .nohead{animation-delay:calc(3.60s * var(--k))}
 .blk.anim .f5,.blk.anim .ya,.blk.anim .yeslabel{animation:none;}
 /* YES／回答する は検索完了まで出さない */
 .flow .ya,.flow .yeslabel,.flow .f5{opacity:0 !important;}
@@ -126,12 +166,12 @@ body{
 @keyframes popin{0%{transform:scale(.86)}62%{transform:scale(1.07)}100%{transform:scale(1)}}
 @keyframes glow{0%{box-shadow:0 0 0 0 rgba(47,109,246,.55)}70%{box-shadow:0 0 0 18px rgba(47,109,246,0)}100%{box-shadow:0 0 0 0 rgba(47,109,246,0)}}
 @keyframes ydrop{0%{transform:translateY(-6px)}100%{transform:translateY(0)}}
-.flow.emph .f5{animation:popin .55s cubic-bezier(.2,1.4,.4,1) both, glow 1.5s ease-out .3s 2;}
-.flow.emph .ya{animation:ydrop .5s ease both;}
+.flow.emph .f5{animation:popin calc(.55s * var(--k)) cubic-bezier(.2,1.4,.4,1) both, glow calc(1.5s * var(--k)) ease-out calc(.3s * var(--k)) 2;}
+.flow.emph .ya{animation:ydrop calc(.5s * var(--k)) ease both;}
 /* 検索を繰り返すたびに光らせる */
-.flow.pulse .f2{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-dark);animation:ring .9s ease-out;}
+.flow.pulse .f2{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-dark);animation:ring calc(.9s * var(--k)) ease-out;}
 @keyframes ring{0%{box-shadow:0 0 0 0 rgba(47,109,246,.45)}100%{box-shadow:0 0 0 12px rgba(47,109,246,0)}}
-.flow.pulse .nopath{animation:draw .8s linear;}
+.flow.pulse .nopath{animation:draw calc(.8s * var(--k)) linear;}
 
 /* ---------- 回答 ---------- */
 .answer-head{display:flex;align-items:center;gap:10px;padding-bottom:10px;border-bottom:2px solid var(--text);margin-bottom:12px;}
@@ -308,7 +348,11 @@ ol.sllist li{margin-bottom:2px;}
   .logo{height:30px;}
   .vr{height:18px;}
   .topbar{gap:10px;}
-  .log{height:calc(100vh - 190px);padding:14px 13px 24px;}
+  .viewport{height:calc(100vh - 190px);}
+  .log{padding:14px 13px 20px;}
+  .bottombar{padding:11px 13px 13px;}
+  .qask-t{font-size:15px;padding:10px 14px;max-width:88%;}
+  .spd button{font-size:11px;padding:3px 8px;}
   .spot{padding:14px;align-items:flex-start;padding-top:60px;}
   .big{padding:16px;border-radius:12px;}
   .big-q{font-size:17px;gap:10px;}
@@ -341,11 +385,10 @@ ol.sllist li{margin-bottom:2px;}
 
   <div class="stage">
    <div class="viewport" id="vp">
-    <div class="log" id="log">
 
-      <!-- 01 プロンプト -->
-      <section class="blk" data-dur="6" data-label="プロンプト" data-spot="q" data-hold="3200">
-        <div class="steplabel">01 ／ プロンプト</div>
+    <!-- 入力バー（DOM上は先頭・表示は下段） -->
+    <div class="bottombar">
+      <section class="blk" data-dur="7.2" data-label="プロンプト" data-spot="q" data-hold="3200">
         <div class="prompt">
           <span class="ico" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg></span>
           <p>自動車の軽量化を目的としたアルミニウム合金の表面処理技術に関する研究事例を探して、要点と新規性をまとめて。調べた内容はPPTXのスライドにしてください。</p>
@@ -353,19 +396,20 @@ ol.sllist li{margin-bottom:2px;}
         </div>
       </section>
 
-      <!-- 02 リポジトリ -->
+    </div>
+
+    <div class="log" id="log">
+
+      <!-- 質問バブル -->
+      <div class="qask" id="ask"><span class="qask-t" id="askT"></span></div>
+
+      <!-- 02 検索対象（1行表示） -->
       <section class="blk" data-dur="5.5" data-label="検索対象のリポジトリ" data-spot="r" data-hold="2800">
         <div class="steplabel">02 ／ 検索対象</div>
-        <div class="card">
-          <p style="margin:0 0 10px;font-size:13px;color:var(--muted);">社内の2つのリポジトリを横断して検索します。</p>
-          <div class="repos">
-            <span class="repo"><span class="dot"></span>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>
-              ファイルサーバー</span>
-            <span class="repo"><span class="dot"></span>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>
-              Box</span>
-          </div>
+        <div class="rstatus">
+          <span class="sp" aria-hidden="true"></span>
+          <span class="ck" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+          <span><b>2つのリポジトリ</b>（ファイルサーバー・Box）<span class="m1">を横断検索しています…</span><span class="m2">を横断検索しました</span></span>
         </div>
       </section>
 
@@ -459,7 +503,7 @@ ol.sllist li{margin-bottom:2px;}
       <div class="ansgrid" id="ansGrid">
       <div class="anscol">
       <div id="answerWrap">
-      <section class="blk" data-dur="1.1" data-label="調査結果" data-ans="1" data-panel="files">
+      <section class="blk" data-dur="1.4" data-label="調査結果" data-panel="files" data-scroll="#answerWrap">
         <div class="steplabel">04 ／ 回答</div>
         <div class="answer-head">
           <h2>調査結果</h2>
@@ -469,7 +513,7 @@ ol.sllist li{margin-bottom:2px;}
       </section>
 
       <!-- 05 章1 -->
-      <section class="blk" data-dur="1.77" data-label="1. 特定した文献" data-ans="1" data-panel="files">
+      <section class="blk" data-dur="0.45" data-label="1. 特定した文献" data-panel="files" data-noscroll="1">
         <h3 class="sec">1. 特定した文献</h3>
         <div class="tblwrap">
           <table>
@@ -486,7 +530,7 @@ ol.sllist li{margin-bottom:2px;}
       </section>
 
       <!-- 06 章2 -->
-      <section class="blk" data-dur="2.23" data-label="2. 各文献の要点" data-ans="1" data-panel="files">
+      <section class="blk" data-dur="0.45" data-label="2. 各文献の要点" data-panel="files" data-noscroll="1">
         <h3 class="sec">2. 各文献の要点</h3>
         <div class="docs">
           <div class="doc">
@@ -538,7 +582,7 @@ ol.sllist li{margin-bottom:2px;}
       </section>
 
       <!-- 07 章3 -->
-      <section class="blk" data-dur="2" data-label="3. 新規性の比較" data-ans="1" data-panel="files">
+      <section class="blk" data-dur="0.45" data-label="3. 新規性の比較" data-panel="files" data-noscroll="1">
         <h3 class="sec">3. 新規性の比較</h3>
         <div class="tblwrap">
           <table>
@@ -560,7 +604,7 @@ ol.sllist li{margin-bottom:2px;}
       </section>
 
       <!-- 08 章4 -->
-      <section class="blk" data-dur="2" data-label="4. 研究開発への示唆" data-ans="1" data-panel="files">
+      <section class="blk" data-dur="0.45" data-label="4. 研究開発への示唆" data-panel="files" data-noscroll="1">
         <h3 class="sec">4. 研究開発への示唆</h3>
         <div class="imps">
           <div class="imp">
@@ -587,7 +631,7 @@ ol.sllist li{margin-bottom:2px;}
       </section>
 
       <!-- 09 章5 -->
-      <section class="blk" data-dur="1.33" data-label="5. 次のアクション候補" data-ans="1" data-panel="files">
+      <section class="blk" data-dur="2.8" data-label="5. 次のアクション候補" data-panel="files" data-noscroll="1">
         <h3 class="sec">5. 次のアクション候補</h3>
         <ul class="acts">
           <li>レーザー処理面の塩水噴霧試験（空白領域の穴埋め）を先行開発部へ提案する</li>
@@ -598,14 +642,11 @@ ol.sllist li{margin-bottom:2px;}
       </section>
       </div><!-- /#answerWrap -->
 
-      <!-- 10 回答の先頭に戻って関連ファイルを表示 -->
-      <div data-dur="6" data-label="関連ファイル" data-panel="files" data-scroll="#answerWrap"></div>
+      <!-- 10 回答をゆっくり読み進める（5. 次のアクション候補まで） -->
+      <div data-dur="12" data-label="回答を読む" data-panel="files" data-scrollrun="1" data-slow="1"></div>
 
-      <!-- 11 5. 次のアクション候補まで一気にスクロール -->
-      <div data-dur="2.4" data-label="回答の読み返し" data-panel="files" data-scrollrun="1"></div>
-
-      <!-- 12 拡大表示を閉じたあとの間 -->
-      <div data-dur="1.5" data-label="PPTXを作成" data-panel="files"></div>
+      <!-- 11 末尾で保持 -->
+      <div data-dur="2.2" data-label="5. 次のアクション候補" data-panel="files"></div>
 
       <!-- 11 スライドの説明 -->
       <section class="blk" data-dur="4.4" data-label="スライドの説明" data-panel="files">
@@ -763,6 +804,11 @@ ol.sllist li{margin-bottom:2px;}
         <div class="rail"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
       </div>
       <div class="meta">
+        <div class="spd" id="spd">
+          <button type="button" data-r="1" class="on">×1</button>
+          <button type="button" data-r="1.5">×1.5</button>
+          <button type="button" data-r="2">×2</button>
+        </div>
         <span class="chap" id="chap">プロンプト</span>
         <span class="time"><span id="cur">0:00</span> / <span id="tot">0:00</span></span>
         <button class="pbtn ghost" id="rst" type="button" aria-label="最初から再生">
@@ -778,6 +824,16 @@ ol.sllist li{margin-bottom:2px;}
 <script>
 (function () {
   var log = document.getElementById('log');
+  var askEl = document.getElementById('ask'), askT = document.getElementById('askT');
+  var spdBox = document.getElementById('spd');
+  var promptP = document.querySelector('.bottombar .prompt p');
+  var QUERY_TEXT = promptP ? promptP.textContent : '';
+  var PLACEHOLDER = '質問を入力してください';
+  if (askT) askT.textContent = QUERY_TEXT;
+  var rstatus = document.querySelector('.rstatus');
+  /* 再生速度（×1／×1.5／×2）— アニメーションは --k で追従 */
+  var rate = 1;
+  function ms(v) { return Math.max(1, Math.round(v / rate)); }
   var pp = document.getElementById('pp'), rst = document.getElementById('rst');
   var track = document.getElementById('track'), fill = document.getElementById('fill');
   var knob = document.getElementById('knob'), ticks = document.getElementById('ticks');
@@ -805,10 +861,10 @@ ol.sllist li{margin-bottom:2px;}
         '</div></div>';
     }
   };
-  var SPOT_TARGET = { q: '.prompt', r: '.card' };
+  var SPOT_TARGET = { q: '.prompt', r: '.rstatus' };
 
   /* ---- タイムライン ---- */
-  var nodes = [].slice.call(log.querySelectorAll('[data-dur]'));
+  var nodes = [].slice.call(document.getElementById('vp').querySelectorAll('[data-dur]'));
   var steps = nodes.map(function (el) {
     return {
       el: el, dur: parseFloat(el.dataset.dur || '4') * 1000, label: el.dataset.label || '',
@@ -819,6 +875,11 @@ ol.sllist li{margin-bottom:2px;}
   });
   var starts = [], total = 0;
   steps.forEach(function (s) { starts.push(total); total += s.dur; });
+  /* 質問バブルが出る時刻（= プロンプトの拡大表示が閉じ、検索を押した約1秒後） */
+  var askAt = Infinity;
+  steps.forEach(function (s, i) {
+    if (s.spot === 'q') askAt = starts[i] + SPOT_IN + s.hold + SPOT_OUT + 450 + 1000;
+  });
 
   function fmt(ms) { var s = Math.max(0, Math.round(ms / 1000)); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
   totEl.textContent = fmt(total);
@@ -871,9 +932,11 @@ ol.sllist li{margin-bottom:2px;}
   var FINAL_DELAY = 1500;
   var finalIdx = -1;
   steps.forEach(function (s, i) { if (s.final) finalIdx = i; });
+  function setRepoDone(on) { if (rstatus) rstatus.classList.toggle('done', on); }
   function driveFinal() {
     if (finalIdx < 0) return;
     var on = t >= starts[finalIdx] + FINAL_DELAY;
+    setRepoDone(on);
     if (on === flow.classList.contains('final')) return;
     flow.classList.toggle('final', on);
     if (on) { flow.classList.remove('emph'); void flow.offsetWidth; flow.classList.add('emph'); }
@@ -893,7 +956,7 @@ ol.sllist li{margin-bottom:2px;}
     else {
       spotIn.style.transition = 'none'; spotIn.style.opacity = '0';
       void spotIn.offsetWidth;
-      spotIn.style.transition = 'opacity ' + ANS_IN + 'ms ease';
+      spotIn.style.transition = 'opacity ' + ms(ANS_IN) + 'ms ease';
       spot.classList.add('on'); spotIn.style.opacity = '1';
     }
     ansOpen = true;
@@ -902,9 +965,9 @@ ol.sllist li{margin-bottom:2px;}
     if (!ansOpen) return;
     if (instant) { spot.classList.remove('ans'); spotIn.className = 'spot-in'; clearSpot(); }
     else {
-      spotIn.style.transition = 'opacity ' + ANS_OUT + 'ms ease';
+      spotIn.style.transition = 'opacity ' + ms(ANS_OUT) + 'ms ease';
       spotIn.style.opacity = '0'; spot.classList.remove('on');
-      setTimeout(function () { if (!ansOpen) { spot.classList.remove('ans'); spotIn.className = 'spot-in'; clearSpot(); } }, ANS_OUT);
+      setTimeout(function () { if (!ansOpen) { spot.classList.remove('ans'); spotIn.className = 'spot-in'; clearSpot(); } }, ms(ANS_OUT));
     }
     ansOpen = false; ansRoll = null;
   }
@@ -943,6 +1006,17 @@ ol.sllist li{margin-bottom:2px;}
     spotIn.innerHTML = '';
   }
 
+  /* 質問バブルの表示／入力バーの文字 */
+  var ASK_AFTER_TAP = 1000;                 /* 「検索」を押してからバブルが出るまで */
+  function setAsk(on) {
+    if (!askEl) return;
+    askEl.classList.toggle('on', on);
+    if (promptP) {
+      promptP.textContent = on ? PLACEHOLDER : QUERY_TEXT;
+      promptP.classList.toggle('ph', on);
+    }
+  }
+
   function applyPhase(s, phase) {
     var sec = s.el;
     if (phase === 'in') {
@@ -952,7 +1026,7 @@ ol.sllist li{margin-bottom:2px;}
       spotIn.style.transition = 'none';
       spotIn.style.transform = 'scale(.94)'; spotIn.style.opacity = '0';
       void spotIn.offsetWidth;
-      spotIn.style.transition = 'transform ' + SPOT_IN + 'ms cubic-bezier(.2,.85,.3,1), opacity ' + SPOT_IN + 'ms ease';
+      spotIn.style.transition = 'transform ' + ms(SPOT_IN) + 'ms cubic-bezier(.2,.85,.3,1), opacity ' + ms(SPOT_IN) + 'ms ease';
       spotIn.style.transform = 'scale(1)'; spotIn.style.opacity = '1';
       if (s.spot === 'q') setTimeout(function () {
         var bq = document.getElementById('bigq'); if (bq) bq.classList.add('focus');
@@ -960,6 +1034,8 @@ ol.sllist li{margin-bottom:2px;}
     } else if (phase === 'tap') {
       var btn = document.getElementById('promptSend');
       if (btn) { btn.classList.add('pressed'); setTimeout(function () { btn.classList.remove('pressed'); }, 300); }
+    } else if (phase === 'ask') {
+      setAsk(true);
     } else if (phase === 'out') {
       var tgt = sec.querySelector(SPOT_TARGET[s.spot]);
       var r1 = spotIn.getBoundingClientRect(), r2 = tgt.getBoundingClientRect();
@@ -967,7 +1043,7 @@ ol.sllist li{margin-bottom:2px;}
       if (!isFinite(sc) || sc <= 0) sc = .25;
       var dx = (r2.left + r2.width / 2) - (r1.left + r1.width / 2);
       var dy = (r2.top + r2.height / 2) - (r1.top + r1.height / 2);
-      spotIn.style.transition = 'transform ' + SPOT_OUT + 'ms cubic-bezier(.4,0,.2,1), opacity ' + SPOT_OUT + 'ms ease';
+      spotIn.style.transition = 'transform ' + ms(SPOT_OUT) + 'ms cubic-bezier(.4,0,.2,1), opacity ' + ms(SPOT_OUT) + 'ms ease';
       spotIn.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(' + sc + ')';
       spotIn.style.opacity = '0';
       spot.classList.remove('on');
@@ -1001,10 +1077,15 @@ ol.sllist li{margin-bottom:2px;}
     flow.classList.remove('emph');
     flow.classList.remove('pulse');
     fcnum.textContent = maxPulse || 1;
+    setAsk(t >= askAt);
+    setRepoDone(finalIdx >= 0 && t >= starts[finalIdx] + FINAL_DELAY);
     shown = i;
     runIdx = -1;
     drivePanels(true);
-    placeScroll(i, false);
+    placeScroll(i, false, true);
+    if (steps[i].el.dataset.scrollrun) {      /* 途中から再生してもスクロールが続くように */
+      runIdx = i; runFrom = answerTop(); runTo = maxScroll();
+    }
   }
 
   /* 指定ステップの表示位置（通常／回答の先頭へ／末尾まで一気に） */
@@ -1016,10 +1097,26 @@ ol.sllist li{margin-bottom:2px;}
     if (smooth) log.scrollTo({ top: v, behavior: 'smooth' });
     else { log.style.scrollBehavior = 'auto'; log.scrollTop = v; log.style.scrollBehavior = ''; }
   }
-  function placeScroll(i, smooth) {
+  /* スクロールの始点（回答の先頭） */
+  function answerTop() {
+    var aw = log.querySelector('#answerWrap');
+    return aw ? Math.max(0, contentTop(aw) - 12) : 0;
+  }
+  function runSpan(i) { return steps[i].dur * (steps[i].el.dataset.slow ? .85 : .5); }
+  function placeScroll(i, smooth, seek) {
     var el = steps[i].el, d = el.dataset;
+    if (!log.contains(el)) return;            /* 入力バー内のステップはスクロール対象外 */
+    if (d.noscroll) {                         /* 回答本文：再生中は先頭のまま動かさない */
+      if (seek) setScroll(answerTop(), false);   /* 頭出し時は回答の先頭に合わせる */
+      return;
+    }
     if (d.scroll) { var tg = log.querySelector(d.scroll); if (tg) { setScroll(contentTop(tg) - 12, smooth); return; } }
-    if (d.scrollrun) { setScroll(maxScroll(), smooth); return; }
+    if (d.scrollrun) {                        /* 読み進め中：途中でも位置を合わせる */
+      var p = Math.min(1, Math.max(0, (t - starts[i]) / runSpan(i)));
+      var from = answerTop(), to = maxScroll();
+      setScroll(from + (to - from) * p, smooth);
+      return;
+    }
     ensureVisible(el, smooth);
   }
 
@@ -1029,16 +1126,19 @@ ol.sllist li{margin-bottom:2px;}
     if (s.pulse) pulseFlow(s.pulse);
     if (s.spot) { s.phase = null; }
     shown = i; userScrolled = false;
-    if (s.el.dataset.scrollrun) { runIdx = i; runFrom = log.scrollTop; runTo = maxScroll(); }
+    if (s.el.dataset.scrollrun) { runIdx = i; runFrom = log.scrollTop; runTo = maxScroll(); userScrolled = false; }
     else placeScroll(i, true);
   }
 
   /* 「5. 次のアクション候補」まで一気に送る */
   function driveRun(i) {
     if (i !== runIdx) return false;
-    var p = (t - starts[i]) / (steps[i].dur * .5);
+    var slow = !!steps[i].el.dataset.slow;
+    var p = (t - starts[i]) / runSpan(i);
     p = Math.min(1, Math.max(0, p));
-    var e = p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+    /* ゆっくり読ませる区間は、ほぼ等速（前後だけなめらかに） */
+    var e = slow ? (p < .12 ? (p * p) / .0288 * .12 : (p > .88 ? 1 - Math.pow(1 - p, 2) / .0288 * .12 : p))
+                 : (p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2);
     scrollLock = Date.now() + 400;
     log.style.scrollBehavior = 'auto';
     log.scrollTop = runFrom + (Math.min(runTo, maxScroll()) - runFrom) * e;
@@ -1079,6 +1179,7 @@ ol.sllist li{margin-bottom:2px;}
   function autoScroll(i) {
     if (userScrolled || Date.now() < scrollLock) return;
     var el = steps[i].el;
+    if (!log.contains(el) || el.dataset.noscroll || el.dataset.scroll) return;
     var top = contentTop(el) - 10;
     var over = el.offsetHeight - (log.clientHeight - bottomInset()) + 24;
     if (over <= 0) return;
@@ -1100,14 +1201,15 @@ ol.sllist li{margin-bottom:2px;}
     else if (p < SPOT_IN + s.hold) ph = 'hold';
     else if (p < settled) ph = 'out';
     else if (s.spot === 'q' && p < settled + 450) ph = 'done';
-    else if (s.spot === 'q') ph = 'tap';
+    else if (s.spot === 'q' && p < settled + 450 + ASK_AFTER_TAP) ph = 'tap';
+    else if (s.spot === 'q') ph = 'ask';
     else ph = 'done';
     if (ph !== s.phase) { applyPhase(s, ph); s.phase = ph; }
   }
 
   function tick(now) {
     if (!playing) return;
-    var dt = now - last; last = now;
+    var dt = (now - last) * rate; last = now;
     t = Math.min(total, t + dt);
     var i = indexAt(t);
     drivePanels(false);
@@ -1136,6 +1238,18 @@ ol.sllist li{margin-bottom:2px;}
   function seekTo(ratio) {
     t = Math.min(total, Math.max(0, ratio * total));
     syncTo(indexAt(t)); driveAns(true); paint();
+  }
+
+  /* 再生速度 */
+  if (spdBox) {
+    var spdBtns = [].slice.call(spdBox.querySelectorAll('button'));
+    spdBtns.forEach(function (b) {
+      b.addEventListener('click', function () {
+        rate = parseFloat(b.getAttribute('data-r')) || 1;
+        document.documentElement.style.setProperty('--k', (1 / rate).toFixed(3));
+        spdBtns.forEach(function (o) { o.classList.toggle('on', o === b); });
+      });
+    });
   }
 
   pp.addEventListener('click', toggle);
