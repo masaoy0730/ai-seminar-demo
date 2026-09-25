@@ -391,6 +391,45 @@ ol.sllist li{margin-bottom:2px;}
   .blk.anim .nopath{stroke-dashoffset:0 !important;}
   .log{scroll-behavior:auto;}
 }
+
+/* ===== ROUND 1（日報 Step 0）追加分 ===== */
+.roundtag{display:inline-flex;align-items:center;gap:7px;margin:0 0 10px;font-size:11px;font-weight:700;
+  letter-spacing:.04em;color:#fff;background:var(--accent);border-radius:20px;padding:3px 12px;}
+.roundtag.r2{background:#33476a;}
+.rexc{display:inline-block;margin-left:6px;font-size:11px;color:var(--muted);background:#f1f3f6;border-radius:20px;padding:2px 9px;vertical-align:1px;}
+.nprows{margin:9px 0 2px;border:1px solid var(--border);border-radius:7px;overflow:hidden;background:#fff;}
+.nprow{display:grid;grid-template-columns:172px minmax(0,1fr) 74px;gap:10px;align-items:center;
+  padding:7px 10px;border-bottom:1px solid var(--border);font-size:11.5px;line-height:1.5;}
+.nprow:last-child{border-bottom:0;}
+.nprow .npl{font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.nprow .npx{color:var(--muted);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.nprow .npt{justify-self:end;font-size:10px;font-weight:700;border-radius:20px;padding:2px 8px;
+  color:#8a93a2;background:#f1f3f6;white-space:nowrap;}
+.nprow.mid .npt{color:var(--warn);background:#fdf3e2;}
+.nprow.hit{background:#fff7e6;}
+.nprow.hit .npl{color:#7a4e00;}
+.nprow.hit .npx{color:#4a3a1c;font-weight:600;}
+.nprow.hit .npt{color:#fff;background:var(--warn);}
+.npfound{margin:10px 0 0;border-left:3px solid var(--warn);background:#fffaf0;border-radius:0 7px 7px 0;
+  padding:10px 13px;font-size:12.5px;line-height:1.75;color:var(--text);}
+.npfound b{color:#7a4e00;}
+.npfound .npq{display:block;margin:5px 0 0;font-size:13px;font-weight:700;}
+.handoff{display:flex;align-items:center;gap:11px;margin:2px 0 4px;padding:12px 15px;
+  border:1px dashed var(--border-strong);border-radius:9px;background:#f7f9fc;font-size:12.5px;line-height:1.7;color:var(--muted);}
+.handoff b{color:var(--text);}
+.handoff .hoar{flex:none;color:var(--accent);}
+.scard.show .nprow{animation:rise calc(.4s * var(--k)) cubic-bezier(.2,.8,.3,1) both;
+  animation-delay:calc(var(--i) * .15s * var(--k));}
+.scard.show .npfound{animation:rise calc(.45s * var(--k)) cubic-bezier(.2,.8,.3,1) both;
+  animation-delay:calc(1.8s * var(--k));}
+.nphl{background:#fff3d6;border-radius:3px;padding:1px 3px;}
+.nphl2{background:#ffe9e4;border-radius:3px;padding:1px 3px;}
+@media (max-width:860px){
+  .nprow{grid-template-columns:118px minmax(0,1fr);row-gap:3px;align-items:start;}
+  .nprow .npl{white-space:normal;}
+  .nprow .npx{white-space:normal;text-overflow:clip;}
+  .nprow .npt{grid-column:2;justify-self:start;}
+}
 </style>
 </head>
 <body>
@@ -406,10 +445,10 @@ ol.sllist li{margin-bottom:2px;}
     <div class="viewport" id="vp">
 
       <div class="bottombar">
-        <section class="blk show" data-dur="7.2" data-label="プロンプト" data-spot="q" data-hold="3200">
+        <section class="blk show">
           <div class="prompt">
             <span class="ico" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg></span>
-            <p>AL-2ラインの締結工程で、リワークでワークを一度治具から外して入れ直すと、締付本数のカウントがずれる可能性があるとの指摘が現場から出ています。過去の他ラインで同種の事例がないか調べて、原因と確認すべきことを整理してください。調べた内容はWordの報告書にしてください。</p>
+            <p>昨日（9月14日）の日報の中から、生産技術として確認したほうがよさそうな記載を見つけて、理由とあわせて挙げてください。</p>
             <button class="sendbtn" id="promptSend" type="button" tabindex="-1" aria-hidden="true">検索<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M12 5l7 7-7 7"/></svg></button>
           </div>
         </section>
@@ -418,11 +457,97 @@ ol.sllist li{margin-bottom:2px;}
 
       <div id="log" class="log">
 
+
+        <section class="blk" data-dur="6" data-label="プロンプト①（日報）" data-spot="q" data-hold="2600" data-ask="ask" data-setq="昨日（9月14日）の日報の中から、生産技術として確認したほうがよさそうな記載を見つけて、理由とあわせて挙げてください。">
+          <div class="roundtag">ROUND 1　朝いちばん　昨日の日報を見る</div>
+        </section>
+
         <div class="qask" id="ask"><div class="qask-t" id="askT"></div></div>
 
+        <section class="blk" data-dur="4" data-label="検索対象（日報）" data-spot="r1" data-hold="2200">
+          <div class="steplabel">01 ／ 検索対象</div>
+          <div class="rstatus" id="rstat1">
+            <span class="sp" aria-hidden="true"></span>
+            <span class="ck" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+            <span><b>2つのリポジトリ</b>（ファイルサーバー・SharePoint Online）<span class="m1">を対象に検索しています…</span><span class="m2">を対象に検索しました</span><span class="rexc">Box は社外との共有フォルダのため対象外</span></span>
+          </div>
+        </section>
+
+        <section class="blk" data-dur="1.6" data-label="日報を読む">
+          <div class="steplabel">02 ／ 検索プロセス</div>
+          <div class="card tint">
+            <h3 class="sec">昨日の日報を読んで、確認すべきものを選ぶ</h3>
+            <div class="searches">
+              <div class="scard" data-dur="6" data-label="検索 1／1（日報）" data-repodone="1">
+                <div class="blkhead"><span class="t">検索 1</span><span class="hit">10件ヒット</span></div>
+                <code class="q">日報 <b class="op">AND</b> 2026年9月14日
+＋ 文書種別を日報に絞り込み</code>
+                <ul class="notes">
+                  <li><b>ファイルサーバー</b>　製造部／組立課／01_日報／2026年度／09月／20260914 … <b>10件</b>。AL-2ライン3件、AL-1／MC-1／MC-2 各1件、生産技術部・設備保全課・品質保証部・部品課 各1件。</li>
+                  <li><b>SharePoint Online</b>　各部門サイトのドキュメントも同時に対象。日付が一致する日報は0件だが、<b>部門サイト側に日報を置いている部署があればそのまま拾える</b>。</li>
+                  <li>10件すべての<b>「気づき・申し送り」欄</b>を読み、立ち上げ中のラインの品質・設備に関わる記載を優先して評価する。</li>
+                </ul>
+                  <div class="nprow " style="--i:0"><span class="npl">AL-2 部品供給・圧入</span><span class="npx">圧入荷重のばらつきが前回より大きく見える／部品の供給待ち</span><span class="npt">—</span></div>
+                  <div class="nprow hit" style="--i:1"><span class="npl">AL-2 締結工程</span><span class="npx">入れ直すと3本で完了ランプ。再現したら「4/4 完了」表示</span><span class="npt">要確認</span></div>
+                  <div class="nprow " style="--i:2"><span class="npl">AL-2 外観検査・梱包</span><span class="npx">擦り傷2件。搬送パレットの緩衝材が劣化</span><span class="npt">—</span></div>
+                  <div class="nprow " style="--i:3"><span class="npl">AL-1 組立</span><span class="npx">朝のエア圧低下でサイクルタイムが2秒延びた</span><span class="npt">—</span></div>
+                  <div class="nprow mid" style="--i:4"><span class="npl">MC-1 組立</span><span class="npx">締付順序の誤り1件（今月2件目）。治具の番号表示が見えにくい</span><span class="npt">参考</span></div>
+                  <div class="nprow " style="--i:5"><span class="npl">MC-2 組立</span><span class="npx">ワーク詰まりが同じ箇所で継続</span><span class="npt">—</span></div>
+                  <div class="nprow mid" style="--i:6"><span class="npl">生産技術部 第2G</span><span class="npx">AL-2立会い。締結治具の位置決めピンに軽微な摩耗</span><span class="npt">参考</span></div>
+                  <div class="nprow " style="--i:7"><span class="npl">設備保全課</span><span class="npx">AL-2のリセットボタンの銘板が剥がれかけ／エア元圧を調整</span><span class="npt">—</span></div>
+                  <div class="nprow " style="--i:8"><span class="npl">品質保証部 検査係</span><span class="npx">AL-2工程能力調査1ロット目。Cpk 1.62で安定</span><span class="npt">—</span></div>
+                  <div class="nprow " style="--i:9"><span class="npl">生産管理部 部品課</span><span class="npx">ブラケット入荷遅延でAL-2に12分の供給待ち</span><span class="npt">—</span></div>
+                <div class="npfound">
+                  <b>AL-2ライン 締結工程の日報に、次の記載を確認。</b>
+                  <span class="npq">「リワークでワークを一度治具から外して入れ直すと、3本しか締めていないのに完了ランプが点いた気がする」</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="blk" data-dur="6.5" data-label="日報の確認結果">
+          <div class="steplabel">03 ／ 回答</div>
+          <div class="answer-head">
+            <h2>昨日の日報の確認結果</h2>
+            <span class="by">エージェント検索の回答</span>
+          </div>
+          <p class="lead">10件の日報を確認しました。いずれも工程内で処置済みですが、<b>次の3件は生産技術として見ておいたほうがよい</b>と考えます。とくに1件目は、不良になっていないため品質データには残らない記載です。</p>
+          <div class="tblwrap">
+            <table style="table-layout:fixed">
+              <colgroup><col style="width:52px"><col style="width:150px"><col style="width:33%"><col></colgroup>
+              <thead><tr><th>優先</th><th>日報</th><th>記載内容</th><th>確認したほうがよい理由</th></tr></thead>
+              <tbody>
+                <tr><td class="idx">高</td><td><b>AL-2 締結工程</b><br><span class="small">組立課 第2係</span></td><td>リワークで入れ直すと、3本しか締めていないのに完了ランプが点いたとの申し出。再現したところ「4/4 完了」表示</td><td><b>本数が合っていないのに完了と判定されている。</b>不良になっておらず不具合報告も起票されていないため、品質データには残らない。見落とすと気づく機会がない</td></tr>
+                <tr><td class="idx">中</td><td>生産技術部 第2G<br><span class="small">AL-2 立会い</span></td><td>締結治具の位置決めピンに軽微な摩耗</td><td>試作段階での摩耗。量産後の交換周期の見直しにつながる</td></tr>
+                <tr><td class="idx">中</td><td>MC-1 組立<br><span class="small">組立課 第1係</span></td><td>締付順序の誤り1件（今月2件目）。治具の番号表示が見えにくいとの声</td><td>人の習熟の問題として処理されているが、表示の見やすさは設備側で対処できる</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="blk" data-dur="6" data-label="日報を開く" data-panel="nippo">
+          <ol class="flowlist">
+            <li><b>優先度「高」の日報を開きました。</b>　気づき・申し送り欄に、作業者の申し出がそのまま書かれています。最後の一行は「不良にはなっていないので不具合報告は起票していない」。</li>
+          </ol>
+        </section>
+
+        <section class="blk" data-dur="3.2" data-label="次の指示へ">
+          <div class="handoff">
+            <span class="hoar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M12 5l7 7-7 7"/></svg></span>
+            <span>この1件をきっかけに、<b>過去の他ラインで同じことが起きていないか</b>を調べます。ここから2回目の指示に移ります。</span>
+          </div>
+        </section>
+
+        <section class="blk" data-dur="7.2" data-label="プロンプト②（本調査）" data-spot="q" data-hold="3200" data-ask="ask2" data-setq="AL-2ラインの締結工程で、リワークでワークを一度治具から外して入れ直すと、締付本数のカウントがずれる可能性があるとの指摘が現場から出ています。過去の他ラインで同種の事例がないか調べて、原因と確認すべきことを整理してください。調べた内容はWordの報告書にしてください。">
+          <div class="roundtag r2">ROUND 2　過去の類似事例を調べる</div>
+        </section>
+
+        <div class="qask" id="ask2"><div class="qask-t" id="askT2"></div></div>
+
         <section class="blk" data-dur="5.5" data-label="検索対象のリポジトリ" data-spot="r" data-hold="2800">
-          <div class="steplabel">02 ／ 検索対象</div>
-          <div class="rstatus">
+          <div class="steplabel">04 ／ 検索対象</div>
+          <div class="rstatus" id="rstatusMain">
             <span class="sp" aria-hidden="true"></span>
             <span class="ck" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
             <span><b>3つのリポジトリ</b>（ファイルサーバー・Box・SharePoint Online）<span class="m1">を横断検索しています…</span><span class="m2">を横断検索しました</span></span>
@@ -430,7 +555,7 @@ ol.sllist li{margin-bottom:2px;}
         </section>
 
         <section class="blk" id="proc" data-dur="4.4" data-label="エージェントの処理フロー">
-          <div class="steplabel">03 ／ 検索プロセス</div>
+          <div class="steplabel">05 ／ 検索プロセス</div>
           <div class="card tint">
             <h3 class="sec">必要な情報がそろうまで検索を繰り返す</h3>
             <div class="proc">
@@ -556,7 +681,7 @@ ol.sllist li{margin-bottom:2px;}
         <div id="answerWrap">
 
         <section class="blk" data-dur="1.4" data-label="調査結果" data-panel="files" data-scroll="#answerWrap">
-          <div class="steplabel">04 ／ 回答</div>
+          <div class="steplabel">06 ／ 回答</div>
           <div class="answer-head">
             <h2>調査結果</h2>
             <span class="by">エージェント検索の回答</span>
@@ -755,6 +880,7 @@ ol.sllist li{margin-bottom:2px;}
             <li>参照文書一覧（20件）</li>
           </ol>
           <p class="slnote">原因の断定は行わず、現地確認の結果を書き込めば量産移行判定の資料になる構成です。参照した20件は文書番号・日付・表題を一覧にして巻末に添付しています。</p>
+          <p class="slnote">※ Skills の組み込みによる個別開発、またはお使いの生成AIツールから Neuron を呼び出す MCPサーバー（有償オプション）でのご提供も可能です。</p>
         </section>
 
         <section class="blk" data-dur="3.4" data-label="報告書をダウンロード" data-panel="files">
@@ -796,6 +922,39 @@ ol.sllist li{margin-bottom:2px;}
 
 
       <div class="spot" id="spot" aria-hidden="true"><div class="spot-bg"></div><div class="spot-in" id="spotIn"></div></div>
+
+      <aside class="preview" id="npPanel" aria-hidden="true">
+        <div class="pvhead">
+          <div class="dlico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h5"/><path d="M8.5 13h1.2l1 3.4 1-3.4h1.3l-1.6 5.4H9.9z"/></svg></div>
+          <div class="pvtitle">
+            <b>日報_20260914_AL-2ライン_締結工程_組立課第2係.docx</b>
+            <span>Word文書 ・ 1 ページ</span>
+          </div>
+          <span class="pvicon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></span>
+        </div>
+        <div class="pvbody">
+          <div class="sl pg-doc">
+            <h5>作業日報　2026年9月14日（月）</h5>
+            <p style="margin-bottom:4px">セイワ工機株式会社　本社工場　製造部　様式7</p>
+            <table>
+              <tbody>
+                <tr><th>ライン／工程</th><td>AL-2ライン　締結工程（試作流動）</td></tr>
+                <tr><th>所属</th><td>製造部 組立課 第2係</td></tr>
+                <tr><th>記入者</th><td>班長　石田 卓也</td></tr>
+                <tr><th>生産数／予定数</th><td>42台／45台</td></tr>
+              </tbody>
+            </table>
+            <h5 style="margin-top:7px">3. 品質状況</h5>
+            <p>締付トルク・角度とも全数判定OK。工程内不良ゼロ、次工程への流出なし。</p>
+            <h5 style="margin-top:7px;border-bottom-color:#c98a00">4. 気づき・申し送り</h5>
+            <p class="nphl"><b>午後のリワーク品の再投入のときに、作業者の井口から「リワークでワークを一度治具から外して入れ直すと、3本しか締めていないのに完了ランプが点いた気がする」との申し出があった。</b></p>
+            <p style="margin-top:3px">本人に同じ手順をやってもらったところ、ネジが3本しか締まっていないのに、締付管理ユニットは「4/4 完了」と表示して、完了ランプが点いた。その場で残り1本を締め直し、次工程には流していない。</p>
+            <p style="margin-top:3px" class="nphl2">トルクも角度も判定はOKで、不良にはなっていないので<b>不具合報告は起票していない</b>。ただ、量産に入ってから同じことが起きると気づけないおそれがあるので、生産技術部に一度見てもらったほうがよいか判断をお願いしたい。</p>
+            <p style="margin-top:3px">なお、リワーク品を入れ直すときの手順は、暫定版の作業標準には書かれていない。</p>
+            <span class="pg">Page 1 / 1</span>
+          </div>
+        </div>
+      </aside>
 
       <aside class="preview" id="pvPanel" aria-hidden="true">
         <div class="pvhead">
@@ -928,7 +1087,7 @@ ol.sllist li{margin-bottom:2px;}
   var QUERY_TEXT = promptP ? promptP.textContent : '';
   var PLACEHOLDER = '質問を入力してください';
   if (askT) askT.textContent = QUERY_TEXT;
-  var rstatus = document.querySelector('.rstatus');
+  var rstatus = document.getElementById('rstatusMain') || document.querySelector('.rstatus');
   /* 再生速度（×1／×1.5／×2）— アニメーションは --k で追従 */
   var rate = 1;
   function ms(v) { return Math.max(1, Math.round(v / rate)); }
@@ -945,11 +1104,18 @@ ol.sllist li{margin-bottom:2px;}
   var SPOT_IN = 340, SPOT_OUT = 620;
 
   /* 拡大表示の中身 */
+  function esc(v) { return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   var SPOTS = {
-    q: function () {
+    q: function (txt) {
       return '<div class="big" id="bigq"><div class="big-bar">' +
         '<span class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg></span>' +
-        '<span class="big-q">AL-2ラインの締結工程で、リワークでワークを一度治具から外して入れ直すと、締付本数のカウントがずれる可能性があるとの指摘が現場から出ています。過去の他ラインで同種の事例がないか調べて、原因と確認すべきことを整理してください。調べた内容はWordの報告書にしてください。</span>' +
+        '<span class="big-q">' + esc(txt) + '</span>' +
+        '</div></div>';
+    },
+    r1: function () {
+      return '<div class="big"><div class="big-cap">昨日の日報を横断検索</div><div class="big-repos">' +
+        '<span class="big-repo"><span class="dot"></span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>ファイルサーバー</span>' +
+        '<span class="big-repo"><span class="dot"></span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11"/></svg>SharePoint Online</span>' +
         '</div></div>';
     },
     r: function () {
@@ -960,7 +1126,7 @@ ol.sllist li{margin-bottom:2px;}
         '</div></div>';
     }
   };
-  var SPOT_TARGET = { q: '.prompt', r: '.rstatus' };
+  var SPOT_TARGET = { q: '.prompt', r: '.rstatus', r1: '.rstatus' };
 
   /* ---- タイムライン ---- */
   var nodes = [].slice.call(document.getElementById('vp').querySelectorAll('[data-dur]'));
@@ -974,11 +1140,16 @@ ol.sllist li{margin-bottom:2px;}
   });
   var starts = [], total = 0;
   steps.forEach(function (s) { starts.push(total); total += s.dur; });
-  /* 質問バブルが出る時刻（= プロンプトの拡大表示が閉じ、検索を押した約1秒後） */
-  var askAt = Infinity;
+  /* 質問バブルが出る時刻（= プロンプトの拡大表示が閉じ、検索を押した約1秒後）。ラウンドごとに1つ */
+  var qSteps = [];
   steps.forEach(function (s, i) {
-    if (s.spot === 'q') askAt = starts[i] + SPOT_IN + s.hold + SPOT_OUT + 450 + 1000;
+    if (s.spot !== 'q') return;
+    var bubble = document.getElementById(s.el.dataset.ask || 'ask');
+    var text = s.el.dataset.setq || QUERY_TEXT;
+    qSteps.push({ i: i, at: starts[i] + SPOT_IN + s.hold + SPOT_OUT + 450 + 1000, bubble: bubble, text: text });
+    if (bubble) { var tt = bubble.querySelector('.qask-t'); if (tt) tt.textContent = text; }
   });
+  if (qSteps.length && promptP) { promptP.textContent = qSteps[0].text; }
 
   function fmt(ms) { var s = Math.max(0, Math.round(ms / 1000)); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
   totEl.textContent = fmt(total);
@@ -1000,6 +1171,7 @@ ol.sllist li{margin-bottom:2px;}
   var ansGrid = document.getElementById('ansGrid');
   var pvPanel = document.getElementById('pvPanel');
   var pvBody = document.getElementById('pvBody');
+  var npPanel = document.getElementById('npPanel');
   /* 現在のステップに紐づく右側表示（切り替えは少しだけ先読み） */
   function panelAt(ms) {
     var i = indexAt(ms);
@@ -1008,13 +1180,19 @@ ol.sllist li{margin-bottom:2px;}
   }
   function drivePanels(instant) {
     var cur = panelAt(t);
-    var files = cur.name === 'files', slides = cur.name === 'slides';
+    var files = cur.name === 'files', slides = cur.name === 'slides', nip = cur.name === 'nippo';
     if (ansGrid) ansGrid.classList.toggle('withfiles', files);
     if (pvPanel && slides !== pvPanel.classList.contains('on')) {
       if (instant) pvPanel.style.transition = 'none';
       pvPanel.classList.toggle('on', slides);
       pvPanel.setAttribute('aria-hidden', slides ? 'false' : 'true');
       if (instant) { void pvPanel.offsetWidth; pvPanel.style.transition = ''; }
+    }
+    if (npPanel && nip !== npPanel.classList.contains('on')) {
+      if (instant) npPanel.style.transition = 'none';
+      npPanel.classList.toggle('on', nip);
+      npPanel.setAttribute('aria-hidden', nip ? 'false' : 'true');
+      if (instant) { void npPanel.offsetWidth; npPanel.style.transition = ''; }
     }
     if (pvBody) {
       if (!slides) pvBody.scrollTop = 0;
@@ -1024,7 +1202,7 @@ ol.sllist li{margin-bottom:2px;}
         pvBody.scrollTop = Math.max(0, pvBody.scrollHeight - pvBody.clientHeight) * q;
       }
     }
-    if (vp) vp.classList.toggle('split', slides);
+    if (vp) vp.classList.toggle('split', slides || nip);
   }
 
   /* 「検索完了」を見せてから「回答する」を点灯させるまでの間（ミリ秒） */
@@ -1032,6 +1210,14 @@ ol.sllist li{margin-bottom:2px;}
   var finalIdx = -1;
   steps.forEach(function (s, i) { if (s.final) finalIdx = i; });
   function setRepoDone(on) { if (rstatus) rstatus.classList.toggle('done', on); }
+  /* ROUND 1 の検索対象ステータス（日報検索が始まったら「検索しました」に） */
+  var rstat1 = document.getElementById('rstat1');
+  var npDoneIdx = -1;
+  steps.forEach(function (s, i) { if (s.el.dataset.repodone === '1') npDoneIdx = i; });
+  function driveNpRepo() {
+    if (npDoneIdx < 0 || !rstat1) return;
+    rstat1.classList.toggle('done', t >= starts[npDoneIdx] + 900);
+  }
   function driveFinal() {
     if (finalIdx < 0) return;
     var on = t >= starts[finalIdx] + FINAL_DELAY;
@@ -1107,19 +1293,31 @@ ol.sllist li{margin-bottom:2px;}
 
   /* 質問バブルの表示／入力バーの文字 */
   var ASK_AFTER_TAP = 1000;                 /* 「検索」を押してからバブルが出るまで */
-  function setAsk(on) {
-    if (!askEl) return;
-    askEl.classList.toggle('on', on);
+  var askSig = '';
+  function currentQ() {
+    if (!qSteps.length) return null;
+    var q = qSteps[0];
+    for (var k = 0; k < qSteps.length; k++) if (t >= starts[qSteps[k].i]) q = qSteps[k];
+    return q;
+  }
+  function setAsk() {
+    if (!qSteps.length) return;
+    var q = currentQ(), ph = t >= q.at, sig = '';
+    qSteps.forEach(function (x) { sig += (t >= x.at ? '1' : '0'); });
+    sig += '|' + q.i + (ph ? 'P' : 'T');
+    if (sig === askSig) return;
+    askSig = sig;
+    qSteps.forEach(function (x) { if (x.bubble) x.bubble.classList.toggle('on', t >= x.at); });
     if (promptP) {
-      promptP.textContent = on ? PLACEHOLDER : QUERY_TEXT;
-      promptP.classList.toggle('ph', on);
+      promptP.textContent = ph ? PLACEHOLDER : q.text;
+      promptP.classList.toggle('ph', ph);
     }
   }
 
   function applyPhase(s, phase) {
     var sec = s.el;
     if (phase === 'in') {
-      spotIn.innerHTML = SPOTS[s.spot]();
+      spotIn.innerHTML = SPOTS[s.spot](s.el.dataset.setq || QUERY_TEXT);
       sec.classList.add('pending');
       spot.classList.add('on');
       spotIn.style.transition = 'none';
@@ -1134,9 +1332,10 @@ ol.sllist li{margin-bottom:2px;}
       var btn = document.getElementById('promptSend');
       if (btn) { btn.classList.add('pressed'); setTimeout(function () { btn.classList.remove('pressed'); }, 300); }
     } else if (phase === 'ask') {
-      setAsk(true);
+      setAsk();
     } else if (phase === 'out') {
-      var tgt = sec.querySelector(SPOT_TARGET[s.spot]);
+      var tgt = sec.querySelector(SPOT_TARGET[s.spot]) || document.querySelector(SPOT_TARGET[s.spot]);
+      if (!tgt) { spot.classList.remove('on'); sec.classList.remove('pending'); return; }
       var r1 = spotIn.getBoundingClientRect(), r2 = tgt.getBoundingClientRect();
       var sc = Math.min(r2.width / r1.width, r2.height / r1.height);
       if (!isFinite(sc) || sc <= 0) sc = .25;
@@ -1176,7 +1375,7 @@ ol.sllist li{margin-bottom:2px;}
     flow.classList.remove('emph');
     flow.classList.remove('pulse');
     fcnum.textContent = maxPulse || 1;
-    setAsk(t >= askAt);
+    askSig = ''; setAsk(); driveNpRepo();
     setRepoDone(finalIdx >= 0 && t >= starts[finalIdx] + FINAL_DELAY);
     shown = i;
     runIdx = -1;
@@ -1252,8 +1451,10 @@ ol.sllist li{margin-bottom:2px;}
 
   /* 下からせり上がるプレビュー（スマホ）に隠れる高さ */
   function bottomInset() {
-    if (!vp || !vp.classList.contains('split') || !pvPanel) return 0;
-    var r = pvPanel.getBoundingClientRect(), lr = log.getBoundingClientRect();
+    var panel = (pvPanel && pvPanel.classList.contains('on')) ? pvPanel
+              : ((npPanel && npPanel.classList.contains('on')) ? npPanel : null);
+    if (!vp || !vp.classList.contains('split') || !panel) return 0;
+    var r = panel.getBoundingClientRect(), lr = log.getBoundingClientRect();
     if (r.left > lr.left + 2) return 0;
     return Math.max(0, Math.min(lr.height - 80, lr.bottom - r.top));
   }
@@ -1316,6 +1517,8 @@ ol.sllist li{margin-bottom:2px;}
     if (i > shown) { for (var k = shown + 1; k <= i; k++) reveal(k); justRevealed = true; }
     if (!driveRun(i) && !justRevealed) autoScroll(i);
     driveSpot(i);
+    setAsk();
+    driveNpRepo();
     driveFinal();
     driveAns(false);
     paint();
