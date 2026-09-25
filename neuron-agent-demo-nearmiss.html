@@ -473,12 +473,34 @@ ol.sllist li{margin-bottom:2px;}
           </div>
         </section>
 
-        <section class="blk" data-dur="1.6" data-label="日報を読む">
+        <section class="blk" id="nproc" data-dur="4.4" data-label="日報を読む">
           <div class="steplabel">02 ／ 検索プロセス</div>
           <div class="card tint">
-            <h3 class="sec">昨日の日報を読んで、確認すべきものを選ぶ</h3>
-            <div class="searches">
-              <div class="scard" data-dur="6" data-label="検索 1／1（日報）" data-repodone="1">
+            <h3 class="sec">必要な情報がそろうまで検索を繰り返す</h3>
+            <div class="proc">
+              <div class="flowwrap">
+                <div class="flow" id="flow1">
+                  <svg class="flowsvg" viewBox="0 0 280 348" fill="none" aria-hidden="true">
+                    <path class="nopath" d="M56 233 H16 V90 H44" stroke="#9a6200" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                    <polygon class="nohead" points="44,83.5 57,90 44,96.5" fill="#9a6200"/>
+                  </svg>
+                  <div class="fb f1">目的（質問内容）</div>
+                  <span class="ar a1"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 2h6v12h5l-8 8-8-8h5z"/></svg></span>
+                  <div class="fb f2">Neuronで検索を実行</div>
+                  <span class="fcount">検索 <b class="fcn">1</b></span>
+                  <span class="ar a2"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 2h6v12h5l-8 8-8-8h5z"/></svg></span>
+                  <div class="fb f3">検索結果を確認</div>
+                  <span class="ar a3"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 2h6v12h5l-8 8-8-8h5z"/></svg></span>
+                  <div class="fb f4">情報は足りたか？<span class="f4sub">足りなければ 検索に戻る</span></div>
+                  <span class="nolabel">NO</span>
+                  <span class="ar ya"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 2h6v12h5l-8 8-8-8h5z"/></svg></span>
+                  <span class="yeslabel">YES</span>
+                  <div class="fb f5">回答する</div>
+                </div>
+              </div>
+
+              <div class="searches">
+              <div class="scard" data-dur="6" data-label="検索 1／1（日報）" data-pulse="1" data-repodone="1">
                 <div class="blkhead"><span class="t">検索 1</span><span class="hit">10件ヒット</span></div>
                 <code class="q">日報 <b class="op">AND</b> 2026年9月14日
 ＋ 文書種別を日報に絞り込み</code>
@@ -502,6 +524,14 @@ ol.sllist li{margin-bottom:2px;}
                   <span class="npq">「リワークでワークを一度治具から外して入れ直すと、3本しか締めていないのに完了ランプが点いた気がする」</span>
                 </div>
               </div>
+
+              <div data-dur="3" data-label="日報の確認完了" data-final="1">
+                <div class="done">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                  <p>昨日の日報 <b>10件</b>すべての「気づき・申し送り」欄を読み、確認すべき記載を特定しました。</p>
+                </div>
+              </div>
+            </div>
             </div>
           </div>
         </section>
@@ -1098,6 +1128,15 @@ ol.sllist li{margin-bottom:2px;}
   var spot = document.getElementById('spot'), spotIn = document.getElementById('spotIn');
   var flow = document.getElementById('flow'), fcnum = document.getElementById('fcnum');
   var procSec = document.getElementById('proc');
+  /* フロー図は ROUND ごとに1つ。ステップがどのカードに属するかで対応づける */
+  var allFlows = [].slice.call(document.querySelectorAll('.flow'));
+  var allProcs = [].slice.call(document.querySelectorAll('.blk')).filter(function (b) { return b.querySelector('.flow'); });
+  function flowOf(el) {
+    var card = el.closest ? el.closest('.card') : null;
+    var f = card ? card.querySelector('.flow') : null;
+    return f || flow;
+  }
+  function setFcount(f, n) { var b = f.querySelector('.fcount b'); if (b) b.textContent = n; }
 
   var ICON_PLAY  = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
   var ICON_PAUSE = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
@@ -1208,7 +1247,8 @@ ol.sllist li{margin-bottom:2px;}
   /* 「検索完了」を見せてから「回答する」を点灯させるまでの間（ミリ秒） */
   var FINAL_DELAY = 1500;
   var finalIdx = -1;
-  steps.forEach(function (s, i) { if (s.final) finalIdx = i; });
+  var finals = [];
+  steps.forEach(function (s, i) { if (s.final) { finalIdx = i; finals.push({ i: i, flow: flowOf(s.el) }); } });
   function setRepoDone(on) { if (rstatus) rstatus.classList.toggle('done', on); }
   /* ROUND 1 の検索対象ステータス（日報検索が始まったら「検索しました」に） */
   var rstat1 = document.getElementById('rstat1');
@@ -1219,13 +1259,14 @@ ol.sllist li{margin-bottom:2px;}
     rstat1.classList.toggle('done', t >= starts[npDoneIdx] + 900);
   }
   function driveFinal() {
-    if (finalIdx < 0) return;
-    var on = t >= starts[finalIdx] + FINAL_DELAY;
-    setRepoDone(on);
-    if (on === flow.classList.contains('final')) return;
-    flow.classList.toggle('final', on);
-    if (on) { flow.classList.remove('emph'); void flow.offsetWidth; flow.classList.add('emph'); }
-    else flow.classList.remove('emph');
+    finals.forEach(function (f) {
+      var on = t >= starts[f.i] + FINAL_DELAY;
+      if (f.flow === flow) setRepoDone(on);
+      if (!f.flow || on === f.flow.classList.contains('final')) return;
+      f.flow.classList.toggle('final', on);
+      if (on) { f.flow.classList.remove('emph'); void f.flow.offsetWidth; f.flow.classList.add('emph'); }
+      else f.flow.classList.remove('emph');
+    });
   }
   var ansOpen = false, ansRoll = null, ansBox = null;
 
@@ -1352,11 +1393,12 @@ ol.sllist li{margin-bottom:2px;}
     }
   }
 
-  function pulseFlow(n) {
-    if (!flow) return;
-    fcnum.textContent = n;
-    flow.classList.add('counting');
-    flow.classList.remove('pulse'); void flow.offsetWidth; flow.classList.add('pulse');
+  function pulseFlow(el, n) {
+    var f = flowOf(el);
+    if (!f) return;
+    setFcount(f, n);
+    f.classList.add('counting');
+    f.classList.remove('pulse'); void f.offsetWidth; f.classList.add('pulse');
   }
 
   function syncTo(i) {
@@ -1367,14 +1409,17 @@ ol.sllist li{margin-bottom:2px;}
       s.el.classList.remove('pending');
       s.phase = k <= i ? 'done' : null;
     });
-    if (procSec.classList.contains('show')) procSec.classList.remove('anim');
-    var maxPulse = 0;
-    steps.forEach(function (s, k) { if (k <= i && s.pulse) maxPulse = s.pulse; });
-    flow.classList.toggle('counting', maxPulse > 0);
-    flow.classList.toggle('final', finalIdx >= 0 && t >= starts[finalIdx] + FINAL_DELAY);
-    flow.classList.remove('emph');
-    flow.classList.remove('pulse');
-    fcnum.textContent = maxPulse || 1;
+    allProcs.forEach(function (b) { if (b.classList.contains('show')) b.classList.remove('anim'); });
+    allFlows.forEach(function (f) {
+      var maxPulse = 0;
+      steps.forEach(function (s, k) { if (k <= i && s.pulse && flowOf(s.el) === f) maxPulse = s.pulse; });
+      f.classList.toggle('counting', maxPulse > 0);
+      var fin = finals.filter(function (x) { return x.flow === f; })[0];
+      f.classList.toggle('final', !!fin && t >= starts[fin.i] + FINAL_DELAY);
+      f.classList.remove('emph');
+      f.classList.remove('pulse');
+      setFcount(f, maxPulse || 1);
+    });
     askSig = ''; setAsk(); driveNpRepo();
     setRepoDone(finalIdx >= 0 && t >= starts[finalIdx] + FINAL_DELAY);
     shown = i;
@@ -1421,7 +1466,7 @@ ol.sllist li{margin-bottom:2px;}
   function reveal(i) {
     var s = steps[i];
     s.el.classList.add('show', 'anim');
-    if (s.pulse) pulseFlow(s.pulse);
+    if (s.pulse) pulseFlow(s.el, s.pulse);
     if (s.spot) { s.phase = null; }
     shown = i; userScrolled = false;
     if (s.el.dataset.scrollrun) { runIdx = i; runFrom = log.scrollTop; runTo = maxScroll(); userScrolled = false; }
