@@ -1,0 +1,1694 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>エージェント検索 自動デモ｜IT部門の日報から見つける生産ライン立ち上げのトラブル兆候</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Roboto+Mono:wght@400;500&display=swap');
+:root{
+  --k:1;                          /* 再生速度に応じたアニメーションの倍率（1/速度） */
+  --bg:#f5f6f8; --surface:#fff; --border:#e2e5ea; --border-strong:#cdd3db;
+  --text:#1d2430; --muted:#697586;
+  --accent:#2f6df6; --accent-dark:#2255d0; --accent-soft:#eaf1ff;
+  --ok:#17845a; --ok-soft:#e6f6ee; --warn:#9a6200; --warn-soft:#fdf3e2;
+  --err:#c0392f; --err-soft:#fdecea;
+  --radius:10px; --shadow:0 1px 2px rgba(16,24,40,.05),0 4px 16px rgba(16,24,40,.06);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'BIZ UDPGothic','BIZ UDPゴシック','Noto Sans JP','Hiragino Sans',system-ui,-apple-system,sans-serif;
+  font-size:14px;line-height:1.7;-webkit-font-smoothing:antialiased;
+  padding:18px 16px 28px;
+}
+.app{max-width:1240px;margin:0 auto;}
+
+/* ---------- ヘッダー ---------- */
+.topbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px;}
+.logo{flex:none;height:40px;width:auto;display:block;}
+.vr{flex:none;width:1px;height:22px;background:var(--border-strong);}
+.brand{font-size:16px;font-weight:700;}
+.brand span{color:var(--muted);font-weight:500;margin-left:8px;font-size:13px;}
+.badge{margin-left:auto;font-size:11px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:3px 10px;white-space:nowrap;}
+
+/* ---------- ステージ ---------- */
+.stage{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+.viewport{position:relative;overflow:hidden;display:flex;flex-direction:column;
+  height:clamp(560px, calc(100vh - 160px), 1040px);}
+.log{order:1;flex:1 1 auto;min-height:0;overflow-y:auto;overflow-anchor:none;padding:18px 20px 24px;scroll-behavior:smooth;}
+/* 入力バー（画面下に固定） */
+.bottombar{order:2;flex:none;position:relative;z-index:3;border-top:1px solid var(--border);
+  background:var(--surface);padding:14px 20px 16px;}
+.bottombar .blk{display:block;margin-bottom:0;}
+.bottombar .steplabel{display:none;}
+.viewport.split .bottombar{padding-right:396px;}
+.log::-webkit-scrollbar{width:10px;}
+.log::-webkit-scrollbar-thumb{background:#d8dde4;border-radius:6px;border:3px solid var(--surface);}
+
+.blk{display:none;margin-bottom:16px;}
+.blk.show{display:block;}
+.blk.anim{animation:rise calc(.45s * var(--k)) cubic-bezier(.2,.8,.3,1) both;}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.blk.pending .prompt,.blk.pending .card,.blk.pending .rstatus{opacity:0;}
+
+.steplabel{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:3px 10px;margin-bottom:8px;}
+.card{border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;background:var(--surface);transition:opacity .35s ease;}
+.card.tint{background:#fafbfc;}
+
+/* プロンプト */
+.prompt{display:flex;gap:12px;align-items:center;border:1px solid var(--border-strong);border-radius:var(--radius);padding:14px 16px;background:#fff;transition:opacity .35s ease;}
+.prompt .ico{flex:none;width:30px;height:30px;border-radius:8px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;}
+.prompt p{flex:1;min-width:0;margin:0;font-size:16px;font-weight:700;line-height:1.65;}
+.prompt p.ph{color:#9AA3AE;font-weight:400;}
+
+/* リポジトリ */
+.repos{display:flex;flex-wrap:wrap;gap:8px;}
+.repo{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:700;background:var(--surface);border:1px solid var(--border-strong);border-radius:999px;padding:8px 16px;}
+.repo svg{color:var(--accent);}
+.repo .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);}
+
+/* ---------- 質問バブル（右揃え） ---------- */
+.qask{display:flex;justify-content:flex-end;margin:2px 0 14px;opacity:0;transition:opacity .38s ease;}
+.qask.on{opacity:1;}
+.qask-t{max-width:76%;background:#eaf1ff;border:1px solid #c3d8fb;border-radius:16px 16px 5px 16px;
+  padding:12px 18px;font-size:17px;font-weight:700;line-height:1.6;color:var(--text);
+  box-shadow:0 3px 10px rgba(47,109,246,.10);
+  transform:translateY(6px);transition:transform .38s cubic-bezier(.2,.8,.3,1);}
+.qask.on .qask-t{transform:none;}
+
+/* ---------- 検索対象のリポジトリ（1行表示） ---------- */
+.rstatus{display:flex;align-items:center;gap:9px;font-size:13.5px;color:var(--muted);transition:opacity .35s ease;}
+.rstatus b{color:var(--text);}
+.rstatus .sp{width:13px;height:13px;border-radius:50%;flex:none;
+  border:2px solid rgba(47,109,246,.25);border-top-color:var(--accent);animation:rspin calc(.8s * var(--k)) linear infinite;}
+@keyframes rspin{to{transform:rotate(360deg)}}
+.rstatus .ck{display:none;width:15px;height:15px;flex:none;color:var(--ok);}
+.rstatus .m2{display:none;}
+.rstatus.done .sp{display:none;}
+.rstatus.done .ck{display:flex;}
+.rstatus.done .m1{display:none;}
+.rstatus.done .m2{display:inline;}
+
+/* ---------- 再生速度 ---------- */
+.spd{display:flex;gap:5px;flex:none;}
+.spd button{border:1px solid var(--border-strong);background:var(--surface);color:var(--muted);
+  font-family:inherit;font-size:11.5px;font-weight:700;border-radius:999px;padding:4px 10px;cursor:pointer;
+  transition:background-color .15s ease,color .15s ease,border-color .15s ease;}
+.spd button:hover{background:var(--bg);color:var(--text);}
+.spd button.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+/* ---------- 検索プロセス（フロー＋検索カード） ---------- */
+.proc{display:grid;grid-template-columns:300px 1fr;gap:18px;align-items:start;}
+.searches > *{display:none;}
+.searches > *.show{display:block;}
+.searches > *.anim{animation:rise calc(.35s * var(--k)) cubic-bezier(.2,.8,.3,1) both;}
+.scard{border:1px solid var(--border);border-radius:8px;padding:9px 12px;margin-bottom:7px;background:var(--surface);}
+.blkhead{display:flex;align-items:center;gap:10px;margin-bottom:5px;}
+.blkhead .t{font-size:13px;font-weight:700;}
+.hit{margin-left:auto;font-size:11.5px;font-weight:700;color:var(--accent-dark);background:var(--accent-soft);border-radius:999px;padding:1px 9px;white-space:nowrap;}
+.q{display:block;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;font-weight:500;line-height:1.6;
+  color:var(--text);background:#e6ecf5;border:1px solid #b9c5d6;border-radius:6px;padding:6px 9px;margin-bottom:6px;overflow-x:auto;white-space:pre;}
+.q .op{color:var(--accent-dark);font-weight:700;}
+.scard{box-shadow:0 1px 2px rgba(16,24,40,.04);}
+.notes{margin:0;padding:0;list-style:none;}
+.notes li{position:relative;padding-left:15px;margin-bottom:2px;color:var(--muted);font-size:12px;line-height:1.6;}
+.notes li::before{content:'→';position:absolute;left:0;color:var(--border-strong);}
+.notes li:last-child{margin-bottom:0;}
+.notes b{color:var(--text);}
+.notes li.turn{color:var(--text);background:var(--warn-soft);border-left:3px solid var(--warn);border-radius:0 6px 6px 0;padding:5px 9px 5px 10px;margin-top:6px;}
+.notes li.turn::before{content:none;}
+.notes li.turn em{font-style:normal;font-weight:700;color:var(--warn);}
+.done{display:flex;gap:10px;align-items:flex-start;background:var(--ok-soft);border:1px solid #bfe3d2;border-radius:8px;padding:12px 14px;margin-top:2px;}
+.done svg{flex:none;color:var(--ok);margin-top:2px;}
+.done p{margin:0;font-size:13px;}
+.done b{color:var(--ok);}
+
+/* ---------- 処理フロー図 ---------- */
+.flowwrap{position:sticky;top:0;display:flex;justify-content:center;}
+.flow{position:relative;width:280px;height:348px;}
+.flowsvg{position:absolute;left:0;top:0;width:280px;height:348px;overflow:visible;}
+.fb{position:absolute;left:56px;width:220px;border:1px solid #b9c5d6;background:#e6ecf5;border-radius:8px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 12px;
+  font-size:15px;font-weight:700;color:var(--text);transition:border-color .3s ease,color .3s ease,background-color .3s ease;}
+.f1{top:0;height:44px;} .f2{top:68px;height:44px;} .f3{top:136px;height:44px;} .f4{top:204px;height:58px;}
+.f5{top:296px;height:52px;background:var(--accent);border-color:var(--accent);color:#fff;font-size:16px;}
+.f4sub{display:block;font-size:11.5px;font-weight:400;color:var(--muted);margin-top:2px;}
+.ar{position:absolute;left:155px;width:22px;height:22px;color:#94b5f6;}
+.a1{top:46px;} .a2{top:114px;} .a3{top:182px;} .ya{top:266px;color:var(--accent);}
+.nolabel{position:absolute;left:-3px;top:238px;width:38px;text-align:center;font-size:12px;font-weight:700;color:var(--warn);}
+.yeslabel{position:absolute;left:186px;top:270px;font-size:12px;font-weight:700;color:var(--accent-dark);opacity:0;}
+.nopath{stroke-dasharray:600;stroke-dashoffset:0;}
+
+.fcount{position:absolute;left:0;top:40px;width:52px;text-align:center;font-size:11px;font-weight:700;color:var(--accent-dark);background:var(--accent-soft);border-radius:999px;padding:2px 0;opacity:0;transition:opacity .3s ease;}
+.flow.counting .fcount{opacity:1;}
+
+.blk.anim .fb,.blk.anim .ar,.blk.anim .f4sub,.blk.anim .nolabel,.blk.anim .nohead{animation:fin calc(.42s * var(--k)) ease both;}
+@keyframes fin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.blk.anim .f1{animation-delay:calc(.14s * var(--k))}
+.blk.anim .a1{animation-delay:calc(.40s * var(--k))}
+.blk.anim .f2{animation-delay:calc(.66s * var(--k))}
+.blk.anim .a2{animation-delay:calc(.92s * var(--k))}
+.blk.anim .f3{animation-delay:calc(1.18s * var(--k))}
+.blk.anim .a3{animation-delay:calc(1.44s * var(--k))}
+.blk.anim .f4{animation-delay:calc(1.70s * var(--k))}
+.blk.anim .f4sub{animation-delay:calc(2.06s * var(--k))}
+.blk.anim .nolabel{animation-delay:calc(2.40s * var(--k))}
+.blk.anim .nopath{animation:draw calc(1.05s * var(--k)) linear calc(2.50s * var(--k)) both;}
+@keyframes draw{from{stroke-dashoffset:600}to{stroke-dashoffset:0}}
+.blk.anim .nohead{animation-delay:calc(3.60s * var(--k))}
+.blk.anim .f5,.blk.anim .ya,.blk.anim .yeslabel{animation:none;}
+/* YES／回答する は検索完了まで出さない */
+.flow .ya,.flow .yeslabel,.flow .f5{opacity:0 !important;}
+.flow.final .ya,.flow.final .yeslabel,.flow.final .f5{opacity:1 !important;transition:opacity .4s ease;}
+/* 「回答する」を少し強調する */
+@keyframes popin{0%{transform:scale(.86)}62%{transform:scale(1.07)}100%{transform:scale(1)}}
+@keyframes glow{0%{box-shadow:0 0 0 0 rgba(47,109,246,.55)}70%{box-shadow:0 0 0 18px rgba(47,109,246,0)}100%{box-shadow:0 0 0 0 rgba(47,109,246,0)}}
+@keyframes ydrop{0%{transform:translateY(-6px)}100%{transform:translateY(0)}}
+.flow.emph .f5{animation:popin calc(.55s * var(--k)) cubic-bezier(.2,1.4,.4,1) both, glow calc(1.5s * var(--k)) ease-out calc(.3s * var(--k)) 2;}
+.flow.emph .ya{animation:ydrop calc(.5s * var(--k)) ease both;}
+/* 検索を繰り返すたびに光らせる */
+.flow.pulse .f2{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-dark);animation:ring calc(.9s * var(--k)) ease-out;}
+@keyframes ring{0%{box-shadow:0 0 0 0 rgba(47,109,246,.45)}100%{box-shadow:0 0 0 12px rgba(47,109,246,0)}}
+.flow.pulse .nopath{animation:draw calc(.8s * var(--k)) linear;}
+
+/* ---------- 回答 ---------- */
+.answer-head{display:flex;align-items:center;gap:10px;padding-bottom:10px;border-bottom:2px solid var(--text);margin-bottom:12px;}
+.answer-head h2{margin:0;font-size:19px;font-weight:700;}
+.answer-head .by{margin-left:auto;font-size:11.5px;color:var(--muted);}
+.lead{margin:0;font-size:15px;line-height:1.9;}
+
+
+h3.sec{font-size:15px;font-weight:700;margin:0 0 10px;padding-left:10px;border-left:4px solid var(--accent);line-height:1.4;}
+.tblwrap{overflow-x:auto;border:1px solid var(--border);border-radius:8px;}
+table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:560px;}
+th,td{border-bottom:1px solid var(--border);padding:7px 10px;text-align:left;vertical-align:top;}
+th{background:var(--bg);font-weight:700;white-space:nowrap;color:var(--muted);font-size:11.5px;}
+tr:last-child td{border-bottom:0;}
+td code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:var(--muted);}
+td .idx{font-weight:700;color:var(--accent-dark);}
+
+.docs{display:grid;grid-template-columns:1fr;gap:10px;}
+.docs{gap:18px;}
+.doc h4{margin:0 0 4px;font-size:13.5px;font-weight:700;}
+.doc p{margin:0 0 5px;font-size:13px;line-height:1.8;}
+.doc ul{margin:0;padding-left:22px;font-size:13px;line-height:1.8;list-style:disc;}
+.doc li{margin-bottom:3px;}
+.doc .key,.doc .cau{font-weight:700;color:var(--text);}
+.doc .key::after,.doc .cau::after{content:'：';}
+
+ol.flowlist{margin:10px 0 0;padding-left:20px;font-size:12.5px;line-height:1.75;}
+ol.flowlist li{margin-bottom:6px;}
+
+
+.imps{display:grid;grid-template-columns:1fr;gap:16px;}
+.imp h4{margin:0 0 4px;font-size:13.5px;font-weight:700;}
+.imp p{margin:0;font-size:13px;line-height:1.8;}
+
+ul.acts{margin:0;padding-left:18px;font-size:13px;}
+ul.acts li{margin-bottom:5px;}
+.ask{margin:10px 0 0;font-size:12.5px;color:var(--muted);background:var(--bg);border:1px dashed var(--border-strong);border-radius:8px;padding:9px 12px;}
+
+
+/* ---------- 成果物（報告書）とプレビューパネル ---------- */
+.sldesc{margin:0 0 10px;font-size:15px;line-height:1.9;}
+ol.sllist{margin:0 0 12px;padding-left:22px;font-size:13.5px;line-height:1.85;}
+ol.sllist li{margin-bottom:2px;}
+.slnote{margin:0;font-size:13px;line-height:1.85;color:var(--muted);}
+
+.dlcard{display:flex;align-items:center;gap:12px;border:1px solid var(--border-strong);border-radius:12px;background:#fff;padding:10px 12px;max-width:620px;box-shadow:0 1px 2px rgba(16,24,40,.05);}
+.dlico{flex:none;width:40px;height:40px;border-radius:10px;background:#cfe0f7;color:#1d4f96;display:flex;align-items:center;justify-content:center;}
+.dlmeta{flex:1;min-width:0;}
+.dlname{font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dlsub{font-size:11.5px;color:var(--muted);}
+.dlbtn{flex:none;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border-strong);border-radius:9px;background:#fff;color:var(--text);font-family:inherit;font-size:12.5px;font-weight:700;padding:7px 13px;cursor:default;}
+.dlbtn svg{color:var(--muted);}
+
+.preview{position:absolute;top:0;right:0;bottom:0;width:366px;z-index:4;display:flex;flex-direction:column;background:#fbfbfa;border-left:1px solid var(--border);box-shadow:-10px 0 28px rgba(16,24,40,.07);transform:translateX(103%);pointer-events:none;transition:transform .55s cubic-bezier(.2,.8,.3,1);}
+.preview.on{transform:none;pointer-events:auto;}
+.viewport.split .log{padding-right:386px;}
+.pvhead{flex:none;display:flex;align-items:center;gap:9px;padding:9px 11px;border-bottom:1px solid var(--border);background:#fff;}
+.pvhead .dlico{width:28px;height:28px;border-radius:8px;}
+.pvtitle{flex:1;min-width:0;}
+.pvtitle b{display:block;font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;}
+.pvtitle span{font-size:10.5px;color:var(--muted);}
+.pvicon{flex:none;width:26px;height:26px;border-radius:7px;border:1px solid var(--border);background:#fff;color:var(--muted);display:flex;align-items:center;justify-content:center;}
+.pvbody{flex:1;overflow-y:auto;padding:14px 14px 22px;display:flex;flex-direction:column;gap:12px;}
+.pvbody::-webkit-scrollbar{width:8px;}
+.pvbody::-webkit-scrollbar-thumb{background:#dfe3e9;border-radius:6px;border:2px solid #fbfbfa;}
+
+.sl{position:relative;flex:none;aspect-ratio:16/9;border:1px solid var(--border-strong);border-radius:7px;background:#fff;overflow:hidden;box-shadow:0 1px 3px rgba(16,24,40,.09);padding:10px 12px;}
+/* Word報告書のページは縦長で表示する */
+.sl.pg-doc{aspect-ratio:1/1.414;padding:13px 14px;}
+.sl.pg-doc h5{border-bottom-color:var(--text);}
+.sl .pg{position:absolute;right:6px;bottom:5px;font-size:7px;font-weight:700;color:#fff;background:rgba(29,36,48,.7);border-radius:5px;padding:2px 6px;letter-spacing:.03em;}
+.sl h5{margin:0 0 5px;font-size:9px;font-weight:700;line-height:1.35;padding-bottom:4px;border-bottom:1.5px solid var(--accent);}
+.sl p{margin:0;font-size:7px;line-height:1.5;color:#41506a;}
+.sl ul{margin:0;padding-left:8px;list-style:disc;}
+.sl li{margin:0 0 2px;font-size:7px;line-height:1.45;color:#41506a;}
+.sl .two{display:grid;grid-template-columns:1fr 1fr;gap:4px 7px;}
+.sl .chip{display:block;font-size:6.5px;font-weight:700;color:var(--accent-dark);background:var(--accent-soft);border-radius:4px;padding:1.5px 4px;margin-bottom:2px;}
+.sl table{width:100%;min-width:0;border-collapse:collapse;font-size:6.5px;}
+.sl th,.sl td{border-bottom:.5px solid var(--border);padding:1.5px 3px;white-space:nowrap;text-align:left;}
+.sl th{background:#f2f5f9;color:var(--muted);font-size:6px;font-weight:700;}
+.sl.cover{background:linear-gradient(135deg,#2c4372,#1b2a49);border-color:#1b2a49;display:flex;flex-direction:column;justify-content:center;padding:14px 16px;}
+.sl.cover .bar{width:32px;height:2.5px;background:var(--accent);margin-bottom:8px;}
+.sl.cover h5{border:0;padding:0;color:#fff;font-size:11px;line-height:1.45;margin-bottom:6px;}
+.sl.cover p{color:#bcccec;font-size:7px;}
+
+@media (max-width:900px){
+  .preview{left:0;right:0;top:auto;height:250px;width:auto;border-left:0;border-top:1px solid var(--border);box-shadow:0 -10px 26px rgba(16,24,40,.09);transform:translateY(104%);}
+  .viewport.split .log{padding-right:20px;padding-bottom:268px;}
+  .pvbody{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:start;}
+}
+
+/* 関連ファイル（回答の右段） */
+.ansgrid{display:grid;grid-template-columns:1fr;gap:0;align-items:start;}
+.ansgrid.withfiles{grid-template-columns:minmax(0,1fr) 330px;gap:26px;}
+.anscol{min-width:0;}
+.rfcol{display:none;min-width:0;border-left:1px solid var(--border);padding-left:18px;}
+.ansgrid.withfiles .rfcol{display:block;}
+.rfhead{display:flex;align-items:center;gap:7px;padding-bottom:8px;margin-bottom:4px;border-bottom:1px solid var(--border);color:var(--muted);}
+.rfhead svg{flex:none;color:var(--accent-dark);}
+.rfhead b{font-size:12.5px;font-weight:700;color:var(--text);}
+.rfhead span{font-size:10.5px;}
+.rfitem{display:flex;gap:9px;padding:10px 6px;border-bottom:1px solid var(--border);}
+.rfitem:last-child{border-bottom:0;}
+.rfitem.cur{background:#fdeeee;border-radius:8px;border-bottom-color:transparent;}
+.rfck{flex:none;width:13px;height:13px;margin-top:3px;border:1.5px solid var(--border-strong);border-radius:3px;background:#fff;position:relative;}
+.rfck.on{background:var(--accent);border-color:var(--accent);}
+.rfck.on::after{content:'';position:absolute;left:3.4px;top:.6px;width:3px;height:6px;border:solid #fff;border-width:0 1.6px 1.6px 0;transform:rotate(45deg);}
+.rftxt{flex:1;min-width:0;}
+.rfname{font-size:12px;font-weight:700;color:var(--accent-dark);line-height:1.55;}
+.rfpv{display:inline-block;margin-left:6px;font-size:8.5px;font-weight:700;color:#fff;background:#8a93a2;border-radius:4px;padding:1px 5px;vertical-align:1.5px;}
+.rfsnip{font-size:10.5px;color:var(--muted);line-height:1.6;margin-top:3px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.rfsrc{color:#7d879a;}
+
+/* ---------- 検索カード内の件数分布 ---------- */
+.dist{margin:7px 0 6px;border:1px solid var(--border);border-radius:7px;background:#fbfcfd;padding:9px 10px 7px;}
+.dist .dh{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:7px;}
+.dist .dlgd{display:flex;gap:12px;font-size:10.5px;color:var(--muted);margin-bottom:6px;}
+.dist .dlgd i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;vertical-align:0px;}
+.dgrid{display:grid;grid-template-columns:104px repeat(9,minmax(0,1fr));gap:0 3px;align-items:center;min-width:390px;}
+.dscroll{overflow-x:auto;}
+.drow{font-size:10.5px;color:var(--muted);white-space:nowrap;padding-right:6px;}
+.dcell{height:20px;display:flex;align-items:center;justify-content:center;gap:2px;border-radius:3px;}
+.dcell.on{background:rgba(105,117,134,.09);}
+.dmk{width:7px;height:7px;border-radius:50%;}
+.dyr{font-size:9.5px;color:#94a0ae;text-align:center;font-variant-numeric:tabular-nums;padding-top:3px;}
+.dcut{grid-column:5 / span 1;position:relative;height:0;}
+.dcut i{position:absolute;right:-2px;top:-49px;width:2px;height:49px;
+  background:repeating-linear-gradient(#c0392f 0 3px,transparent 3px 6px);}
+.dnote{margin-top:6px;font-size:10.5px;color:#c0392f;}
+
+/* ---------- 拡大表示（スポットライト） ---------- */
+.spot{position:absolute;inset:0;z-index:5;pointer-events:none;display:flex;align-items:center;justify-content:center;padding:28px;}
+.spot.ans{align-items:stretch;padding:20px;}
+.spot-in.is-ans{max-width:1040px;height:100%;}
+.big-ans{height:100%;overflow:hidden;padding:20px 26px;}
+.ansroll{will-change:transform;}
+.ansroll .blk{display:block !important;margin-bottom:18px;animation:none !important;opacity:1 !important;transform:none !important;}
+.ansroll .steplabel{display:none;}
+.ansroll .answer-head h2{font-size:23px;}
+.ansroll .lead{font-size:18px;line-height:1.95;}
+.ansroll h3.sec{font-size:18px;margin-bottom:12px;}
+.ansroll table{font-size:14px;}
+.ansroll th,.ansroll td{padding:9px 12px;}
+.ansroll .doc h4{font-size:15px;}
+.ansroll .docs{gap:22px;}
+.ansroll .doc p,.ansroll .doc ul{font-size:14.5px;}
+.ansroll ol.flowlist{font-size:14px;}
+.ansroll .imp h4{font-size:15px;}
+.ansroll .imp p{font-size:14.5px;}
+.ansroll .imps{gap:20px;}
+.ansroll ul.acts{font-size:15px;}
+.ansroll .ask{font-size:13.5px;}
+.spot-bg{position:absolute;inset:0;background:rgba(29,36,48,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);opacity:0;transition:opacity .32s ease;}
+.spot.on .spot-bg{opacity:1;}
+.spot-in{position:relative;width:100%;max-width:900px;transform-origin:50% 50%;opacity:0;will-change:transform,opacity;}
+.big{background:#fff;border-radius:14px;box-shadow:0 20px 50px rgba(16,24,40,.35);padding:26px 30px;}
+.big-bar{display:flex;align-items:center;gap:16px;border:2px solid var(--border-strong);border-radius:14px;padding:16px 16px 16px 20px;transition:border-color .25s ease,box-shadow .25s ease;}
+.big.focus .big-bar{border-color:var(--accent);box-shadow:0 0 0 4px rgba(47,109,246,.16);}
+.big-bar .ico{flex:none;color:var(--accent);display:flex;}
+.big-q{flex:1;min-width:0;font-size:25px;font-weight:700;line-height:1.55;}
+.sendbtn{flex:none;display:flex;align-items:center;gap:7px;border:0;border-radius:9px;background:var(--accent);color:#fff;
+  font-family:inherit;font-size:14px;font-weight:700;letter-spacing:.06em;padding:10px 18px;cursor:default;
+  transition:transform .12s ease,background-color .12s ease,box-shadow .12s ease;box-shadow:0 2px 6px rgba(47,109,246,.32);}
+.sendbtn.pressed{transform:scale(.93);background:var(--accent-dark);box-shadow:0 0 0 rgba(47,109,246,0);}
+.big-cap{font-size:15px;font-weight:700;color:var(--accent-dark);margin-bottom:16px;padding-left:12px;border-left:4px solid var(--accent);}
+.big-repos{display:flex;flex-direction:column;gap:10px;}
+.big-repo{display:flex;align-items:center;justify-content:center;gap:12px;font-size:22px;font-weight:700;background:var(--accent-soft);border:1px solid #bed3fb;border-radius:999px;padding:14px 20px;}
+.big-repo .dot{width:10px;height:10px;border-radius:50%;background:var(--ok);}
+.big-repo svg{color:var(--accent);}
+
+/* ---------- プレイヤー ---------- */
+.player{display:flex;align-items:center;gap:12px;border-top:1px solid var(--border);background:var(--surface);padding:10px 14px;}
+.pbtn{flex:none;width:36px;height:36px;border-radius:50%;border:0;cursor:pointer;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;transition:background .15s ease;}
+.pbtn:hover{background:var(--accent-dark);}
+.pbtn.ghost{background:transparent;color:var(--muted);border:1px solid var(--border);width:32px;height:32px;}
+.pbtn.ghost:hover{background:var(--bg);color:var(--text);}
+.pbtn:focus-visible{outline:2px solid var(--accent-dark);outline-offset:2px;}
+.track{position:relative;flex:1;height:26px;cursor:pointer;touch-action:none;}
+.rail{position:absolute;left:0;right:0;top:11px;height:4px;border-radius:2px;background:var(--border);}
+.fill{position:absolute;left:0;top:11px;height:4px;border-radius:2px;background:var(--accent);width:0;}
+.tick{position:absolute;top:8px;width:2px;height:10px;border-radius:1px;background:#fff;box-shadow:0 0 0 1px var(--border);}
+.knob{position:absolute;top:6px;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:#fff;border:2px solid var(--accent);box-shadow:0 1px 3px rgba(16,24,40,.2);left:0;}
+.meta{display:flex;align-items:center;gap:10px;flex:none;}
+.chap{font-size:12px;font-weight:700;white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis;}
+.time{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.foot{margin-top:9px;font-size:11.5px;color:var(--muted);}
+
+@media (max-width:860px){
+  .proc{grid-template-columns:1fr;gap:14px;}
+  .flowwrap{position:static;}
+}
+@media (max-width:720px){
+  body{padding:12px 10px 24px;font-size:13.5px;}
+  .logo{height:30px;}
+  .vr{height:18px;}
+  .topbar{gap:10px;}
+  .viewport{height:calc(100vh - 190px);}
+  .log{padding:14px 13px 20px;}
+  .bottombar{padding:11px 13px 13px;}
+  .qask-t{font-size:15px;padding:10px 14px;max-width:88%;}
+  .spd button{font-size:11px;padding:3px 8px;}
+  .spot{padding:14px;align-items:flex-start;padding-top:60px;}
+  .big{padding:16px;border-radius:12px;}
+  .big-q{font-size:17px;gap:10px;}
+  .big-q .ico{width:28px;height:28px;}
+  .big-cap{font-size:13px;margin-bottom:12px;}
+  .big-repo{font-size:15px;padding:11px 16px;}
+  .chap{display:none;}
+  .player{gap:9px;padding:9px 10px;}
+}
+@media (max-width:1040px){
+  .ansgrid.withfiles{grid-template-columns:minmax(0,1fr);gap:0;}
+  .ansgrid.withfiles .rfcol{border-left:0;border-top:1px solid var(--border);padding-left:0;padding-top:12px;margin-top:16px;}
+}
+@media (prefers-reduced-motion: reduce){
+  .blk.anim,.blk.anim *{animation:none !important;opacity:1 !important;transform:none !important;}
+  .blk.anim .nopath{stroke-dashoffset:0 !important;}
+  .log{scroll-behavior:auto;}
+}
+
+/* ===== ROUND 1（日報 Step 0）追加分 ===== */
+.roundtag{display:inline-flex;align-items:center;gap:7px;margin:0 0 10px;font-size:11px;font-weight:700;
+  letter-spacing:.04em;color:#fff;background:var(--accent);border-radius:20px;padding:3px 12px;}
+.roundtag.r2{background:#33476a;}
+.rexc{display:inline-block;margin-left:6px;font-size:11px;color:var(--muted);background:#f1f3f6;border-radius:20px;padding:2px 9px;vertical-align:1px;}
+.nprows{margin:9px 0 2px;border:1px solid var(--border);border-radius:7px;overflow:hidden;background:#fff;}
+.nprow{display:grid;grid-template-columns:172px minmax(0,1fr) 74px;gap:10px;align-items:center;
+  padding:7px 10px;border-bottom:1px solid var(--border);font-size:11.5px;line-height:1.5;}
+.nprow:last-child{border-bottom:0;}
+.nprow .npl{font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.nprow .npx{color:var(--muted);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.nprow .npt{justify-self:end;font-size:10px;font-weight:700;border-radius:20px;padding:2px 8px;
+  color:#8a93a2;background:#f1f3f6;white-space:nowrap;}
+.nprow.mid .npt{color:var(--warn);background:#fdf3e2;}
+.nprow.hit{background:#fff7e6;}
+.nprow.hit .npl{color:#7a4e00;}
+.nprow.hit .npx{color:#4a3a1c;font-weight:600;}
+.nprow.hit .npt{color:#fff;background:var(--warn);}
+.npfound{margin:10px 0 0;border-left:3px solid var(--warn);background:#fffaf0;border-radius:0 7px 7px 0;
+  padding:10px 13px;font-size:12.5px;line-height:1.75;color:var(--text);}
+.npfound b{color:#7a4e00;}
+.npfound .npq{display:block;margin:5px 0 0;font-size:13px;font-weight:700;}
+.handoff{display:flex;align-items:center;gap:11px;margin:2px 0 4px;padding:12px 15px;
+  border:1px dashed var(--border-strong);border-radius:9px;background:#f7f9fc;font-size:12.5px;line-height:1.7;color:var(--muted);}
+.handoff b{color:var(--text);}
+.handoff .hoar{flex:none;color:var(--accent);}
+.scard.show .nprow{animation:rise calc(.4s * var(--k)) cubic-bezier(.2,.8,.3,1) both;
+  animation-delay:calc(var(--i) * .15s * var(--k));}
+.scard.show .npfound{animation:rise calc(.45s * var(--k)) cubic-bezier(.2,.8,.3,1) both;
+  animation-delay:calc(1.8s * var(--k));}
+th .small,td .small{display:inline-block;font-size:10.5px;font-weight:400;color:var(--muted);}
+.nphl{background:#fff3d6;border-radius:3px;padding:1px 3px;}
+.nphl2{background:#ffe9e4;border-radius:3px;padding:1px 3px;}
+@media (max-width:860px){
+  .nprow{grid-template-columns:118px minmax(0,1fr);row-gap:3px;align-items:start;}
+  .nprow .npl{white-space:normal;}
+  .nprow .npx{white-space:normal;text-overflow:clip;}
+  .nprow .npt{grid-column:2;justify-self:start;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <img class="logo" src="data:image/png;base64,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" alt="Neuron Enterprise Search">
+    <span class="vr" aria-hidden="true"></span>
+    <div class="brand">エージェント検索 <span>｜ 自動デモ</span></div>
+    <div class="badge">イメージデモ</div>
+  </div>
+
+  <div class="stage">
+    <div class="viewport" id="vp">
+
+      <div class="bottombar">
+        <section class="blk show">
+          <div class="prompt">
+            <span class="ico" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg></span>
+            <p>昨日（9月28日）の情報システム部のメンバー20名の日報の中から、マネージャーとして確認したほうがよさそうな記載を見つけて、理由とあわせて挙げてください。</p>
+            <button class="sendbtn" id="promptSend" type="button" tabindex="-1" aria-hidden="true">検索<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M12 5l7 7-7 7"/></svg></button>
+          </div>
+        </section>
+      </div>
+
+
+      <div id="log" class="log">
+
+        <section class="blk" data-dur="6" data-label="プロンプト①（日報）" data-spot="q" data-hold="2600" data-ask="ask" data-setq="昨日（9月28日）の情報システム部のメンバー20名の日報の中から、マネージャーとして確認したほうがよさそうな記載を見つけて、理由とあわせて挙げてください。">
+          <div class="roundtag">ROUND 1　朝いちばん　昨日の日報を見る</div>
+        </section>
+
+        <div class="qask" id="ask"><div class="qask-t" id="askT"></div></div>
+
+        <section class="blk" data-dur="4" data-label="検索対象（日報）" data-spot="r1" data-hold="2200">
+          <div class="steplabel">01 ／ 検索対象</div>
+          <div class="rstatus" id="rstat1">
+            <span class="sp" aria-hidden="true"></span>
+            <span class="ck" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+            <span><b>SharePoint Online</b>（情報システム部サイト ＞ 日報）<span class="m1">を対象に検索しています…</span><span class="m2">を対象に検索しました</span><span class="rexc">日報の保存先は部門サイトのみ</span></span>
+          </div>
+        </section>
+
+        <section class="blk" id="nproc" data-dur="4.4" data-label="日報を読む">
+          <div class="steplabel">02 ／ 検索プロセス</div>
+          <div class="card tint">
+            <h3 class="sec">必要な情報がそろうまで検索を繰り返す</h3>
+            <div class="proc">
+              <div class="flowwrap">
+                <div class="flow" id="flow1">
+                  <svg class="flowsvg" viewBox="0 0 280 348" fill="none" aria-hidden="true">
+                    <path class="nopath" d="M56 233 H16 V90 H44" stroke="#9a6200" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                    <polygon class="nohead" points="44,83.5 57,90 44,96.5" fill="#9a6200"/>
+                  </svg>
+                  <div class="fb f1">目的（質問内容）</div>
+                  <span class="ar a1"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 2h6v12h5l-8 8-8-8h5z"/></svg></span>
+                  <div class="fb f2">Neuronで検索を実行</div>
+                  <span class="fcount">検索 <b class="fcn">1</b></span>
+                  <span class="ar a2"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 2h6v12h5l-8 8-8-8h5z"/></svg></span>
+                  <div class="fb f3">検索結果を確認</div>
+                  <span class="ar a3"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 2h6v12h5l-8 8-8-8h5z"/></svg></span>
+                  <div class="fb f4">情報は足りたか？<span class="f4sub">足りなければ 検索に戻る</span></div>
+                  <span class="nolabel">NO</span>
+                  <span class="ar ya"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 2h6v12h5l-8 8-8-8h5z"/></svg></span>
+                  <span class="yeslabel">YES</span>
+                  <div class="fb f5">回答する</div>
+                </div>
+              </div>
+
+              <div class="searches">
+              <div class="scard" data-dur="8" data-label="検索 1／1（日報）" data-pulse="1" data-repodone="1">
+                <div class="blkhead"><span class="t">検索 1</span><span class="hit">20件ヒット</span></div>
+                <code class="q">日報 <b class="op">AND</b> 2026年9月28日
+＋ 文書種別を日報に絞り込み（情報システム部サイト）</code>
+                <ul class="notes">
+                  <li><b>SharePoint Online</b>　情報システム部サイト ＞ 日報 ＞ 2026年度 ＞ 09月 ＞ 20260928 … <b>20件</b>。生産システム係8名、基盤・ネットワーク係6名、ヘルプデスク・情報係6名。</li>
+                  <li>20件すべての<b>「気づき・課題／相談したいこと」欄</b>を読み、対象システム・時間帯・部署の記載を突き合わせる。</li>
+                  <li class="turn"><em>気づき</em>　単独では判断のつかない記載が複数あるため、<b>記載どうしの関連性で束ねて</b>評価する。</li>
+                </ul>
+                  <div class="nprow hit" style="--i:0"><span class="npl">山際（生産システム）</span><span class="npx">AL-2の実績連携でタイムアウト3件。再実行で通ったので様子見</span><span class="npt">要確認</span></div>
+                  <div class="nprow hit" style="--i:0.5"><span class="npl">平山（基盤・NW）</span><span class="npx">夜間バッチの完了が04:42。締切05:00まで余裕18分</span><span class="npt">要確認</span></div>
+                  <div class="nprow hit" style="--i:1"><span class="npl">大野（ヘルプデスク）</span><span class="npx">生産管理部から「前日実績が朝見えない」。今月3件目</span><span class="npt">要確認</span></div>
+                  <div class="nprow hit" style="--i:1.5"><span class="npl">内村（基盤・NW）</span><span class="npx">AL-2エリアのスイッチのポート使用率が朝方に上昇</span><span class="npt">要確認</span></div>
+                  <div class="nprow mid" style="--i:2"><span class="npl">篠原（生産システム）</span><span class="npx">AL-2端末3台の追加キッティング完了。量産時の必要台数は未連絡</span><span class="npt">参考</span></div>
+                  <div class="nprow mid" style="--i:2.5"><span class="npl">三村（生産システム）</span><span class="npx">図面管理システムの検索が遅い。再構築で改善したが原因未特定</span><span class="npt">参考</span></div>
+                  <div class="nprow" style="--i:3"><span class="npl">桑田（生産システム）</span><span class="npx">MES帳票レイアウトの修正依頼。次回リリースにまとめたい</span><span class="npt">—</span></div>
+                  <div class="nprow" style="--i:3.5"><span class="npl">北野（生産システム）</span><span class="npx">検査装置PCのウイルス対策ソフト更新5台</span><span class="npt">—</span></div>
+                  <div class="nprow" style="--i:4"><span class="npl">遠藤（生産システム）</span><span class="npx">第二工場の実績端末の入替検討。OS期限2027年</span><span class="npt">—</span></div>
+                  <div class="nprow" style="--i:4.5"><span class="npl">柴田（生産システム）</span><span class="npx">ベンダー月次定例。オプション機能の案内は当面不要と回答</span><span class="npt">—</span></div>
+                  <div class="nprow" style="--i:5"><span class="npl">宮本（生産システム）</span><span class="npx">IT資産台帳の棚卸。台帳と現物の差異7件</span><span class="npt">—</span></div>
+                  <div class="nprow" style="--i:5.5"><span class="npl">岩城（基盤・NW）</span><span class="npx">基幹システムのバックアップ正常終了。使用率62%</span><span class="npt">—</span></div>
+                  <div class="nprow" style="--i:6"><span class="npl">三宅（基盤・NW）</span><span class="npx">無線APのファーム更新計画。生産休止日に実施したい</span><span class="npt">—</span></div>
+                  <div class="nprow" style="--i:6.5"><span class="npl">長谷川（基盤・NW）</span><span class="npx">第二工場ファイルサーバーが使用率88%。棚卸を依頼</span><span class="npt">—</span></div>
+                  <div class="nprow" style="--i:7"><span class="npl">森（基盤・NW）</span><span class="npx">Windows Update の展開。適用率94%</span><span class="npt">—</span></div>
+                  <div class="nprow" style="--i:7.5"><span class="npl">川島（ヘルプデスク）</span><span class="npx">VPN接続の問い合わせ増。多くは証明書の期限切れ</span><span class="npt">—</span></div>
+                  <div class="nprow" style="--i:8"><span class="npl">小野寺（ヘルプデスク）</span><span class="npx">複合機ドライバ更新。印刷不良は解消</span><span class="npt">—</span></div>
+                  <div class="nprow" style="--i:8.5"><span class="npl">藤本（ヘルプデスク）</span><span class="npx">10月入社者のアカウント発行4名。派遣分は依頼待ち</span><span class="npt">—</span></div>
+                  <div class="nprow" style="--i:9"><span class="npl">高田（ヘルプデスク）</span><span class="npx">セキュリティ教育の受講率81%。製造部が低い</span><span class="npt">—</span></div>
+                  <div class="nprow" style="--i:9.5"><span class="npl">三枝（ヘルプデスク）</span><span class="npx">Teams会議室デバイスの不調。再設定で復旧</span><span class="npt">—</span></div>
+                <div class="npfound">
+                  <b>4名の日報に、同じ事象の断片と見られる記載を確認。</b>
+                  <span class="npq">「AL-2の実績連携でタイムアウト3件。再実行で通ったので様子見」／「夜間バッチの完了が04:42」／「前日実績が朝見えない、今月3件目」／「AL-2エリアのスイッチ使用率が朝方に上昇」</span>
+                </div>
+              </div>
+
+              <div data-dur="3" data-label="日報の確認完了" data-final="1">
+                <div class="done">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                  <p>メンバー <b>20名</b>の日報すべての「気づき・課題」欄を読み、確認すべき記載を特定しました。</p>
+                </div>
+              </div>
+            </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="blk" data-dur="7.5" data-label="日報の確認結果">
+          <div class="steplabel">03 ／ 回答</div>
+          <div class="answer-head">
+            <h2>昨日の日報の確認結果</h2>
+            <span class="by">エージェント検索の回答</span>
+          </div>
+          <p class="lead">20件の日報を確認しました。いずれも各担当で処置済みですが、<b>次の3点はマネージャーとして見ておいたほうがよい</b>と考えます。とくに1点目は、<b>4名の日報に分かれて書かれている記載</b>で、1件ずつでは判断がつかないものです。</p>
+          <div class="tblwrap">
+            <table style="table-layout:fixed">
+              <colgroup><col style="width:52px"><col style="width:150px"><col style="width:36%"><col></colgroup>
+              <thead><tr><th>優先</th><th>対象</th><th>記載内容</th><th>確認したほうがよい理由</th></tr></thead>
+              <tbody>
+                <tr><td class="idx">高</td><td><b>4名の日報にまたがる記載</b><br><span class="small">山際／平山／大野／内村</span></td><td>①AL-2の実績連携でタイムアウト3件（再実行で通ったので様子見）／②夜間バッチの完了が04:42、締切05:00まで余裕18分／③生産管理部から「前日実績が朝見えない」今月3件目／④AL-2エリアのスイッチ使用率が朝方に上昇</td><td>4名が別々に書いているが、<b>対象（AL-2ライン・実績連携）と時間帯（早朝）が一致</b>する。単独ではいずれも「様子見」で終わる粒度。AL-2は<b>11月2日に量産開始予定</b>で残り5週間</td></tr>
+                <tr><td class="idx">中</td><td>篠原<br><span class="small">生産システム係</span></td><td>AL-2端末3台の追加キッティング完了。量産時の必要台数は生産技術部から未連絡</td><td>端末が増えると実績連携の処理量とネットワークの前提が変わる。上の件と関係する可能性</td></tr>
+                <tr><td class="idx">中</td><td>三村<br><span class="small">生産システム係</span></td><td>図面管理システムの検索が遅い。インデックス再構築で改善したが原因未特定</td><td>登録数の増加に設計が追いついていない可能性。別件として追跡が必要</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="blk" data-dur="6.5" data-label="日報を開く" data-panel="nippo">
+          <ol class="flowlist">
+            <li><b>優先度「高」の1件目、山際さんの日報を開きました。</b>　気づき・課題欄に「再実行で通ったので様子見」「最近ちょくちょく出る」と書かれています。最後の一行は「<b>再実行で通っているのでインシデントは起票していない</b>」。つまり、この事象はインシデント記録にも残りません。</li>
+          </ol>
+        </section>
+
+        <section class="blk" data-dur="3.4" data-label="次の指示へ">
+          <div class="handoff">
+            <span class="hoar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M12 5l7 7-7 7"/></svg></span>
+            <span>この4件をきっかけに、<b>過去に同じ事象が起きていないか</b>を調べます。ここから2回目の指示に移ります。</span>
+          </div>
+        </section>
+
+
+        <section class="blk" data-dur="7.6" data-label="プロンプト②（本調査）" data-spot="q" data-hold="3400" data-ask="ask2" data-setq="AL-2ラインの実績連携のタイムアウトと夜間バッチの遅延が、複数のメンバーの日報に出ています。過去に同じような事象がなかったか調べて、原因として考えられるものと、11月の量産開始までに確認すべきことを整理してください。調べた内容はWordの報告書にしてください。">
+          <div class="roundtag r2">ROUND 2　過去の同種事象を調べる</div>
+        </section>
+
+        <div class="qask" id="ask2"><div class="qask-t" id="askT2"></div></div>
+
+        <section class="blk" data-dur="5.5" data-label="検索対象のリポジトリ" data-spot="r" data-hold="2800">
+          <div class="steplabel">04 ／ 検索対象</div>
+          <div class="rstatus" id="rstatusMain">
+            <span class="sp" aria-hidden="true"></span>
+            <span class="ck" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+            <span><b>3つのリポジトリ</b>（SharePoint Online・ファイルサーバー・Box）<span class="m1">を横断検索しています…</span><span class="m2">を横断検索しました</span></span>
+          </div>
+        </section>
+
+        <section class="blk" id="proc" data-dur="4.4" data-label="エージェントの処理フロー">
+          <div class="steplabel">05 ／ 検索プロセス</div>
+          <div class="card tint">
+            <h3 class="sec">必要な情報がそろうまで検索を繰り返す</h3>
+            <div class="proc">
+              <div class="flowwrap">
+                <div class="flow" id="flow">
+                  <svg class="flowsvg" viewBox="0 0 280 348" fill="none" aria-hidden="true">
+                    <path class="nopath" d="M56 233 H16 V90 H44" stroke="#9a6200" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                    <polygon class="nohead" points="44,83.5 57,90 44,96.5" fill="#9a6200"/>
+                  </svg>
+                  <div class="fb f1">目的（質問内容）</div>
+                  <span class="ar a1"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 2h6v12h5l-8 8-8-8h5z"/></svg></span>
+                  <div class="fb f2">Neuronで検索を実行</div>
+                  <span class="fcount">検索 <b id="fcnum">1</b></span>
+                  <span class="ar a2"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 2h6v12h5l-8 8-8-8h5z"/></svg></span>
+                  <div class="fb f3">検索結果を確認</div>
+                  <span class="ar a3"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 2h6v12h5l-8 8-8-8h5z"/></svg></span>
+                  <div class="fb f4">情報は足りたか？<span class="f4sub">足りなければ 検索に戻る</span></div>
+                  <span class="nolabel">NO</span>
+                  <span class="ar ya"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 2h6v12h5l-8 8-8-8h5z"/></svg></span>
+                  <span class="yeslabel">YES</span>
+                  <div class="fb f5">回答する</div>
+                </div>
+              </div>
+
+              <div class="searches">
+                <div class="scard" data-dur="1.6" data-label="検索 1／7" data-pulse="1">
+                  <div class="blkhead"><span class="t">検索 1</span><span class="hit">3件ヒット</span></div>
+                  <code class="q">(実績 <b class="op">OR</b> 連携 <b class="op">OR</b> 登録) <b class="op">AND</b> (反映されない <b class="op">OR</b> 抜け <b class="op">OR</b> 補正 <b class="op">OR</b> 遅れ <b class="op">OR</b> 通らない)
+＋ 文書種別を日報に絞り込み（情報システム部以外）</code>
+                  <ul class="notes">
+                    <li class="turn"><em>方針</em>　情報システム部の中だけでは事象の広がりが分からない。<b>他部署の日報</b>へ対象を広げる。</li>
+                    <li><b>ファイルサーバー</b>　製造部・生産技術部・生産管理部の同日の日報に、同じ事象と見られる記載を3件。</li>
+                    <li>製造部「始業直後に実績登録が通らず<b>3台分を紙の管理票で控えた</b>。情シスには連絡していない」／生産技術部「実績が3台分抜けたので<b>手入力で補正。今月4回目</b>」／生産管理部「朝礼時点で前日実績が未反映」。</li>
+                  </ul>
+                </div>
+
+                <div class="scard" data-dur="4.4" data-label="検索 2／7" data-pulse="2">
+                  <div class="blkhead"><span class="t">検索 2</span><span class="hit">分布を集計</span></div>
+                  <code class="q">分類・月別のファセット集計（rows:0／文書本体は取得しない）</code>
+                  <div class="dist">
+                    <div class="dh">実績反映の遅れに関する件数（月別）</div>
+                    <div class="dlgd"><span><i style="background:#C0690E"></i>ヘルプデスク問い合わせ</span><span><i style="background:#0E7FB8"></i>夜間バッチが05:00を超過した日数</span></div>
+                    <div class="dscroll"><div class="dgrid" style="grid-template-columns:150px repeat(6,minmax(0,1fr))">
+                      <div class="drow">ヘルプデスク問い合わせ</div><div class="dcell"></div><div class="dcell on"><span class="dmk" style="background:#C0690E"></span></div><div class="dcell on"><span class="dmk" style="background:#C0690E"></span><span class="dmk" style="background:#C0690E"></span></div><div class="dcell on"><span class="dmk" style="background:#C0690E"></span><span class="dmk" style="background:#C0690E"></span></div><div class="dcell on"><span class="dmk" style="background:#C0690E"></span><span class="dmk" style="background:#C0690E"></span><span class="dmk" style="background:#C0690E"></span><span class="dmk" style="background:#C0690E"></span></div><div class="dcell on"><span class="dmk" style="background:#C0690E"></span><span class="dmk" style="background:#C0690E"></span><span class="dmk" style="background:#C0690E"></span></div>
+                      <div class="drow">締切05:00の超過日数</div><div class="dcell"></div><div class="dcell"></div><div class="dcell"></div><div class="dcell"></div><div class="dcell"></div><div class="dcell on"><span class="dmk" style="background:#0E7FB8"></span><span class="dmk" style="background:#0E7FB8"></span><span class="dmk" style="background:#0E7FB8"></span></div>
+                      <div class="drow"></div><div class="dyr">4月</div><div class="dyr">5月</div><div class="dyr">6月</div><div class="dyr">7月</div><div class="dyr">8月</div><div class="dyr">9月</div>
+                      <div class="drow"></div><div class="dcut" style="grid-column:5 / span 1"><i></i></div>
+                    </div></div>
+                    <div class="dnote">▲ 2026年8月10日　AL-2ライン 試作流動開始（7月13日に工程実績収集端末を接続）</div>
+                  </div>
+                  <ul class="notes">
+                    <li>問い合わせは4月0件から<b>8月に4件へ増加</b>。段差の位置が<b>AL-2の試作流動開始と一致</b>する。</li>
+                    <li>9月は<b>夜間バッチが3日、日次締め（05:00）に間に合っていない</b>。問い合わせ3件と日付が一致する。</li>
+                    <li class="turn"><em>仮説</em>　単発の通信障害ではなく、<b>処理時間そのものが締切に迫っている</b>のではないか。過去に同種の事例がないか探す。</li>
+                  </ul>
+                </div>
+
+                <div class="scard" data-dur="1.6" data-label="検索 3／7" data-pulse="3">
+                  <div class="blkhead"><span class="t">検索 3</span><span class="hit">2件</span></div>
+                  <code class="q">(夜間バッチ <b class="op">OR</b> 実績連携) <b class="op">AND</b> (遅延 <b class="op">OR</b> 延伸 <b class="op">OR</b> タイムアウト)
+＋ 文書種別をインシデント記録に絞り込み</code>
+                  <ul class="notes">
+                    <li><b>INC-2021-038</b>（2021/4/12）：MC-2ライン稼働開始後、夜間バッチが<b>06:20まで延伸</b>。端末の送信タイムアウトが1日3〜8件、<b>早番の始業直後に集中</b>。<b>いまと同じ形</b>の事象。</li>
+                    <li>INC-2026-014（2026/8/24）：AL-2試作流動開始後に所要時間が45分増加。異常終了しないため<b>経過観察で終わっている</b>。</li>
+                    <li class="turn"><em>次の手</em>　2021年に何をして収まったのかを追う。</li>
+                  </ul>
+                </div>
+
+                <div class="scard" data-dur="1.8" data-label="検索 4／7" data-pulse="4">
+                  <div class="blkhead"><span class="t">検索 4</span><span class="hit">2件</span></div>
+                  <code class="q">JOB-PRD-NIGHT <b class="op">AND</b> (開始時刻 <b class="op">OR</b> スケジューラ <b class="op">OR</b> 設定値)
+＋ 文書種別を変更記録に絞り込み</code>
+                  <ul class="notes">
+                    <li><b>CHG-2021-012</b>（2021/4/26）：恒久対策。<b>ジョブ開始時刻を23:30→22:30に前倒し</b>、収集間隔を5分→2分に変更。以降タイムアウトはゼロ件。</li>
+                    <li><b>CHG-2024-003</b>（2024/6/8）：仮想基盤への更改。<b>ベンダー標準テンプレートへの再登録方式</b>で移行し、JOB-PRD-NIGHT は<b>開始23:30・収集間隔5分</b>で登録。「個別に変更されていた設定値の洗い出しは移行作業の範囲外とした」と明記。</li>
+                    <li class="turn"><em>発見</em>　<b>2021年の対策が、2024年の更改で元に戻っている。</b>確認は全ジョブの正常終了のみで、完了時刻の個別確認は行われていない。</li>
+                  </ul>
+                </div>
+
+                <div class="scard" data-dur="1.8" data-label="検索 5／7" data-pulse="5">
+                  <div class="blkhead"><span class="t">検索 5</span><span class="hit">3件</span></div>
+                  <code class="q">(ライン増設 <b class="op">OR</b> 立ち上げ) <b class="op">AND</b> (処理時間 <b class="op">OR</b> 試算 <b class="op">OR</b> ジョブ分割)
+＋ 文書種別を議事録・計画に絞り込み</code>
+                  <ul class="notes">
+                    <li><b>SYS-2021-05</b>（2021/5/20）に申し送り：「今後ラインを増設する際は、<b>夜間バッチの処理時間を事前に試算し</b>、必要に応じて開始時刻の前倒しまたはジョブ分割を検討すること」。ただし「<b>試算の方法および確認の手順は未整備</b>」との記載もある。</li>
+                    <li><b>PLN-IT-2026-004</b>（AL-2 IT対応計画）：対応項目5「実績連携＝既存の日次ジョブに追加」。<b>処理時間の試算欄が空欄</b>。</li>
+                    <li>SYS-2026-03（2026/6/17）：AL-2対応の進捗報告。端末・NW・アカウントの承認はあるが<b>処理時間の記載なし</b>。</li>
+                    <li class="turn"><em>裏取りへ</em>　申し送りは残っていたが参照されていない。<b>実際の設計と実測で裏を取る。</b></li>
+                  </ul>
+                </div>
+
+                <div class="scard" data-dur="1.8" data-label="検索 6／7" data-pulse="6">
+                  <div class="blkhead"><span class="t">検索 6</span><span class="hit">2件</span></div>
+                  <code class="q">(日次実績連携 <b class="op">OR</b> JOB-PRD-NIGHT) <b class="op">AND</b> (処理方式 <b class="op">OR</b> 所要時間 <b class="op">OR</b> 排他 <b class="op">OR</b> ロック)
+＋ 文書種別を設計書・運用ログに絞り込み</code>
+                  <ul class="notes">
+                    <li><b>SPEC-MES-003</b>（Box／ベンダー提供の運用設計書）7.2：<b>全ライン分を単一プロセスで逐次処理。同時実行数の上限は1。処理時間はレコード総件数に概ね比例</b>。7.4：ライン単位の分割は<b>オプション MES-OPT-J</b>で対応可能。</li>
+                    <li>同 9.2・9.3：<b>ジョブ実行中は実績テーブルに排他ロック</b>。長時間化すると<b>始業時刻と重なる</b>。端末の送信タイムアウトは30秒／再送3回。</li>
+                    <li><b>LOG-BATCH-2026</b>（ファイルサーバー）：平均所要時間は5月4時間34分 → 9月<b>5時間12分</b>。完了04:42で締切まで<b>18分</b>。9月のうち3日は超過。</li>
+                  </ul>
+                </div>
+
+                <div class="scard" data-dur="2" data-label="検索 7／7" data-pulse="7">
+                  <div class="blkhead"><span class="t">検索 7</span><span class="hit">3件</span></div>
+                  <code class="q">(原価締め <b class="op">OR</b> 棚卸 <b class="op">OR</b> 月次) <b class="op">AND</b> (夜間 <b class="op">OR</b> ジョブ <b class="op">OR</b> 重複)
+<b class="op">OR</b> (ライン <b class="op">AND</b> 増設 <b class="op">AND</b> 計画)</code>
+                  <ul class="notes">
+                    <li class="turn"><em>自己点検</em>　AL-2という条件に絞って調べたが、<b>同じ締切の逼迫は他の要因でも起こりうる</b>と判断し、条件を広げて再検索。</li>
+                    <li>実行ログより、9月に超過した3日（9/1・9/14・9/24）は<b>いずれも月次原価締めまたは棚卸の一括取込と重なった日</b>。月初は所要時間がさらに30分前後長い。</li>
+                    <li>保守報告書 MNT-CD-2026-H1 でも、<b>ベンダーから所要時間の漸増とジョブ分割オプションが提案されている</b>（柴田さんの日報では「当面は必要ない」と回答）。</li>
+                    <li>第二工場 SM-3ラインの増設計画（2027年）でも<b>同じ論点が再来する</b>。</li>
+                  </ul>
+                </div>
+
+                <div data-dur="4.8" data-label="検索完了" data-final="1">
+                  <div class="done">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                    <p>計7回の検索で、日報・インシデント記録・変更記録・議事録・計画書・運用設計書・実行ログの <b>7種類の文書群</b>を横断し、関連する <b>18件</b>の文書を特定しました。</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        <div class="ansgrid" id="ansGrid">
+        <div class="anscol">
+        <div id="answerWrap">
+
+        <section class="blk" data-dur="1.4" data-label="調査結果" data-panel="files" data-scroll="#answerWrap">
+          <div class="steplabel">06 ／ 回答</div>
+          <div class="answer-head">
+            <h2>調査結果</h2>
+            <span class="by">エージェント検索の回答</span>
+          </div>
+          <p class="lead">日報・インシデント記録・変更記録・議事録・計画書・運用設計書・ジョブ実行ログを横断検索した結果、ご指摘の事象は <b>単発の通信障害ではなく、夜間バッチの処理時間が締切に迫っていることの表れ</b>である可能性が高いことが分かりました。さらに、<b>2021年に同じ事象が起きており、そのときの対策が2024年のサーバ更改で元に戻っています</b>。</p>
+        </section>
+
+        <section class="blk" data-dur="0.45" data-label="1. 日報にまたがっていた記載" data-panel="files" data-noscroll="1">
+          <h3 class="sec">1. 日報にまたがっていた記載</h3>
+          <div class="tblwrap">
+            <table>
+              <thead><tr><th>部署</th><th>記載内容</th><th>文書</th></tr></thead>
+              <tbody>
+                <tr><td>情報システム部（山際）</td><td>AL-2の実績連携でタイムアウト3件。朝6:40前後。再実行で通った</td><td><code>NP-IT-2026-0928-01</code></td></tr>
+                <tr><td>情報システム部（平山）</td><td>夜間バッチ完了04:42。締切05:00まで18分</td><td><code>NP-IT-2026-0928-02</code></td></tr>
+                <tr><td>情報システム部（大野）</td><td>「前日実績が朝見えない」今月3件目</td><td><code>NP-IT-2026-0928-03</code></td></tr>
+                <tr><td>情報システム部（内村）</td><td>AL-2エリアのスイッチ使用率が朝方に上昇</td><td><code>NP-IT-2026-0928-04</code></td></tr>
+                <tr><td><b>製造部 組立課</b></td><td>始業直後に実績登録が通らず、<b>3台分を紙の管理票で控えた</b>。情シスには連絡していない</td><td><code>NP-2026-0928-01</code></td></tr>
+                <tr><td><b>生産技術部</b></td><td>朝の照会で<b>実績が3台分抜けていたので手入力で補正。今月4回目</b></td><td><code>NP-2026-0928-02</code></td></tr>
+                <tr><td><b>生産管理部</b></td><td>朝礼時点で前日実績が未反映。前々日の数字で説明した</td><td><code>NP-2026-0928-03</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <ol class="flowlist">
+            <li><b>同じ事象が、部署ごとにまったく違う言葉で書かれています。</b>　情報システム部では「タイムアウト」、製造部では「紙で控えた」、生産技術部では「手入力で補正」。<b>製造部は情報システム部に連絡していません。</b></li>
+          </ol>
+        </section>
+
+        <section class="blk" data-dur="0.45" data-label="2. 5年前に同じ事象" data-panel="files" data-noscroll="1">
+          <h3 class="sec">2. 5年前に同じ事象が起きており、対策も打たれている</h3>
+          <div class="docs">
+            <div class="doc">
+              <h4>INC-2021-038　インシデント記録（2021/4/12）</h4>
+              <p>MC-2ライン稼働開始後の夜間バッチ遅延および実績連携タイムアウト。</p>
+              <ul>
+                <li>ジョブ完了が<b>06:20まで延伸</b>し、日次締め（05:00）に間に合わなかった。</li>
+                <li>端末の送信タイムアウトが1日3〜8件。<b>早番の始業直後（06:15〜07:00）に集中</b>。</li>
+                <li><span class="key">原因</span>MC-2分のレコードが加わり、単一プロセスで逐次処理するジョブの所要時間が約50分増加した。</li>
+              </ul>
+            </div>
+            <div class="doc">
+              <h4>CHG-2021-012　変更記録（2021/4/26）</h4>
+              <p>恒久対策として実施された設定変更。</p>
+              <ul>
+                <li><b>ジョブ開始時刻を 23:30 → 22:30 に前倒し</b>。収集間隔を5分→2分に変更。</li>
+                <li>変更後2週間の完了時刻は03:05〜03:15で安定。端末のタイムアウトはゼロ件。</li>
+                <li><span class="key">備考</span>「本設定は、ライン構成が変わった場合に見直しが必要となる」と明記されている。</li>
+              </ul>
+            </div>
+          </div>
+          <ol class="flowlist">
+            <li><b>現在の症状は、2021年の事象とほぼ同じ形をしています。</b>　早朝のタイムアウト、生産管理部からの「実績が見えない」、バッチの延伸。当時は設定変更で収まりました。</li>
+          </ol>
+        </section>
+
+        <section class="blk" data-dur="0.45" data-label="3. 対策が元に戻っている" data-panel="files" data-noscroll="1">
+          <h3 class="sec">3. その対策が、いまは元に戻っている</h3>
+          <div class="docs">
+            <div class="doc">
+              <h4>CHG-2024-003　変更記録（2024/6/8）</h4>
+              <p>基幹システム基盤の仮想化更改に伴うジョブスケジューラの移行。</p>
+              <ul>
+                <li>移行は<b>ベンダー提供の標準テンプレートへの再登録方式</b>。登録ジョブ47本を移行。</li>
+                <li>JOB-PRD-NIGHT は<b>標準テンプレートの設定値（開始 23:30／収集間隔 5分）で登録</b>されている。</li>
+                <li><span class="cau">記録されていること</span>「個別に変更されていた設定値の洗い出しは、移行作業の範囲外とした」</li>
+                <li><span class="cau">記録されていないこと</span>開始時刻を23:30に戻した理由。意図的か引き継ぎ漏れかは判断できない。</li>
+              </ul>
+            </div>
+            <div class="doc">
+              <h4>移行後の確認範囲</h4>
+              <p>変更記録の「3. 変更後の確認」欄。</p>
+              <ul>
+                <li>確認は<b>全47ジョブの正常終了をもって完了</b>としている。</li>
+                <li><b>所要時間・完了時刻の個別確認は実施していない</b>と明記されている。</li>
+                <li><span class="key">結果</span>2021年に確保した60分の余裕が2024年6月に失われたが、<b>異常終了しないため警報は出ず、締切には間に合っていたため誰も気づかなかった</b>。</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="blk" data-dur="0.45" data-label="4. 立ち上げ時に検討されたか" data-panel="files" data-noscroll="1">
+          <h3 class="sec">4. AL-2の立ち上げでは検討されたか</h3>
+          <div class="tblwrap">
+            <table>
+              <thead><tr><th>文書</th><th>記載されていること</th></tr></thead>
+              <tbody>
+                <tr><th>SYS-2021-05<br><span class="small">2021/5/20</span></th><td>申し送り：「今後ラインを増設する際は、<b>夜間バッチの処理時間を事前に試算し</b>、必要に応じて開始時刻の前倒しまたはジョブ分割を検討すること」。ただし「<b>試算の方法および確認の手順は本議事録作成時点では未整備</b>」との記載もある</td></tr>
+                <tr><th>PLN-IT-2026-004<br><span class="small">2026/5/22</span></th><td>AL-2ライン IT対応計画。対応項目5「実績連携＝既存の日次ジョブに追加」。<b>処理時間の試算欄は空欄</b>。備考に「追加開発は発生しない」</td></tr>
+                <tr><th>SYS-2026-03<br><span class="small">2026/6/17</span></th><td>AL-2対応の進捗報告。端末・ネットワーク・アカウントは承認されているが、<b>処理時間に関する記載はない</b></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <ol class="flowlist">
+            <li><b>申し送りは残っていましたが、手順として整備されなかったため、5年後の立ち上げでは参照されませんでした。</b>　文書としては存在するのに、必要な場面でつながっていない状態です。</li>
+          </ol>
+        </section>
+
+        <section class="blk" data-dur="0.45" data-label="5. 運用設計書との照合" data-panel="files" data-noscroll="1">
+          <h3 class="sec">5. 運用設計書との照合（一次情報）</h3>
+          <div class="tblwrap">
+            <table>
+              <thead><tr><th>記載箇所</th><th>内容</th></tr></thead>
+              <tbody>
+                <tr><th>SPEC-MES-003 7.2</th><td>日次実績連携ジョブは<b>全ライン分を単一プロセスで逐次処理</b>。同時実行数の上限は1。<b>処理時間はレコード総件数に概ね比例</b></td></tr>
+                <tr><th>同 7.3</th><td>処理性能の目安は <b>1分あたり約1,400件</b></td></tr>
+                <tr><th>同 7.4</th><td>ライン単位のジョブ分割は<b>オプション機能 MES-OPT-J</b> で対応可能。導入には並列実行時のDB負荷評価が必要</td></tr>
+                <tr><th>同 9.2・9.3</th><td>端末の送信タイムアウトは30秒／再送3回。<b>ジョブ実行中は実績テーブルに排他ロック</b>がかかり、重なった端末送信はタイムアウトする。ロックは<b>ジョブ完了で解除</b></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <ol class="flowlist">
+            <li>山際さんの日報にある「朝6:40前後のタイムアウト」は、完了04:42とは重なりません。ただし<b>9月に05:00を超過した3日は、早番の始業（06:15）に近づいています</b>。<b>タイムアウトが出た日と、バッチが遅延した日の突合が必要です。</b></li>
+          </ol>
+        </section>
+
+        <section class="blk" data-dur="0.45" data-label="6. 数字で見た見通し" data-panel="files" data-noscroll="1">
+          <h3 class="sec">6. 数字で見た見通し</h3>
+          <div class="tblwrap">
+            <table>
+              <thead><tr><th>月</th><th>平均所要時間</th><th>完了時刻</th><th>締切05:00までの余裕</th><th>備考</th></tr></thead>
+              <tbody>
+                <tr><th>2026/5</th><td>4時間34分</td><td>04:04</td><td>56分</td><td></td></tr>
+                <tr><th>2026/7</th><td>4時間42分</td><td>04:12</td><td>48分</td><td>7/13 AL-2端末を接続</td></tr>
+                <tr><th>2026/8</th><td>4時間56分</td><td>04:26</td><td>34分</td><td>8/10 試作流動開始（日産20台）</td></tr>
+                <tr><th><b>2026/9</b></th><td><b>5時間12分</b></td><td><b>04:42</b></td><td><b>18分</b></td><td>日産42台。<b>うち3日は05:00を超過</b></td></tr>
+                <tr><th><b>量産時の試算</b></th><td><b>6時間22分</b></td><td><b>05:52</b></td><td><b>52分の超過</b></td><td>11/2 量産開始（日産120台）</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <ol class="flowlist">
+            <li>AL-2分の処理時間は現在 <b>約38分</b>（日産42台）。日産120台では <b>約108分</b>（+70分）となり、<b>日次締めを52分超過する計算</b>です。レコード件数は現在の1台あたり件数を用いた概算のため、生産計画の確定後に再試算が必要です。</li>
+            <li><b>開始時刻が22:30のままであれば、量産時でも完了は04:52</b> となり、締切内に収まる計算になります。2024年の更改で失われた60分が、そのまま効いています。</li>
+          </ol>
+        </section>
+
+        <section class="blk" data-dur="0.45" data-label="7. 原因候補" data-panel="files" data-noscroll="1">
+          <h3 class="sec">7. 原因候補（1つに断定できません）</h3>
+          <div class="tblwrap">
+            <table>
+              <thead><tr><th>#</th><th>原因候補</th><th>この候補を支持する根拠</th><th>この候補だけでは説明できないこと</th></tr></thead>
+              <tbody>
+                <tr><td class="idx">①</td><td>夜間バッチの処理時間が締切に迫っている（AL-2追加分。量産で+70分）</td><td>LOG-BATCH-2026／SPEC-MES-003 7.2／INC-2021-038</td><td>遅延していない日にもタイムアウトが出ていること</td></tr>
+                <tr><td class="idx">②</td><td>2021年の対策（開始22:30）が2024年の更改で23:30に戻っている</td><td>CHG-2021-012／CHG-2024-003</td><td>現象そのものではなく、余裕を削っている要因</td></tr>
+                <tr><td class="idx">③</td><td>実行中の排他ロックと早番の送信時間帯の重なり</td><td>SPEC-MES-003 9.2・9.3／NP-IT-2026-0928-01／INC-2021-038</td><td>バッチが定時に終わった日のタイムアウト</td></tr>
+                <tr><td class="idx">④</td><td>AL-2エリアのネットワーク（スイッチのポート使用率・帯域）</td><td>NP-IT-2026-0928-04／NW-2026-008</td><td>夜間バッチの所要時間の増加</td></tr>
+                <tr><td class="idx">＋</td><td>実績欠損が手入力補正で埋められ、<b>欠損そのものが記録に残らない</b></td><td>NP-2026-0928-01／-02／SPEC-MES-003 9.4</td><td>別系統（トレーサビリティ側の論点）</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <ol class="flowlist">
+            <li><b>①②③は排他ではなく、②が①を悪化させ、①が③を引き起こすという連鎖の可能性が高いと考えられます。</b>　切り分けは次の確認で行えます。</li>
+          </ol>
+        </section>
+
+        <section class="blk" data-dur="0.45" data-label="8. 確認チェックリスト" data-panel="files" data-noscroll="1">
+          <h3 class="sec">8. 確認チェックリスト</h3>
+          <div class="tblwrap">
+            <table>
+              <thead><tr><th>#</th><th>確認すること</th><th>確認方法</th><th>該当した場合</th><th>根拠</th></tr></thead>
+              <tbody>
+                <tr><td class="idx">1</td><td>ジョブ開始時刻が現在23:30か</td><td>ジョブ定義の実機確認</td><td>22:30への変更を検討（費用なし）</td><td><code>CHG-2024-003</code></td></tr>
+                <tr><td class="idx">2</td><td>AL-2分のレコード件数と所要時間の内訳</td><td>バッチログのライン別集計</td><td>①が実測で裏づけられる</td><td><code>LOG-BATCH-2026</code></td></tr>
+                <tr><td class="idx">3</td><td>日産120台でのレコード件数と所要時間の再試算</td><td>生産計画と実測値から算出</td><td>締切超過の時期が確定する</td><td><code>SPEC-MES-003</code></td></tr>
+                <tr><td class="idx">4</td><td>タイムアウト発生時刻とバッチ実行時間帯の突合</td><td>MES連携ログと端末ログの照合</td><td>③が確定。再送設定の見直し</td><td><code>SPEC-MES-003 9.2</code></td></tr>
+                <tr><td class="idx">5</td><td>AL-2エリアのスイッチのポート使用率・帯域</td><td>ネットワーク監視での実測</td><td>④。スイッチ増設の検討</td><td><code>NW-2026-008</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <ol class="flowlist">
+            <li>いずれも <b>試作流動中の現在なら実施できます</b>。とくに3は、量産移行判定の資料としてそのまま使えます。</li>
+          </ol>
+        </section>
+
+        <section class="blk" data-dur="0.45" data-label="9. 量産前だから選べる対策" data-panel="files" data-noscroll="1">
+          <h3 class="sec">9. 量産前だから選べる対策</h3>
+          <div class="tblwrap">
+            <table>
+              <thead><tr><th>対策</th><th>内容</th><th>費用・工期の目安</th><th>実施できるタイミング</th></tr></thead>
+              <tbody>
+                <tr><th>ジョブ開始時刻の前倒し</th><td>23:30 → 22:30（2021年の設定に戻す）。<b>量産時の完了見込みが05:52→04:52となり、締切内に収まる計算</b></td><td>費用なし。設定変更のみ</td><td>即時。遅番の生産終了（22:10）との調整が必要</td></tr>
+                <tr><th>ジョブ分割（MES-OPT-J）</th><td>ライン単位に分割して並列実行。将来のライン増設にも効く</td><td>ベンダー見積が必要。保守報告書でも提案されている</td><td><b>量産前なら現行ジョブと並行稼働で検証できる</b></td></tr>
+                <tr><th>端末の再送設定の見直し</th><td>タイムアウト30秒／再送3回の値を見直す</td><td>費用なし</td><td>即時</td></tr>
+                <tr><th>フロアスイッチの増設</th><td>AL-2エリアの帯域確保</td><td>約60万円（NW-2026-008）</td><td>量産前が望ましい</td></tr>
+                <tr><th>実績欠損の記録化</th><td>手入力補正を記録に残す運用に変更</td><td>費用なし。運用ルールの追加</td><td>即時</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <ol class="flowlist">
+            <li>量産開始後は、バッチが締切を超えた時点で<b>生産管理システムの日次締めと原価計算が毎日ずれます</b>。いま打てば設定変更だけで済む可能性があり、<b>費用対効果の判断が変わる局面</b>といえます。実施の可否および優先順位のご判断は、情報システム部および関係部門でお願いします。</li>
+          </ol>
+        </section>
+
+        <section class="blk" data-dur="2.8" data-label="10. 今回わからなかったこと" data-panel="files" data-noscroll="1">
+          <h3 class="sec">10. 今回わからなかったこと／次のアクション候補</h3>
+          <div class="imps">
+            <div class="imp">
+              <h4>(1) CHG-2024-003 で開始時刻が変わった理由が記録にない</h4>
+              <p>意図的な変更か引き継ぎ漏れかは、記載内容からは判断できません。「個別設定の洗い出しは範囲外」との記載があることから<b>引き継がれなかった可能性は高い</b>と考えられますが、当時の担当者への確認が必要です。</p>
+            </div>
+            <div class="imp">
+              <h4>(2) 量産時のレコード件数は生産計画の確定待ち</h4>
+              <p>試算は現在の1台あたり件数を用いた概算です。検査項目が量産で変わる場合は再試算が必要です。</p>
+            </div>
+            <div class="imp">
+              <h4>(3) MES-OPT-J の費用と工期は未確認</h4>
+              <p>中日電計システムズへの照会が必要です。なお柴田さんの日報に、<b>9月28日の定例でオプション機能の案内を受け「当面は必要ない」と回答した</b>との記載があります。</p>
+            </div>
+          </div>
+          <ul class="acts">
+            <li>チェックリストの5項目を、量産移行判定（10月）までに実施する</li>
+            <li>CHG-2024-003 の担当者に、開始時刻の変更が意図的だったかを確認する</li>
+            <li>中日電計システムズに MES-OPT-J の見積を依頼する</li>
+            <li>SYS-2021-05 の申し送りどおり、処理時間の試算手順を整備する（第二工場 SM-3 の増設計画でも同じ論点が再来する）</li>
+          </ul>
+          <p class="ask"><b>さらに調べますか？</b>　「タイムアウトが出た日とバッチ完了時刻を突合する」「2024年の更改で設定が戻った他のジョブがないか確認する」「他の夜間ジョブでも同じ余裕不足が起きていないか調べる」などをご指示ください。</p>
+        </section>
+        </div><!-- /#answerWrap -->
+
+        <div data-dur="14" data-label="回答を読む" data-panel="files" data-scrollrun="1" data-slow="1"></div>
+
+        <div data-dur="2.2" data-label="10. 今回わからなかったこと" data-panel="files"></div>
+
+        <section class="blk" data-dur="4.8" data-label="報告書の説明" data-panel="files">
+          <p class="sldesc">調査結果を <b>全6ページ・11章の報告書</b> にまとめました。10月の量産移行判定にそのまま提出できる構成にしています。</p>
+          <ol class="sllist">
+            <li>調査の背景と目的</li>
+            <li>調査方法 － 横断した7種類の文書群</li>
+            <li>調査結果の要約</li>
+            <li>日報にまたがっていた記載</li>
+            <li>2021年の同種事象と対策</li>
+            <li>2024年の設定変更の経緯</li>
+            <li>運用設計との照合と処理時間の推移</li>
+            <li>原因候補（4系統＋別系統1）</li>
+            <li>確認チェックリスト（5項目）</li>
+            <li>対策案の比較</li>
+            <li>確認できなかった事項／参照文書一覧（18件）</li>
+          </ol>
+          <p class="slnote">原因の断定は行わず、確認結果を書き込めば量産移行判定の資料になる構成です。参照した18件は文書番号・日付・表題を一覧にして巻末に添付しています。</p>
+          <p class="slnote">※ Skills の組み込みによる個別開発、またはお使いの生成AIツールから Neuron を呼び出す MCPサーバー（有償オプション）でのご提供も可能です。</p>
+        </section>
+
+        <section class="blk" data-dur="3.4" data-label="報告書をダウンロード" data-panel="files">
+          <div class="dlcard">
+            <div class="dlico"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h5"/><path d="M8.5 13h1.2l1 3.4 1-3.4h1.3l-1.6 5.4H9.9z"/></svg></div>
+            <div class="dlmeta">
+              <div class="dlname">AL-2ライン実績連携_夜間バッチ遅延_調査報告書.docx</div>
+              <div class="dlsub">Word文書 ・ 6 ページ ・ 0.4 MB</div>
+            </div>
+            <span class="dlbtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg>ダウンロード</span>
+          </div>
+        </section>
+
+        <div data-dur="6.5" data-label="報告書のプレビュー" data-panel="slides" data-pscroll="1"></div>
+
+        <div data-dur="4" data-label="関連ファイル" data-panel="files" data-scroll="#answerWrap"></div>
+
+        </div><!-- /.anscol -->
+
+        <aside class="rfcol" id="rfCol">
+          <div class="rfhead">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-7.5L10.6 4.6A2 2 0 0 0 9.2 4H4a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1z"/></svg>
+            <b>関連ファイル</b><span>回答候補のファイル一覧 ・ 10 件</span>
+          </div>
+          <div class="rfitem cur"><span class="rfck on"></span><div class="rftxt"><div class="rfname">インシデント記録票　INC-2021-038<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">情報システム部 様式IT-11／ 2021-04-12</span>　MC-2ライン稼働開始以降、日次実績連携ジョブの完了時刻が段階的に遅延。4月12日は06:20に完了した。</div></div></div>
+          <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">変更記録票　CHG-2021-012<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">情報システム部 様式IT-12／ 2021-04-26</span>　ジョブ開始時刻を23:30から22:30に変更（1時間前倒し）。収集間隔を5分から2分に変更。</div></div></div>
+          <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">変更記録票　CHG-2024-003<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">情報システム部 様式IT-12／ 2024-06-08</span>　夜間バッチ群は標準テンプレートの設定値で登録している。個別に変更されていた設定値の洗い出しは移行作業の範囲外とした。</div></div></div>
+          <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">SEIWA-MES 運用設計書（抜粋）　SPEC-MES-003<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">中日電計システムズ／ 第3.2版</span>　本ジョブは、登録されている全ラインの実績レコードを単一プロセスで逐次処理する。同時実行数の上限は1である。</div></div></div>
+          <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">日次実績連携ジョブ実行ログ　LOG-BATCH-2026<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">システム運用／ Excel 107行＋月別サマリ</span>　9月平均5時間12分・完了04:42。9/1・9/14・9/24は05:00を超過。</div></div></div>
+          <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">IT運用検討会 議事録　SYS-2021-05<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">情報システム部／ 2021-05-20</span>　今後ラインを増設する際は、夜間バッチの処理時間を事前に試算し、必要に応じて開始時刻の前倒しまたはジョブ分割を検討すること。</div></div></div>
+          <div class="rfitem"><span class="rfck"></span><div class="rftxt"><div class="rfname">AL-2ライン量産立ち上げ IT対応計画　PLN-IT-2026-004<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">情報システム部／ 2026-05-22</span>　対応項目5「実績連携＝既存の日次ジョブに追加」。処理時間の試算欄は空欄。</div></div></div>
+          <div class="rfitem"><span class="rfck"></span><div class="rftxt"><div class="rfname">作業日報（製造部 組立課 第2係）　NP-2026-0928-01<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">本社工場 製造部 様式7／ 2026-09-28</span>　始業直後に実績登録が「送信できません」で止まり、3台分を紙の管理票に控えた。情報システム部には連絡していない。</div></div></div>
+          <div class="rfitem"><span class="rfck"></span><div class="rftxt"><div class="rfname">ヘルプデスク問い合わせ一覧　HD-2026<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">情報システム部／ Excel 72件</span>　実績反映の遅れに関する問い合わせは4月0件、8月4件、9月3件。</div></div></div>
+          <div class="rfitem"><span class="rfck"></span><div class="rftxt"><div class="rfname">AL-2エリア ネットワーク増強の検討メモ　NW-2026-008<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">情報システム部 基盤・NW係／ 2026-09-10</span>　朝6:30〜7:30にポート使用率が40%前後まで上昇。実績連携のタイムアウトとの関係は未確認。</div></div></div>
+        </aside>
+        </div>
+
+      </div><!-- /#log -->
+
+
+      <div class="spot" id="spot" aria-hidden="true"><div class="spot-bg"></div><div class="spot-in" id="spotIn"></div></div>
+
+      <aside class="preview" id="npPanel" aria-hidden="true">
+        <div class="pvhead">
+          <div class="dlico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h5"/><path d="M8.5 13h1.2l1 3.4 1-3.4h1.3l-1.6 5.4H9.9z"/></svg></div>
+          <div class="pvtitle">
+            <b>NP-IT-2026-0928-01_生産システム係_山際悠人.docx</b>
+            <span>Word文書 ・ 1 ページ</span>
+          </div>
+          <span class="pvicon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></span>
+        </div>
+        <div class="pvbody">
+          <div class="sl pg-doc">
+            <h5>情報システム部　日報</h5>
+            <p style="margin-bottom:4px">セイワ工機株式会社　情報システム部　様式IT-01</p>
+            <table>
+              <tbody>
+                <tr><th>日付</th><td>2026年9月28日（月）</td></tr>
+                <tr><th>所属</th><td>情報システム部　生産システム係</td></tr>
+                <tr><th>氏名</th><td>山際 悠人</td></tr>
+                <tr><th>保存先</th><td>SharePoint Online ／ 情報システム部サイト ＞ 日報</td></tr>
+              </tbody>
+            </table>
+            <h5 style="margin-top:7px">1. 本日の作業</h5>
+            <p>AL-2ライン 実績連携の監視（日次）／MES実績データの欠損チェックと再送処理／検査実績インタフェースの改修</p>
+            <h5 style="margin-top:7px;border-bottom-color:#c98a00">2. 気づき・課題／相談したいこと</h5>
+            <p class="nphl"><b>AL-2の実績連携でタイムアウトが3件出た。いずれも再実行で通ったので様子見としている。</b></p>
+            <p style="margin-top:3px" class="nphl"><b>最近ちょくちょく出るようになった気がする。先月はほとんど無かった。</b></p>
+            <p style="margin-top:3px">発生していたのは朝の6時40分前後。早番の立ち上げ直後の時間帯。</p>
+            <p style="margin-top:3px" class="nphl2">再実行で通っているので<b>インシデントは起票していない</b>。</p>
+            <h5 style="margin-top:7px">3. 明日の予定</h5>
+            <p>AL-2 実績連携の監視、検査実績インタフェースの単体テスト</p>
+            <span class="pg">Page 1 / 1</span>
+          </div>
+        </div>
+      </aside>
+
+      <aside class="preview" id="pvPanel" aria-hidden="true">
+        <div class="pvhead">
+          <div class="dlico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h5"/><path d="M8.5 13h1.2l1 3.4 1-3.4h1.3l-1.6 5.4H9.9z"/></svg></div>
+          <div class="pvtitle">
+            <b>AL-2ライン実績連携_夜間バッチ遅延_調査報告書.docx</b>
+            <span>Word文書 ・ 6 ページ</span>
+          </div>
+          <span class="pvicon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg></span>
+          <span class="pvicon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></span>
+        </div>
+        <div class="pvbody" id="pvBody">
+
+          <div class="sl pg-doc cover">
+            <div class="bar"></div>
+            <h5>AL-2ライン 実績連携<br>夜間バッチ遅延 調査報告書</h5>
+            <p>情報システム部 運用グループ ／ 文書番号 RPT-IT-2026-021</p>
+            <p>2026-09 ／ エージェント検索による自動作成</p>
+            <span class="pg">Page 1 / 6</span>
+          </div>
+
+          <div class="sl pg-doc">
+            <h5>1. 調査の背景と目的／2. 調査方法</h5>
+            <p>2026年9月28日の日報において、AL-2ラインの実績連携のタイムアウトおよび夜間バッチの遅延に関する記載が複数のメンバーから提起された。</p>
+            <ul>
+              <li>いずれも再実行・手入力補正で処置済みであり、インシデントは起票されていない</li>
+              <li>AL-2ラインは2026年11月2日に量産開始を予定している</li>
+              <li>本報告書は原因の断定を行わない</li>
+            </ul>
+            <table>
+              <tbody><tr><th>文書群</th><th>主な内容</th></tr>
+              <tr><td>日報</td><td>情報システム部20件／他部署6件</td></tr>
+              <tr><td>インシデント・変更記録</td><td>2021年・2024年・2026年</td></tr>
+              <tr><td>議事録・計画書</td><td>IT運用検討会／AL-2 IT対応計画</td></tr>
+              <tr><td>運用設計書・実行ログ</td><td>SPEC-MES-003／LOG-BATCH-2026</td></tr>
+            </tbody></table>
+            <span class="pg">Page 2 / 6</span>
+          </div>
+
+          <div class="sl pg-doc">
+            <h5>3. 調査結果の要約／4. 日報にまたがっていた記載</h5>
+            <ul>
+              <li>同一事象と見られる記載が<b>情報システム部4名＋他部署3部署</b>に分散</li>
+              <li>2021年に同種事象（INC-2021-038）。対策は<b>ジョブ開始時刻の前倒し</b></li>
+              <li>その設定が<b>2024年のサーバ更改で標準値に戻っている</b></li>
+              <li>AL-2の立ち上げ計画に<b>処理時間の試算がない</b></li>
+            </ul>
+            <table>
+              <tbody><tr><th>部署</th><th>記載</th></tr>
+              <tr><td>情シス（山際）</td><td>タイムアウト3件・様子見</td></tr>
+              <tr><td>情シス（平山）</td><td>完了04:42・余裕18分</td></tr>
+              <tr><td>製造部 組立課</td><td>紙の管理票で控えた</td></tr>
+              <tr><td>生産技術部</td><td>手入力で補正・今月4回目</td></tr>
+              <tr><td>生産管理部</td><td>朝礼時点で未反映</td></tr>
+            </tbody></table>
+            <span class="pg">Page 3 / 6</span>
+          </div>
+
+          <div class="sl pg-doc">
+            <h5>5. 2021年の同種事象と対策／6. 2024年の設定変更の経緯</h5>
+            <div class="two">
+              <div><span class="chip">INC-2021-038</span><p>MC-2立ち上げ後、完了06:20まで延伸。早朝にタイムアウト集中。</p></div>
+              <div><span class="chip">CHG-2021-012</span><p>開始時刻23:30→22:30。収集間隔5分→2分。以降タイムアウトゼロ。</p></div>
+              <div><span class="chip">CHG-2024-003</span><p>仮想基盤更改。標準テンプレートで再登録し開始23:30に。</p></div>
+              <div><span class="chip">確認範囲</span><p>全47ジョブの正常終了のみ。完了時刻の個別確認はなし。</p></div>
+            </div>
+            <p>SYS-2021-05 の申し送り「ライン増設時は処理時間を事前に試算する」は、手順が未整備のまま、PLN-IT-2026-004 では試算欄が空欄となっている。</p>
+            <span class="pg">Page 4 / 6</span>
+          </div>
+
+          <div class="sl pg-doc">
+            <h5>7. 運用設計との照合と処理時間の推移／8. 原因候補</h5>
+            <table>
+              <tbody><tr><th>月</th><th>所要</th><th>完了</th><th>余裕</th></tr>
+              <tr><td>2026/5</td><td>4:34</td><td>04:04</td><td>56分</td></tr>
+              <tr><td>2026/8</td><td>4:56</td><td>04:26</td><td>34分</td></tr>
+              <tr><td>2026/9</td><td>5:12</td><td>04:42</td><td>18分</td></tr>
+              <tr><td>量産試算</td><td>6:22</td><td>05:52</td><td>52分超過</td></tr>
+            </tbody></table>
+            <ul>
+              <li>①処理時間の締切逼迫　②2021年対策のデグレ　③排他ロックと始業の重なり　④ネットワーク　＋実績欠損が記録に残らない</li>
+            </ul>
+            <span class="pg">Page 5 / 6</span>
+          </div>
+
+          <div class="sl pg-doc">
+            <h5>9. 確認チェックリスト／10. 対策案の比較／11. 確認できなかった事項・参照文書</h5>
+            <ul>
+              <li>確認は5項目。いずれも試作流動中の現在に実施可能</li>
+              <li><b>開始時刻を22:30に戻せば、量産時の完了見込みは04:52</b>（費用なし）</li>
+              <li>ジョブ分割（MES-OPT-J）は量産前なら並行稼働で検証できる</li>
+              <li>CHG-2024-003 の変更理由、量産時のレコード件数、MES-OPT-J の費用は未確認</li>
+              <li>参照文書 18 件を文書番号・日付・表題で一覧化</li>
+            </ul>
+            <span class="pg">Page 6 / 6</span>
+          </div>
+
+        </div>
+      </aside>
+
+    </div><!-- /#vp -->
+
+    <div class="player">
+      <button class="pbtn" id="pp" type="button" aria-label="再生"></button>
+      <div class="track" id="track" role="slider" aria-label="再生位置" tabindex="0" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div class="rail"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+      </div>
+      <div class="meta">
+        <div class="spd" id="spd">
+          <button type="button" data-r="1" class="on">×1</button>
+          <button type="button" data-r="1.5">×1.5</button>
+          <button type="button" data-r="2">×2</button>
+        </div>
+        <span class="chap" id="chap"></span>
+        <span class="time"><span id="cur">0:00</span> / <span id="tot">0:00</span></span>
+        <button class="pbtn ghost" id="rst" type="button" aria-label="最初から再生">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <p class="foot">※ 企業名・ライン名・製品名・文書ID・型式・金額はすべて架空のデモ用データです。</p>
+</div>
+<script>
+(function () {
+  var log = document.getElementById('log');
+  var askEl = document.getElementById('ask'), askT = document.getElementById('askT');
+  var spdBox = document.getElementById('spd');
+  var promptP = document.querySelector('.bottombar .prompt p');
+  var QUERY_TEXT = promptP ? promptP.textContent : '';
+  var PLACEHOLDER = '質問を入力してください';
+  if (askT) askT.textContent = QUERY_TEXT;
+  var rstatus = document.getElementById('rstatusMain') || document.querySelector('.rstatus');
+  /* 再生速度（×1／×1.5／×2）— アニメーションは --k で追従 */
+  var rate = 1;
+  function ms(v) { return Math.max(1, Math.round(v / rate)); }
+  var pp = document.getElementById('pp'), rst = document.getElementById('rst');
+  var track = document.getElementById('track'), fill = document.getElementById('fill');
+  var knob = document.getElementById('knob'), ticks = document.getElementById('ticks');
+  var chap = document.getElementById('chap'), curEl = document.getElementById('cur'), totEl = document.getElementById('tot');
+  var spot = document.getElementById('spot'), spotIn = document.getElementById('spotIn');
+  var flow = document.getElementById('flow'), fcnum = document.getElementById('fcnum');
+  var procSec = document.getElementById('proc');
+  /* フロー図は ROUND ごとに1つ。ステップがどのカードに属するかで対応づける */
+  var allFlows = [].slice.call(document.querySelectorAll('.flow'));
+  var allProcs = [].slice.call(document.querySelectorAll('.blk')).filter(function (b) { return b.querySelector('.flow'); });
+  function flowOf(el) {
+    var card = el.closest ? el.closest('.card') : null;
+    var f = card ? card.querySelector('.flow') : null;
+    return f || flow;
+  }
+  function setFcount(f, n) { var b = f.querySelector('.fcount b'); if (b) b.textContent = n; }
+
+  var ICON_PLAY  = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+  var ICON_PAUSE = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+  var SPOT_IN = 340, SPOT_OUT = 620;
+
+  /* 拡大表示の中身 */
+  function esc(v) { return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  var SPOTS = {
+    q: function (txt) {
+      return '<div class="big" id="bigq"><div class="big-bar">' +
+        '<span class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg></span>' +
+        '<span class="big-q">' + esc(txt) + '</span>' +
+        '</div></div>';
+    },
+    r1: function () {
+      return '<div class="big"><div class="big-cap">メンバー20名の日報を横断検索</div><div class="big-repos">' +
+        '<span class="big-repo"><span class="dot"></span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11"/></svg>SharePoint Online</span>' +
+        '</div></div>';
+    },
+    r: function () {
+      return '<div class="big"><div class="big-cap">社内リポジトリを横断検索</div><div class="big-repos">' +
+        '<span class="big-repo"><span class="dot"></span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>ファイルサーバー</span>' +
+        '<span class="big-repo"><span class="dot"></span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>Box</span>' +
+        '<span class="big-repo"><span class="dot"></span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11"/></svg>SharePoint Online</span>' +
+        '</div></div>';
+    }
+  };
+  var SPOT_TARGET = { q: '.prompt', r: '.rstatus', r1: '.rstatus' };
+
+  /* ---- タイムライン ---- */
+  var nodes = [].slice.call(document.getElementById('vp').querySelectorAll('[data-dur]'));
+  var steps = nodes.map(function (el) {
+    return {
+      el: el, dur: parseFloat(el.dataset.dur || '4') * 1000, label: el.dataset.label || '',
+      spot: el.dataset.spot || null, hold: parseFloat(el.dataset.hold || '2600'),
+      pulse: el.dataset.pulse ? parseInt(el.dataset.pulse, 10) : 0,
+      final: el.dataset.final === '1', phase: null
+    };
+  });
+  var starts = [], total = 0;
+  steps.forEach(function (s) { starts.push(total); total += s.dur; });
+  /* 質問バブルが出る時刻（= プロンプトの拡大表示が閉じ、検索を押した約1秒後）。ラウンドごとに1つ */
+  var qSteps = [];
+  steps.forEach(function (s, i) {
+    if (s.spot !== 'q') return;
+    var bubble = document.getElementById(s.el.dataset.ask || 'ask');
+    var text = s.el.dataset.setq || QUERY_TEXT;
+    qSteps.push({ i: i, at: starts[i] + SPOT_IN + s.hold + SPOT_OUT + 450 + 1000, bubble: bubble, text: text });
+    if (bubble) { var tt = bubble.querySelector('.qask-t'); if (tt) tt.textContent = text; }
+  });
+  if (qSteps.length && promptP) { promptP.textContent = qSteps[0].text; }
+
+  function fmt(ms) { var s = Math.max(0, Math.round(ms / 1000)); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
+  totEl.textContent = fmt(total);
+  steps.forEach(function (s, i) {
+    if (!i) return;
+    var t = document.createElement('i'); t.className = 'tick';
+    t.style.left = (starts[i] / total * 100) + '%'; ticks.appendChild(t);
+  });
+
+  /* 回答セグメント（拡大してスクロール表示する範囲） */
+  var ansIdx = [];
+  steps.forEach(function (s, i) { if (s.el.dataset.ans === '1') ansIdx.push(i); });
+  var ansStart = ansIdx.length ? starts[ansIdx[0]] : Infinity;
+  var ansEnd = ansIdx.length ? starts[ansIdx[ansIdx.length - 1]] + steps[ansIdx[ansIdx.length - 1]].dur : Infinity;
+  var ANS_IN = 300, ANS_OUT = 600;
+
+  /* 右サイドパネル（関連ファイル／報告書プレビュー） */
+  var vp = document.getElementById('vp');
+  var ansGrid = document.getElementById('ansGrid');
+  var pvPanel = document.getElementById('pvPanel');
+  var pvBody = document.getElementById('pvBody');
+  var npPanel = document.getElementById('npPanel');
+  /* 現在のステップに紐づく右側表示（切り替えは少しだけ先読み） */
+  function panelAt(ms) {
+    var i = indexAt(ms);
+    if (i + 1 < steps.length && ms >= starts[i + 1] - 200) i += 1;
+    return { name: steps[i].el.dataset.panel || null, i: i };
+  }
+  function drivePanels(instant) {
+    var cur = panelAt(t);
+    var files = cur.name === 'files', slides = cur.name === 'slides', nip = cur.name === 'nippo';
+    if (ansGrid) ansGrid.classList.toggle('withfiles', files);
+    if (pvPanel && slides !== pvPanel.classList.contains('on')) {
+      if (instant) pvPanel.style.transition = 'none';
+      pvPanel.classList.toggle('on', slides);
+      pvPanel.setAttribute('aria-hidden', slides ? 'false' : 'true');
+      if (instant) { void pvPanel.offsetWidth; pvPanel.style.transition = ''; }
+    }
+    if (npPanel && nip !== npPanel.classList.contains('on')) {
+      if (instant) npPanel.style.transition = 'none';
+      npPanel.classList.toggle('on', nip);
+      npPanel.setAttribute('aria-hidden', nip ? 'false' : 'true');
+      if (instant) { void npPanel.offsetWidth; npPanel.style.transition = ''; }
+    }
+    if (pvBody) {
+      if (!slides) pvBody.scrollTop = 0;
+      else if (steps[cur.i].el.dataset.pscroll) {
+        var q = (t - starts[cur.i]) / steps[cur.i].dur;
+        q = Math.min(1, Math.max(0, (q - .12) / .7));
+        pvBody.scrollTop = Math.max(0, pvBody.scrollHeight - pvBody.clientHeight) * q;
+      }
+    }
+    if (vp) vp.classList.toggle('split', slides || nip);
+  }
+
+  /* 「検索完了」を見せてから「回答する」を点灯させるまでの間（ミリ秒） */
+  var FINAL_DELAY = 1500;
+  var finalIdx = -1;
+  var finals = [];
+  steps.forEach(function (s, i) { if (s.final) { finalIdx = i; finals.push({ i: i, flow: flowOf(s.el) }); } });
+  function setRepoDone(on) { if (rstatus) rstatus.classList.toggle('done', on); }
+  /* ROUND 1 の検索対象ステータス（日報検索が始まったら「検索しました」に） */
+  var rstat1 = document.getElementById('rstat1');
+  var npDoneIdx = -1;
+  steps.forEach(function (s, i) { if (s.el.dataset.repodone === '1') npDoneIdx = i; });
+  function driveNpRepo() {
+    if (npDoneIdx < 0 || !rstat1) return;
+    rstat1.classList.toggle('done', t >= starts[npDoneIdx] + 900);
+  }
+  function driveFinal() {
+    finals.forEach(function (f) {
+      var on = t >= starts[f.i] + FINAL_DELAY;
+      if (f.flow === flow) setRepoDone(on);
+      if (!f.flow || on === f.flow.classList.contains('final')) return;
+      f.flow.classList.toggle('final', on);
+      if (on) { f.flow.classList.remove('emph'); void f.flow.offsetWidth; f.flow.classList.add('emph'); }
+      else f.flow.classList.remove('emph');
+    });
+  }
+  var ansOpen = false, ansRoll = null, ansBox = null;
+
+  function openAns(instant) {
+    spot.classList.add('ans');
+    spotIn.className = 'spot-in is-ans';
+    spotIn.innerHTML = '<div class="big big-ans"><div class="ansroll">' +
+      document.getElementById('answerWrap').innerHTML + '</div></div>';
+    ansBox = spotIn.querySelector('.big-ans');
+    ansRoll = spotIn.querySelector('.ansroll');
+    spotIn.style.transform = 'none';
+    if (instant) { spotIn.style.transition = 'none'; spotIn.style.opacity = '1'; spot.classList.add('on'); }
+    else {
+      spotIn.style.transition = 'none'; spotIn.style.opacity = '0';
+      void spotIn.offsetWidth;
+      spotIn.style.transition = 'opacity ' + ms(ANS_IN) + 'ms ease';
+      spot.classList.add('on'); spotIn.style.opacity = '1';
+    }
+    ansOpen = true;
+  }
+  function closeAns(instant) {
+    if (!ansOpen) return;
+    if (instant) { spot.classList.remove('ans'); spotIn.className = 'spot-in'; clearSpot(); }
+    else {
+      spotIn.style.transition = 'opacity ' + ms(ANS_OUT) + 'ms ease';
+      spotIn.style.opacity = '0'; spot.classList.remove('on');
+      setTimeout(function () { if (!ansOpen) { spot.classList.remove('ans'); spotIn.className = 'spot-in'; clearSpot(); } }, ms(ANS_OUT));
+    }
+    ansOpen = false; ansRoll = null;
+  }
+  function driveAns(instant) {
+    if (t >= ansStart && t < ansEnd) {
+      if (!ansOpen) openAns(!!instant);
+      if (!ansRoll) return;
+      var span = (ansEnd - ansStart) - ANS_IN - ANS_OUT;
+      var p = (t - ansStart - ANS_IN) / span;
+      p = Math.min(1, Math.max(0, (p - .17) / .78));
+      var cs = getComputedStyle(ansBox);
+      var pad = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+      var over = Math.max(0, ansRoll.scrollHeight - (ansBox.clientHeight - pad) + 10);
+      ansRoll.style.transform = 'translateY(' + (-over * p) + 'px)';
+      if (t >= ansEnd - ANS_OUT) closeAns(false);
+    } else if (ansOpen) {
+      closeAns(true);
+    }
+  }
+
+  var t = 0, playing = false, shown = -1, raf = null, last = 0;
+  var userScrolled = false, scrollLock = 0;
+
+  function indexAt(ms) { var i = 0; for (var k = 0; k < steps.length; k++) if (ms >= starts[k]) i = k; return i; }
+
+  function paint() {
+    var r = total ? t / total : 0;
+    fill.style.width = (r * 100) + '%'; knob.style.left = (r * 100) + '%';
+    curEl.textContent = fmt(t); track.setAttribute('aria-valuenow', Math.round(r * 100));
+    chap.textContent = steps[indexAt(t)].label;
+  }
+
+  function clearSpot() {
+    spot.classList.remove('on');
+    spotIn.style.transition = 'none'; spotIn.style.transform = 'none'; spotIn.style.opacity = '0';
+    spotIn.innerHTML = '';
+  }
+
+  /* 質問バブルの表示／入力バーの文字 */
+  var ASK_AFTER_TAP = 1000;                 /* 「検索」を押してからバブルが出るまで */
+  var askSig = '';
+  function currentQ() {
+    if (!qSteps.length) return null;
+    var q = qSteps[0];
+    for (var k = 0; k < qSteps.length; k++) if (t >= starts[qSteps[k].i]) q = qSteps[k];
+    return q;
+  }
+  function setAsk() {
+    if (!qSteps.length) return;
+    var q = currentQ(), ph = t >= q.at, sig = '';
+    qSteps.forEach(function (x) { sig += (t >= x.at ? '1' : '0'); });
+    sig += '|' + q.i + (ph ? 'P' : 'T');
+    if (sig === askSig) return;
+    askSig = sig;
+    qSteps.forEach(function (x) { if (x.bubble) x.bubble.classList.toggle('on', t >= x.at); });
+    if (promptP) {
+      promptP.textContent = ph ? PLACEHOLDER : q.text;
+      promptP.classList.toggle('ph', ph);
+    }
+  }
+
+  function applyPhase(s, phase) {
+    var sec = s.el;
+    if (phase === 'in') {
+      spotIn.innerHTML = SPOTS[s.spot](s.el.dataset.setq || QUERY_TEXT);
+      sec.classList.add('pending');
+      spot.classList.add('on');
+      spotIn.style.transition = 'none';
+      spotIn.style.transform = 'scale(.94)'; spotIn.style.opacity = '0';
+      void spotIn.offsetWidth;
+      spotIn.style.transition = 'transform ' + ms(SPOT_IN) + 'ms cubic-bezier(.2,.85,.3,1), opacity ' + ms(SPOT_IN) + 'ms ease';
+      spotIn.style.transform = 'scale(1)'; spotIn.style.opacity = '1';
+      if (s.spot === 'q') setTimeout(function () {
+        var bq = document.getElementById('bigq'); if (bq) bq.classList.add('focus');
+      }, 260);
+    } else if (phase === 'tap') {
+      var btn = document.getElementById('promptSend');
+      if (btn) { btn.classList.add('pressed'); setTimeout(function () { btn.classList.remove('pressed'); }, 300); }
+    } else if (phase === 'ask') {
+      setAsk();
+    } else if (phase === 'out') {
+      var tgt = sec.querySelector(SPOT_TARGET[s.spot]) || document.querySelector(SPOT_TARGET[s.spot]);
+      if (!tgt) { spot.classList.remove('on'); sec.classList.remove('pending'); return; }
+      var r1 = spotIn.getBoundingClientRect(), r2 = tgt.getBoundingClientRect();
+      var sc = Math.min(r2.width / r1.width, r2.height / r1.height);
+      if (!isFinite(sc) || sc <= 0) sc = .25;
+      var dx = (r2.left + r2.width / 2) - (r1.left + r1.width / 2);
+      var dy = (r2.top + r2.height / 2) - (r1.top + r1.height / 2);
+      spotIn.style.transition = 'transform ' + ms(SPOT_OUT) + 'ms cubic-bezier(.4,0,.2,1), opacity ' + ms(SPOT_OUT) + 'ms ease';
+      spotIn.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(' + sc + ')';
+      spotIn.style.opacity = '0';
+      spot.classList.remove('on');
+      sec.classList.remove('pending');
+    } else if (phase === 'done') {
+      sec.classList.remove('pending');
+      clearSpot();
+    }
+  }
+
+  function pulseFlow(el, n) {
+    var f = flowOf(el);
+    if (!f) return;
+    setFcount(f, n);
+    f.classList.add('counting');
+    f.classList.remove('pulse'); void f.offsetWidth; f.classList.add('pulse');
+  }
+
+  function syncTo(i) {
+    closeAns(true); clearSpot();
+    steps.forEach(function (s, k) {
+      s.el.classList.remove('anim');
+      s.el.classList.toggle('show', k <= i);
+      s.el.classList.remove('pending');
+      s.phase = k <= i ? 'done' : null;
+    });
+    allProcs.forEach(function (b) { if (b.classList.contains('show')) b.classList.remove('anim'); });
+    allFlows.forEach(function (f) {
+      var maxPulse = 0;
+      steps.forEach(function (s, k) { if (k <= i && s.pulse && flowOf(s.el) === f) maxPulse = s.pulse; });
+      f.classList.toggle('counting', maxPulse > 0);
+      var fin = finals.filter(function (x) { return x.flow === f; })[0];
+      f.classList.toggle('final', !!fin && t >= starts[fin.i] + FINAL_DELAY);
+      f.classList.remove('emph');
+      f.classList.remove('pulse');
+      setFcount(f, maxPulse || 1);
+    });
+    askSig = ''; setAsk(); driveNpRepo();
+    setRepoDone(finalIdx >= 0 && t >= starts[finalIdx] + FINAL_DELAY);
+    shown = i;
+    runIdx = -1;
+    drivePanels(true);
+    placeScroll(i, false, true);
+    if (steps[i].el.dataset.scrollrun) {      /* 途中から再生してもスクロールが続くように */
+      runIdx = i; runFrom = answerTop(); runTo = maxScroll();
+    }
+  }
+
+  /* 指定ステップの表示位置（通常／回答の先頭へ／末尾まで一気に） */
+  var runIdx = -1, runFrom = 0, runTo = 0;
+  function maxScroll() { return Math.max(0, log.scrollHeight - log.clientHeight); }
+  function setScroll(v, smooth) {
+    v = Math.max(0, Math.min(v, maxScroll()));
+    scrollLock = Date.now() + 900;
+    if (smooth) log.scrollTo({ top: v, behavior: 'smooth' });
+    else { log.style.scrollBehavior = 'auto'; log.scrollTop = v; log.style.scrollBehavior = ''; }
+  }
+  /* スクロールの始点（回答の先頭） */
+  function answerTop() {
+    var aw = log.querySelector('#answerWrap');
+    return aw ? Math.max(0, contentTop(aw) - 12) : 0;
+  }
+  function runSpan(i) { return steps[i].dur * (steps[i].el.dataset.slow ? .85 : .5); }
+  function placeScroll(i, smooth, seek) {
+    var el = steps[i].el, d = el.dataset;
+    if (!log.contains(el)) return;            /* 入力バー内のステップはスクロール対象外 */
+    if (d.noscroll) {                         /* 回答本文：再生中は先頭のまま動かさない */
+      if (seek) setScroll(answerTop(), false);   /* 頭出し時は回答の先頭に合わせる */
+      return;
+    }
+    if (d.scroll) { var tg = log.querySelector(d.scroll); if (tg) { setScroll(contentTop(tg) - 12, smooth); return; } }
+    if (d.scrollrun) {                        /* 読み進め中：途中でも位置を合わせる */
+      var p = Math.min(1, Math.max(0, (t - starts[i]) / runSpan(i)));
+      var from = answerTop(), to = maxScroll();
+      setScroll(from + (to - from) * p, smooth);
+      return;
+    }
+    ensureVisible(el, smooth);
+  }
+
+  function reveal(i) {
+    var s = steps[i];
+    s.el.classList.add('show', 'anim');
+    if (s.pulse) pulseFlow(s.el, s.pulse);
+    if (s.spot) { s.phase = null; }
+    shown = i; userScrolled = false;
+    if (s.el.dataset.scrollrun) { runIdx = i; runFrom = log.scrollTop; runTo = maxScroll(); userScrolled = false; }
+    else placeScroll(i, true);
+  }
+
+  /* 末尾まで一気に送る */
+  function driveRun(i) {
+    if (i !== runIdx) return false;
+    var slow = !!steps[i].el.dataset.slow;
+    var p = (t - starts[i]) / runSpan(i);
+    p = Math.min(1, Math.max(0, p));
+    /* ゆっくり読ませる区間は、ほぼ等速（前後だけなめらかに） */
+    var e = slow ? (p < .12 ? (p * p) / .0288 * .12 : (p > .88 ? 1 - Math.pow(1 - p, 2) / .0288 * .12 : p))
+                 : (p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2);
+    scrollLock = Date.now() + 400;
+    log.style.scrollBehavior = 'auto';
+    log.scrollTop = runFrom + (Math.min(runTo, maxScroll()) - runFrom) * e;
+    log.style.scrollBehavior = '';
+    return true;
+  }
+
+  /* 要素のログ内での位置（スクロール座標）を求める */
+  function contentTop(el) {
+    return el.getBoundingClientRect().top - log.getBoundingClientRect().top + log.scrollTop;
+  }
+
+  /* 下からせり上がるプレビュー（スマホ）に隠れる高さ */
+  function bottomInset() {
+    var panel = (pvPanel && pvPanel.classList.contains('on')) ? pvPanel
+              : ((npPanel && npPanel.classList.contains('on')) ? npPanel : null);
+    if (!vp || !vp.classList.contains('split') || !panel) return 0;
+    var r = panel.getBoundingClientRect(), lr = log.getBoundingClientRect();
+    if (r.left > lr.left + 2) return 0;
+    return Math.max(0, Math.min(lr.height - 80, lr.bottom - r.top));
+  }
+
+  /* 新しく表示した要素が必ず画面に入るようにスクロールする */
+  function ensureVisible(el, smooth) {
+    if (!el) return;
+    var top = contentTop(el);
+    var h = el.offsetHeight, view = log.clientHeight - bottomInset(), cur = log.scrollTop;
+    var target = cur;
+    if (h >= view - 24) target = top - 10;                       // 画面より高い要素は上端に合わせる
+    else if (top + h > cur + view - 14) target = top + h - view + 18;  // 下がはみ出す → 下端を見せる
+    else if (top < cur + 10) target = top - 10;                  // 上がはみ出す → 上端を見せる
+    target = Math.max(0, Math.min(target, log.scrollHeight - log.clientHeight));
+    if (Math.abs(target - cur) < 2) return;
+    scrollLock = Date.now() + 900;
+    if (smooth) log.scrollTo({ top: target, behavior: 'smooth' });
+    else { log.style.scrollBehavior = 'auto'; log.scrollTop = target; log.style.scrollBehavior = ''; }
+  }
+
+  /* 現在のブロックが画面より高いときだけ、その中をゆっくり送る */
+  function autoScroll(i) {
+    if (userScrolled || Date.now() < scrollLock) return;
+    var el = steps[i].el;
+    if (!log.contains(el) || el.dataset.noscroll || el.dataset.scroll) return;
+    var top = contentTop(el) - 10;
+    var over = el.offsetHeight - (log.clientHeight - bottomInset()) + 24;
+    if (over <= 0) return;
+    var p = (t - starts[i]) / steps[i].dur;
+    p = Math.min(1, Math.max(0, (p - .15) / .7));
+    log.style.scrollBehavior = 'auto';
+    log.scrollTop = Math.max(0, top + over * p);
+    log.style.scrollBehavior = '';
+  }
+
+  log.addEventListener('scroll', function () { if (Date.now() > scrollLock) userScrolled = true; });
+
+  function driveSpot(i) {
+    var s = steps[i];
+    if (!s.spot) return;
+    var p = t - starts[i], ph;
+    var settled = SPOT_IN + s.hold + SPOT_OUT;
+    if (p < SPOT_IN) ph = 'in';
+    else if (p < SPOT_IN + s.hold) ph = 'hold';
+    else if (p < settled) ph = 'out';
+    else if (s.spot === 'q' && p < settled + 450) ph = 'done';
+    else if (s.spot === 'q' && p < settled + 450 + ASK_AFTER_TAP) ph = 'tap';
+    else if (s.spot === 'q') ph = 'ask';
+    else ph = 'done';
+    if (ph !== s.phase) { applyPhase(s, ph); s.phase = ph; }
+  }
+
+  function tick(now) {
+    if (!playing) return;
+    var dt = (now - last) * rate; last = now;
+    t = Math.min(total, t + dt);
+    var i = indexAt(t);
+    drivePanels(false);
+    var justRevealed = false;
+    if (i > shown) { for (var k = shown + 1; k <= i; k++) reveal(k); justRevealed = true; }
+    if (!driveRun(i) && !justRevealed) autoScroll(i);
+    driveSpot(i);
+    setAsk();
+    driveNpRepo();
+    driveFinal();
+    driveAns(false);
+    paint();
+    if (t >= total) { pause(true); return; }
+    raf = requestAnimationFrame(tick);
+  }
+
+  function play() {
+    if (t >= total) { t = 0; syncTo(0); steps[0].phase = null; }
+    playing = true; pp.innerHTML = ICON_PAUSE; pp.setAttribute('aria-label', '一時停止');
+    last = performance.now(); raf = requestAnimationFrame(tick);
+  }
+  function pause(ended) {
+    playing = false; cancelAnimationFrame(raf);
+    pp.innerHTML = ICON_PLAY; pp.setAttribute('aria-label', ended ? 'もう一度再生' : '再生');
+  }
+  function toggle() { playing ? pause() : play(); }
+
+  function seekTo(ratio) {
+    t = Math.min(total, Math.max(0, ratio * total));
+    syncTo(indexAt(t)); driveAns(true); paint();
+  }
+
+  /* 再生速度 */
+  if (spdBox) {
+    var spdBtns = [].slice.call(spdBox.querySelectorAll('button'));
+    spdBtns.forEach(function (b) {
+      b.addEventListener('click', function () {
+        rate = parseFloat(b.getAttribute('data-r')) || 1;
+        document.documentElement.style.setProperty('--k', (1 / rate).toFixed(3));
+        spdBtns.forEach(function (o) { o.classList.toggle('on', o === b); });
+      });
+    });
+  }
+
+  pp.addEventListener('click', toggle);
+  rst.addEventListener('click', function () { t = 0; syncTo(0); steps[0].phase = null; paint(); if (!playing) play(); });
+
+  var dragging = false;
+  function ratioFromEvent(e) {
+    var r = track.getBoundingClientRect();
+    return Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+  }
+  track.addEventListener('pointerdown', function (e) { dragging = true; track.setPointerCapture(e.pointerId); seekTo(ratioFromEvent(e)); });
+  track.addEventListener('pointermove', function (e) { if (dragging) seekTo(ratioFromEvent(e)); });
+  track.addEventListener('pointerup', function () { dragging = false; });
+  track.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight') { seekTo((t + 3000) / total); e.preventDefault(); }
+    if (e.key === 'ArrowLeft') { seekTo((t - 3000) / total); e.preventDefault(); }
+    if (e.key === ' ' || e.key === 'Enter') { toggle(); e.preventDefault(); }
+  });
+
+  syncTo(0); paint(); pp.innerHTML = ICON_PLAY;
+  steps[0].phase = null;
+
+  var started = false;
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        if (e.isIntersecting && document.visibilityState !== 'hidden') { if (!started) { started = true; play(); } }
+        else if (playing) pause();
+      });
+    }, { threshold: .25 }).observe(log);
+  } else { play(); }
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden' && playing) pause(); });
+})();
+</script>
+</body>
+</html>
