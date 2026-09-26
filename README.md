@@ -22,3 +22,6 @@ https://masaoy0730.github.io/ai-seminar-demo/neuron-agent-demo-safety.html
 図面検索
 https://masaoy0730.github.io/ai-seminar-demo/neuron-agent-demo-cad.html
 
+IT部門
+https://masaoy0730.github.io/ai-seminar-demo/neuron-agent-demo-it.html
+
