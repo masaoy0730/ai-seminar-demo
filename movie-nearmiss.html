@@ -68,25 +68,27 @@ video.clip{position:absolute;left:0;top:0;width:1920px;height:1080px;background:
   display:none;object-fit:cover;z-index:60;}
 video.clip.on{display:block;}
 #ctrl{position:fixed;left:0;right:0;bottom:0;height:64px;display:flex;align-items:center;
-  gap:14px;padding:0 20px;background:#0A1322;border-top:1px solid #2B3E5C;z-index:100;
+  gap:10px;padding:0 18px;background:#0A1322;border-top:1px solid #2B3E5C;z-index:100;
   font-family:'BIZ UDPGothic','Noto Sans CJK JP','Noto Sans JP',sans-serif;}
 #ctrl button{appearance:none;border:1px solid #2B3E5C;background:#18273F;color:#EAF1FB;
-  font-size:15px;font-weight:700;border-radius:8px;padding:9px 16px;cursor:pointer;
+  font-size:14px;font-weight:700;border-radius:8px;padding:9px 14px;cursor:pointer;
   font-family:inherit;white-space:nowrap;}
-#ctrl button:hover{background:#22345286;border-color:#2DD4BF;}
+#ctrl button:hover{border-color:#2DD4BF;}
 #ctrl button.act{background:#2DD4BF;color:#062A25;border-color:#2DD4BF;}
-#bar{position:relative;flex:1 1 auto;height:24px;cursor:pointer;display:flex;align-items:center;}
+#ctrl button.warn{border-color:#F0A83C;color:#F0A83C;background:#2A1F10;}
+#bar{position:relative;flex:1 1 auto;height:24px;cursor:pointer;display:flex;align-items:center;
+  min-width:120px;}
 #barBg{position:absolute;left:0;right:0;height:6px;border-radius:3px;background:#22344F;}
 #barFill{position:absolute;left:0;height:6px;border-radius:3px;background:#2DD4BF;width:0;}
 #barKnob{position:absolute;width:14px;height:14px;border-radius:50%;background:#2DD4BF;
   left:0;margin-left:-7px;box-shadow:0 0 0 3px rgba(45,212,191,.22);}
-#tm{color:#9DB2CE;font-size:14px;font-variant-numeric:tabular-nums;min-width:108px;text-align:right;}
-#hint{position:fixed;left:0;right:0;top:0;bottom:64px;display:flex;align-items:center;
+#tm{color:#9DB2CE;font-size:14px;font-variant-numeric:tabular-nums;min-width:104px;text-align:right;}
+#hint{position:fixed;left:0;right:0;top:0;bottom:64px;display:none;align-items:center;
   justify-content:center;z-index:90;background:rgba(5,8,14,.55);cursor:pointer;}
+#hint.show{display:flex;}
 #hint span{background:#2DD4BF;color:#062A25;font-weight:700;font-size:20px;
   border-radius:12px;padding:16px 36px;
   font-family:'BIZ UDPGothic','Noto Sans CJK JP','Noto Sans JP',sans-serif;}
-#hint.off{display:none;}
 </style>
 </head>
 <body>
@@ -356,6 +358,8 @@ video.clip.on{display:block;}
   <button id="bPlay">▶ 再生</button>
   <button id="bPause">‖ 一時停止</button>
   <button id="bLoop">↻ 繰り返し再生</button>
+  <button id="bCap">字幕</button>
+  <button id="bSnd">♪ 音声</button>
   <div id="bar"><div id="barBg"></div><div id="barFill"></div><div id="barKnob"></div></div>
   <div id="tm">0:00 / 0:00</div>
 </div>
@@ -864,18 +868,19 @@ document.addEventListener("keydown",function(e){ if(e.key===" "){ playing=!playi
 
 <script>
 (function(){
-  var OPEN=8.010998, BODY=window.__total, CLOSE=6.826009;
-  var ALL=OPEN+BODY+CLOSE;
+  var OPEN=8.010998, BODY=window.__total, CLOSE=6.826009, ALL=OPEN+BODY+CLOSE;
   var vo=document.getElementById('vopen'), vc=document.getElementById('vclose');
   var ab=document.getElementById('abgm'), stage=document.getElementById('stage');
   var vp=document.getElementById('viewport'), ctrl=document.getElementById('ctrl');
+  var cap=document.getElementById('cap');
   var bPlay=document.getElementById('bPlay'), bPause=document.getElementById('bPause');
-  var bLoop=document.getElementById('bLoop'), bar=document.getElementById('bar');
+  var bLoop=document.getElementById('bLoop'), bCap=document.getElementById('bCap');
+  var bSnd=document.getElementById('bSnd'), bar=document.getElementById('bar');
   var fill=document.getElementById('barFill'), knob=document.getElementById('barKnob');
   var tm=document.getElementById('tm'), hint=document.getElementById('hint');
+  var media=[vo,vc,ab];
 
-  var seg=0;            /* 0:opening 1:body 2:closing */
-  var playing=false, loop=true, cur=0;
+  var seg=0, playing=false, loop=false, cur=0, capOn=true, muted=false;
 
   function fit(){
     var w=window.innerWidth, h=window.innerHeight-ctrl.offsetHeight;
@@ -887,6 +892,12 @@ document.addEventListener("keydown",function(e){ if(e.key===" "){ playing=!playi
   window.addEventListener('resize',fit); fit();
 
   function mmss(x){ x=Math.max(0,Math.round(x)); return Math.floor(x/60)+':'+('0'+(x%60)).slice(-2); }
+  function setMuted(m){
+    muted=m; media.forEach(function(e){ e.muted=m; });
+    bSnd.classList.toggle('act',!m); bSnd.classList.toggle('warn',m);
+    bSnd.textContent = m ? '♪ 音声を出す' : '♪ 音声';
+  }
+  function setCap(on){ capOn=on; cap.style.display = on?'':'none'; bCap.classList.toggle('act',on); }
 
   function show(n){
     seg=n;
@@ -895,32 +906,34 @@ document.addEventListener("keydown",function(e){ if(e.key===" "){ playing=!playi
     stage.style.visibility = (n===1)?'visible':'hidden';
   }
 
-  function goto(t, keepPlaying){
-    t=Math.max(0,Math.min(ALL-0.01,t));
-    cur=t; hint.classList.add('off');
+  function cue(t){
+    t=Math.max(0,Math.min(ALL-0.01,t)); cur=t;
     vo.pause(); vc.pause(); ab.pause();
     if(t<OPEN){ show(0); vo.currentTime=t; }
     else if(t<OPEN+BODY){ show(1); ab.currentTime=t-OPEN; window.__seek(t-OPEN); }
     else { show(2); vc.currentTime=t-OPEN-BODY; }
-    if(keepPlaying) start();
     paint();
   }
 
-  function start(){
-    playing=true; hint.classList.add('off');
+  function active(){ return seg===0? vo : seg===1? ab : vc; }
+
+  /* 再生開始。音つきで弾かれたらミュートで再挑戦し、それも駄目なら案内を出す */
+  function start(retry){
+    playing=true; hint.classList.remove('show');
     bPlay.classList.add('act'); bPause.classList.remove('act');
-    var p = (seg===0? vo.play() : seg===1? ab.play() : vc.play());
-    if(p && p.catch) p.catch(function(){ playing=false; bPlay.classList.remove('act'); });
+    var p=active().play();
+    if(p && p.catch) p.catch(function(){
+      if(!retry){ setMuted(true); start(true); }
+      else { playing=false; bPlay.classList.remove('act'); hint.classList.add('show'); }
+    });
   }
   function stop(){
     playing=false; vo.pause(); vc.pause(); ab.pause();
     bPlay.classList.remove('act'); bPause.classList.add('act');
   }
-
   function paint(){
     var r=cur/ALL;
-    fill.style.width=(r*100)+'%';
-    knob.style.left=(r*100)+'%';
+    fill.style.width=(r*100)+'%'; knob.style.left=(r*100)+'%';
     tm.textContent=mmss(cur)+' / '+mmss(ALL);
   }
 
@@ -931,13 +944,12 @@ document.addEventListener("keydown",function(e){ if(e.key===" "){ playing=!playi
         if(vo.ended || cur>=OPEN-0.04){ cur=OPEN; show(1); ab.currentTime=0; window.__seek(0); ab.play(); }
       } else if(seg===1){
         cur=OPEN+ab.currentTime;
-        if(ab.currentTime>=BODY-0.04 || ab.ended){
-          cur=OPEN+BODY; show(2); vc.currentTime=0; vc.play();
-        } else { window.__seek(ab.currentTime); }
+        if(ab.ended || ab.currentTime>=BODY-0.04){ cur=OPEN+BODY; show(2); vc.currentTime=0; vc.play(); }
+        else window.__seek(ab.currentTime);
       } else {
         cur=OPEN+BODY+vc.currentTime;
         if(vc.ended || vc.currentTime>=CLOSE-0.04){
-          if(loop){ goto(0,true); } else { cur=ALL; stop(); }
+          if(loop){ cue(0); start(); } else { cur=ALL; stop(); }
         }
       }
       paint();
@@ -945,29 +957,35 @@ document.addEventListener("keydown",function(e){ if(e.key===" "){ playing=!playi
     requestAnimationFrame(tick);
   }
 
-  bPlay.onclick=function(){ if(cur>=ALL-0.05) goto(0,true); else start(); };
+  bPlay.onclick=function(){ if(cur>=ALL-0.05) cue(0); start(); };
   bPause.onclick=stop;
   bLoop.onclick=function(){ loop=!loop; bLoop.classList.toggle('act',loop); };
-  bLoop.classList.add('act');
-  hint.onclick=function(){ goto(cur,true); };
+  bCap.onclick=function(){ setCap(!capOn); };
+  bSnd.onclick=function(){ setMuted(!muted); if(playing) active().play(); };
+  hint.onclick=function(){ setMuted(false); start(); };
 
   function seekAt(ev){
     var r=bar.getBoundingClientRect();
-    goto((ev.clientX-r.left)/r.width*ALL, playing);
+    var was=playing;
+    cue((ev.clientX-r.left)/r.width*ALL);
+    if(was) start();
   }
-  var dragging=false;
-  bar.addEventListener('mousedown',function(e){ dragging=true; seekAt(e); });
-  window.addEventListener('mousemove',function(e){ if(dragging) seekAt(e); });
-  window.addEventListener('mouseup',function(){ dragging=false; });
+  var drag=false;
+  bar.addEventListener('mousedown',function(e){ drag=true; seekAt(e); });
+  window.addEventListener('mousemove',function(e){ if(drag) seekAt(e); });
+  window.addEventListener('mouseup',function(){ drag=false; });
 
   document.addEventListener('keydown',function(e){
     if(e.key===' '){ e.preventDefault(); playing?stop():start(); }
-    if(e.key==='ArrowRight'){ goto(cur+5,playing); }
-    if(e.key==='ArrowLeft'){ goto(cur-5,playing); }
+    else if(e.key==='ArrowRight'){ var w=playing; cue(cur+5); if(w) start(); }
+    else if(e.key==='ArrowLeft'){ var w2=playing; cue(cur-5); if(w2) start(); }
   });
 
-  goto(0,false); stop(); bPause.classList.remove('act');
+  setCap(true); setMuted(false); bLoop.classList.remove('act');
+  cue(0);
   requestAnimationFrame(tick);
+  /* 起動したら自動で再生開始 */
+  start();
 })();
 </script>
 </body></html>
