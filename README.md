@@ -20,6 +20,12 @@ https://masaoy0730.github.io/ai-seminar-demo/neuron-agent-demo-nearmiss.html
 ヒヤリハットシナリオ：3分動画版
 https://masaoy0730.github.io/ai-seminar-demo/movie-nearmiss.html
 
+設備トラブルシナリオ（ラインZ-12の異音）：3分動画版
+https://masaoy0730.github.io/ai-seminar-demo/movie-z12.html
+
+設備トラブルシナリオ：動画版
+https://masaoy0730.github.io/ai-seminar-demo/movie-setsubi.html
+
 ロボットの安全設計シナリオ
 https://masaoy0730.github.io/ai-seminar-demo/neuron-agent-demo-safety.html
 
