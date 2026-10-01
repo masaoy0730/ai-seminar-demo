@@ -951,6 +951,10 @@ document.addEventListener("keydown",function(e){ if(e.key===" "){ playing=!playi
       else { playing=false; bPlay.classList.remove('act'); hint.classList.add('show'); }
     });
   }
+      if(!retry){ setMuted(true); start(true); }
+      else { playing=false; bPlay.classList.remove('act'); hint.classList.add('show'); }
+    });
+  }
   function stop(){
     playing=false; vo.pause(); vc.pause(); ab.pause();
     bPlay.classList.remove('act'); bPause.classList.add('act');
@@ -1026,7 +1030,8 @@ document.addEventListener("keydown",function(e){ if(e.key===" "){ playing=!playi
   setCap(true); setMuted(false); bLoop.classList.remove('act');
   cue(0);
   requestAnimationFrame(tick);
-  start();   /* 起動したら自動再生 */
+  /* 起動したら自動で再生開始 */
+  start();
 })();
 </script>
 </body></html>
