@@ -37,3 +37,6 @@ https://masaoy0730.github.io/ai-seminar-demo/neuron-agent-demo-it.html
 
 Z−12デモ（Neuronとの比較、3分でわかるエージェント検索）
 https://masaoy0730.github.io/ai-seminar-demo/movie-z12.html
+
+自治体向け 議会答弁シナリオ（さくら浜市・管理不全空家）：3分動画版
+https://masaoy0730.github.io/ai-seminar-demo/movie-gikai.html
