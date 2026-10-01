@@ -1,0 +1,365 @@
+@@CSS@@
+/* ===== このデモで追加するCSS ===== */
+.srcbox{position:absolute;top:300px;width:720px;background:var(--panel);border:2px solid var(--line);border-radius:18px;padding:34px 38px;}
+.srchd{display:flex;align-items:center;gap:18px;margin-bottom:22px;}
+.srcttl{font-size:38px;font-weight:700;}
+.srcsub{font-size:24px;color:var(--mute);margin-top:4px;}
+.fitem{display:flex;align-items:center;gap:16px;font-size:27px;line-height:1.5;padding:14px 0;border-top:1px solid var(--line);}
+.fitem:first-of-type{border-top:0;}
+.fitem .fx{font-size:22px;color:var(--mute);margin-left:auto;white-space:nowrap;}
+.bandwrap{position:absolute;left:140px;right:140px;top:300px;}
+.band{display:flex;gap:2px;height:108px;}
+.bar{flex:1;background:#243349;border-radius:1px;}
+.bar.lit{background:var(--teal);}
+.chapters{display:flex;gap:6px;font-size:22px;margin-top:54px;}
+.chapters div{flex:1;text-align:center;padding:12px 4px;border-radius:6px;background:#1A2740;color:var(--sub);}
+.chapters div.hi{background:#2A1E0B;color:var(--amber);font-weight:700;}
+.chapters div.lit{background:#10362F;color:var(--teal);font-weight:700;}
+.half{flex:1;border-radius:14px;padding:28px 32px;}
+.half h4{font-size:30px;font-weight:700;margin-bottom:12px;}
+.half p{font-size:25px;color:var(--sub);line-height:1.55;}
+.flagpin{position:absolute;top:-58px;transform:translateX(-50%);background:var(--amber);color:#1A1200;font-size:24px;font-weight:700;padding:8px 14px;border-radius:8px;white-space:nowrap;}
+.bxscr{position:absolute;left:140px;top:250px;width:1260px;height:620px;background:#F3F5F8;border-radius:14px;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.45),0 0 0 3px rgba(255,255,255,.10);color:#1F2A37;}
+.bxbar{position:absolute;left:0;right:0;top:0;height:60px;background:#fff;border-bottom:1px solid #DDE3EA;display:flex;align-items:center;padding:0 22px;gap:18px;}
+.bxname{font-size:21px;font-weight:700;color:#2F6FB8;}
+.bximg{margin-left:auto;font-size:16px;font-weight:700;color:#6B7787;background:#EEF2F6;border:1px solid #CFD8E3;border-radius:999px;padding:5px 14px;}
+.bxfield{display:flex;align-items:center;width:620px;height:42px;border:1px solid #CFD8E3;border-radius:8px;padding:0 14px;font-size:22px;background:#fff;}
+.bxbody{position:absolute;left:0;right:0;top:60px;bottom:0;padding:26px 30px;}
+.bxzero{font-size:30px;color:#C0392F;font-weight:700;}
+.bxhit{background:#fff;border:1px solid #DDE3EA;border-left:5px solid #2F6FB8;border-radius:10px;padding:18px 22px;}
+.bxnote{font-size:25px;color:#9A6200;line-height:1.5;}
+.xt{width:560px;border-collapse:collapse;font-size:25px;}
+.xt th,.xt td{border:1px solid var(--line);padding:14px 16px;text-align:left;}
+.xt th{background:#1B2A44;font-weight:700;}
+.nstep{display:flex;align-items:center;gap:12px;font-size:19px;color:#3A4757;padding:9px 12px;border:1px solid #DDE3EA;border-radius:8px;background:#fff;}
+.nstep i{font-style:normal;font-weight:700;color:#2F6FB8;background:#E6ECF2;border-radius:5px;padding:1px 9px;flex:none;}
+.quotebig{position:absolute;left:140px;right:140px;top:300px;background:#2A1E0B;border-left:10px solid var(--amber);border-radius:16px;padding:52px 60px;}
+.quotebig .k{font-size:26px;color:var(--amber);font-weight:700;}
+.quotebig .v{font-size:56px;line-height:1.45;color:#FFE9C4;margin-top:22px;}
+.evid{position:absolute;left:140px;right:140px;top:660px;display:flex;align-items:center;gap:20px;background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:26px 32px;font-size:27px;}
+.evid .fx{margin-left:auto;font-size:23px;color:var(--mute);}
+.pctrow{display:flex;justify-content:center;align-items:center;gap:56px;}
+.pctn{font-size:150px;font-weight:700;line-height:1;}
+.goalpill{display:inline-block;border:2px dashed var(--sub);border-radius:999px;padding:12px 32px;font-size:28px;}
+.step{display:flex;align-items:center;gap:30px;background:var(--panel);border:2px solid var(--line);border-radius:16px;padding:28px 36px;}
+.step .t{font-size:40px;font-weight:700;flex:1;}
+.step .v{font-size:32px;color:var(--teal);font-weight:700;white-space:nowrap;}
+.step.hero{background:#10362F;border-color:#1C5A4F;}
+.step.hero .t{font-size:46px;}
+@@MARKUP@@
+<section class="scene" id="s1"><div class="wrap">
+  <div class="kicker item" id="a1">セイワ工機株式会社 ／ 技術開発本部 先行開発部 材料技術グループ</div>
+  <div class="h1 item" id="a2" style="margin-top:26px">お客様の次期車種のドアを、<br>アルミと樹脂で軽くする。</div>
+  <div style="position:absolute;left:140px;top:470px;display:flex;gap:28px">
+    <div class="card item" id="a3" style="padding:30px 36px"><div class="sm">次期車種</div><div class="h3 tealc" style="margin-top:8px">ホクト自動車 HX-50</div></div>
+    <div class="card item" id="a4" style="padding:30px 36px"><div class="sm">軽量化の目標</div><div class="h3" style="margin-top:8px">ドアインナー −1.8 kg</div></div>
+    <div class="card item" id="a5" style="padding:30px 36px"><div class="sm">期限</div><div class="h3 amberc" style="margin-top:8px">計画審査まで 3週間</div></div>
+  </div>
+  <div class="p item" id="a6" style="position:absolute;left:140px;top:700px">表面処理と接着の条件を決めるため、まず先行研究にあたります。</div>
+</div></section>
+
+<section class="scene" id="s2"><div class="wrap">
+  <div class="kicker item" id="b1">資料の置き場所</div>
+  <div class="h2 item" id="b2" style="margin-top:20px">手がかりは、2か所に分かれている。</div>
+  <div class="srcbox item" id="b3" style="left:140px">
+    <div class="srchd"><div class="ficon" style="background:#2F6FB8">B</div><div><div class="srcttl">Box</div><div class="srcsub">大学・材料メーカーとの共同研究</div></div></div>
+    <div class="fitem">共同研究 最終報告書（2023年度）<span class="fx">128ページ</span></div>
+    <div class="fitem">構造用接着剤 テクニカルガイド<span class="fx">84ページ</span></div>
+    <div class="fitem">表面処理条件別 試験成績報告書<span class="fx">62ページ</span></div>
+  </div>
+  <div class="srcbox item" id="b4" style="right:140px">
+    <div class="srchd"><div class="ficon" style="background:#2DD4BF;color:#062A25">F</div><div><div class="srcttl">ファイルサーバー</div><div class="srcsub">これまでの実験結果</div></div></div>
+    <div class="fitem">接着試験データ 2023-11<span class="fx">xlsx</span></div>
+    <div class="fitem">湿熱耐久試験 測定記録<span class="fx">xlsx</span></div>
+    <div class="fitem">試験片 作製条件メモ<span class="fx">docx</span></div>
+  </div>
+  <div class="p item" id="b5" style="position:absolute;left:140px;right:140px;top:830px;text-align:center">置き場所が分かれていると、<span class="inkc">どちらも</span>探さなければならない。</div>
+</div></section>
+
+<section class="scene" id="s3"><div class="wrap">
+  <div class="kicker item" id="c1">Box で検索する</div>
+  <div class="bxscr item" id="c2">
+    <div class="bxbar"><div class="bxname">Box</div>
+      <div class="bxfield"><span id="c_q"></span><span class="ncur"></span></div>
+      <div class="bximg">Box画面はイメージです</div></div>
+    <div class="bxbody">
+      <div class="grp" id="c_g1"><div class="bxzero">該当するファイルがありません</div></div>
+      <div class="grp" id="c_g2">
+        <div class="bxhit"><div style="font-size:24px;font-weight:700;color:#2F6FB8">共同研究 最終報告書（2023年度）.docx</div>
+          <div style="font-size:19px;color:#5B6878;margin-top:8px">128ページ ／ 共同研究・外部連携 &gt; 軽量化材料</div></div>
+        <div class="bxnote" style="margin-top:26px">見つかった。ただし、どこに書いてあるかは分からない。</div>
+      </div>
+    </div>
+  </div>
+  <table class="xt item" id="c3" style="position:absolute;right:140px;top:250px">
+    <tr><th style="width:58%">検索した言葉</th><th>結果</th></tr>
+    <tr><td>保持率</td><td class="redc" style="font-weight:700">0件</td></tr>
+    <tr><td>85℃・85%RH</td><td class="redc" style="font-weight:700">0件</td></tr>
+    <tr><td>陽極酸化</td><td class="tealc" style="font-weight:700">1件（128ページ）</td></tr>
+  </table>
+</div></section>
+
+<section class="scene" id="s4"><div class="wrap">
+  <div class="kicker item" id="d1">なぜ出てこないのか</div>
+  <div class="bandwrap">
+    <div style="position:relative"><div class="flagpin item" id="d_flag" style="left:66.8%">86ページ目に「保持率 52%」</div></div>
+    <div class="band item" id="d_band"></div>
+    <div class="sm item" id="d2" style="margin-top:16px">共同研究 最終報告書（128ページ）。ティールの部分が、Boxの検索の対象。</div>
+    <div class="chapters item" id="d3">
+      <div class="lit">表紙・要旨・目次</div><div>緒言</div><div>実験方法</div>
+      <div class="hi">実験結果</div><div class="hi">考察</div><div class="hi">結論</div><div class="hi">今後の課題</div>
+    </div>
+    <div style="display:flex;gap:28px;margin-top:40px">
+      <div class="half item" id="d4" style="background:#10362F;border:2px solid #1C5A4F">
+        <h4 class="tealc">検索の対象は、先頭の3〜5ページ</h4>
+        <p>ファイルの先頭から1万バイトまで。日本語ならおよそ3,300字。表紙・要旨・目次で使い切ってしまう</p></div>
+      <div class="half item" id="d5" style="background:#2A1E0B;border:2px solid #6B4A12">
+        <h4 class="amberc">実験結果・考察・結論は、後半にある</h4>
+        <p>研究報告書でいちばん参照したい部分は、たいてい文書の後ろ半分に書かれている</p></div>
+    </div>
+  </div>
+  <div class="sm item" id="d6" style="position:absolute;left:140px;right:140px;bottom:132px">出典：Box ヘルプ「Search for Files, Folders, and Content」（Businessプラン以上：1文書あたり最大10,000バイトまで索引。言語・文書の種類により異なる）　／　Boxの検索が弱いという話ではありません。全文検索の設計上の線引きです。</div>
+</div></section>
+
+<section class="scene" id="s5"><div class="wrap">
+  <div class="kicker item" id="e1">エージェント検索</div>
+  <div class="h2 item" id="e2" style="margin-top:16px;width:1180px">Box も ファイルサーバーも、まとめて探せる。</div>
+  <div class="nscr item" id="e3">
+    <div class="nbar"><img class="nlogo" src="@@NLOGO@@" alt="Neuron Enterprise Search">
+      <span style="font-size:20px;color:#6B7787;">エージェント検索</span><span style="flex:1"></span>
+      <span class="nreal">実際の画面の内容（再現）</span></div>
+    <div class="nside">
+      <div class="nbtn">＋ 新しいチャットを開始する</div>
+      <div style="margin-top:14px;font-size:15px;color:#8A97A8;">会話履歴　<span style="color:#2F6FB8;border-bottom:2px solid #2F6FB8;padding-bottom:3px;">探す範囲</span></div>
+      <div class="nsh" style="margin-top:18px;">取得元</div>
+      <div class="nck ntree" style="margin-top:9px"><span class="ncb">✓</span>Box</div>
+      <div class="nck ntree" style="margin-top:9px"><span class="ncb">✓</span>ファイルサーバー</div>
+      <div class="nsh" style="margin-top:20px;">フォルダ指定</div>
+      <div class="nck ntree"><span class="nchev">∨</span><span class="ncb">✓</span><span class="nfol"></span>共同研究・外部連携</div>
+      <div class="nck ntree" style="padding-left:22px;"><span class="nchev">›</span><span class="ncb">✓</span><span class="nfol"></span>軽量化材料</div>
+      <div class="nck ntree"><span class="nchev">›</span><span class="ncb">✓</span><span class="nfol"></span>材料技術G 実験データ</div>
+    </div>
+    <div class="nmain">
+      <div style="text-align:center;font-size:30px;font-weight:700;color:#3A4757;margin-top:36px;">何でも聞いてください</div>
+      <div style="margin:26px 24px 0;background:#fff;border:2px solid #CFD8E3;border-radius:16px;padding:22px 26px 70px;position:relative;min-height:252px;">
+        <div id="e_q" style="font-size:26px;line-height:1.7;color:#1F2A37;display:inline;"></div><span class="ncur" style="height:30px;"></span>
+        <div style="position:absolute;left:24px;right:24px;bottom:16px;display:flex;align-items:center;gap:20px;font-size:17px;color:#5B6878;">
+          <span><span style="display:inline-block;width:38px;height:20px;border-radius:10px;background:#4A90C8;vertical-align:-4px;position:relative;"><span style="position:absolute;right:3px;top:3px;width:14px;height:14px;border-radius:50%;background:#fff;"></span></span>　エージェントモード</span>
+          <span>推論の努力 <span class="nopt">高 ▾</span></span><span style="flex:1"></span>
+          <span style="position:relative;width:46px;height:46px;border-radius:50%;background:#8FB6DA;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;">➤<span class="nring" id="e_ring" style="left:-9px;top:-9px;right:-9px;bottom:-9px;border-radius:50%;"></span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="call item" id="e4" style="top:300px"><div class="callh">取得元は2つ</div>Box と ファイルサーバーに<b>同時にチェック</b>。1回の指示で両方を探す</div>
+  <div class="call item" id="e5" style="top:560px"><div class="callh">指示は1本だけ</div>困っていることを、そのまま書く。<b>検索語を考えるのはAI</b></div>
+</div></section>
+
+<section class="scene" id="s6"><div class="wrap">
+  <div class="kicker item" id="f1">処理の経過</div>
+  <div class="h2 item" id="f2" style="margin-top:16px;width:1180px">条件を変えながら、2か所を行き来する。</div>
+  <div class="nscr item" id="f3">
+    <div class="nbar"><img class="nlogo" src="@@NLOGO@@" alt="Neuron Enterprise Search">
+      <span style="font-size:20px;color:#6B7787;">エージェント検索</span><span style="flex:1"></span>
+      <span class="nreal">実際の画面の内容（再現）</span></div>
+    <div class="nmain" style="left:0;padding:20px 34px;">
+      <div style="display:flex;justify-content:flex-end;"><div class="nbub" style="font-size:17px;padding:10px 16px;max-width:780px;line-height:1.55;">過去に社内や共同研究で同じテーマの検討が行われていないか調べ、行われていた場合は、その結論と、いまもその結論が有効かどうかを確認してください。</div></div>
+      <div class="nans" style="margin-top:16px;padding:18px 24px;">
+        <div class="nproc">処理の経過　<span class="nnum" id="f_n">1</span><div style="font-size:16px;color:#6B7787;margin-top:4px;">Box と ファイルサーバーを横断して確認しています</div></div>
+        <div id="f_q" style="display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;margin-top:16px;"></div>
+      </div>
+    </div>
+  </div>
+  <div class="call item" id="f4" style="top:300px"><div class="callh">検索は8回</div>結果を読んで足りなければ、<b>条件を変えて自分で探し直す</b></div>
+  <div class="call item" id="f5" style="top:560px"><div class="callh">置き場所をまたぐ</div>報告書はBox、実験結果はファイルサーバー。<b>どちらも同じ1回の指示で</b></div>
+</div></section>
+
+<section class="scene" id="s7"><div class="wrap">
+  <div class="kicker item" id="g1">見つかったこと</div>
+  <div class="nscr item" id="g2" style="top:200px;height:700px">
+    <div class="nbar"><img class="nlogo" src="@@NLOGO@@" alt="Neuron Enterprise Search">
+      <span style="font-size:20px;color:#6B7787;">エージェント検索</span><span style="flex:1"></span>
+      <span class="nreal">実際の画面の内容（再現）</span></div>
+    <div class="nmain" style="left:0;padding:18px 34px;">
+      <div class="nans" style="padding:18px 26px;">
+        <div class="nproc" style="font-size:17px;padding:9px 14px;">処理の経過　<span class="nnum">8</span>　Box と ファイルサーバーを横断して確認しました</div>
+        <div class="nh" style="margin-top:16px;">結論</div>
+        <div style="font-size:24px;font-weight:700;margin-top:6px;line-height:1.5;">同じテーマは3年前に検討され、耐久性が目標に届かないため中止されています。</div>
+        <div style="font-size:19px;line-height:1.65;color:#3A4757;margin-top:8px;">ただし、中止の原因だった接着剤には改良グレードが出ており、当時の結論をそのまま適用することはできません。</div>
+        <div class="nh" style="margin-top:18px;">根拠</div>
+        <div style="font-size:19px;font-weight:700;margin-top:8px;">1. 中止の結論（Box）</div>
+        <div style="font-size:17px;color:#3A4757;margin:3px 0 0 24px;line-height:1.6;">◦ 6.3項　耐久試験の保持率が目標に未達<br>◦ 7.2項　<span class="nhl">耐湿グレードの接着剤で再評価する価値がある</span><br><span style="color:#6B7787;">共同研究 最終報告書（2023年度・全128ページ）</span></div>
+        <div style="font-size:19px;font-weight:700;margin-top:12px;">2. 当時の実測値（ファイルサーバー）</div>
+        <div style="font-size:17px;color:#3A4757;margin:3px 0 0 24px;line-height:1.6;">◦ 湿熱耐久試験の測定記録に、1000時間後の保持率の生データ<br><span style="color:#6B7787;">接着試験データ 2023-11.xlsx ／ 湿熱耐久試験 測定記録.xlsx</span></div>
+        <div style="font-size:17px;color:#6B7787;margin-top:12px;">次に調べる</div>
+        <div style="margin-top:6px;"><span class="nchip">改良グレードの実績</span><span class="nchip">量産工程の制約</span><span class="nchip">現在の要求条件</span></div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="scene" id="s8"><div class="wrap">
+  <div class="kicker item" id="h1">報告書の 98ページ目</div>
+  <div class="quotebig item" id="h2">
+    <div class="k">共同研究 最終報告書 98ページ目 ／ 当時の担当者が残した一文</div>
+    <div class="v">「耐湿グレードの接着剤で、再評価する価値がある」</div>
+  </div>
+  <div class="evid item" id="h3">
+    <div class="ficon" style="background:#2DD4BF;color:#062A25">F</div>
+    <div>ファイルサーバーにあった当時の実験結果も、あわせて示された<div class="sm" style="margin-top:6px">湿熱耐久試験 測定記録.xlsx ／ 接着試験データ 2023-11.xlsx</div></div>
+    <div class="fx">1000時間後の保持率の生データ</div>
+  </div>
+</div></section>
+
+<section class="scene" id="s9"><div class="wrap">
+  <div class="kicker item" id="i1">前提が、変わっていた</div>
+  <div style="position:absolute;left:0;right:0;top:270px;text-align:center">
+    <div class="pctrow">
+      <div class="item" id="i2"><div class="pctn redc" id="i_a">52%</div><div class="sm" style="margin-top:14px">3年前</div></div>
+      <div class="item" id="i3" style="font-size:66px;color:var(--mute)">→</div>
+      <div class="item" id="i4"><div class="pctn tealc" id="i_b">52%</div><div class="sm" style="margin-top:14px">2025年の改良グレード（同じ試験条件）</div></div>
+    </div>
+    <div class="item" id="i5" style="margin-top:38px"><span class="goalpill">目標 80%</span></div>
+  </div>
+  <div class="h2 item" id="i6" style="position:absolute;left:140px;right:140px;top:720px;text-align:center">
+    3か月の再実験が、<span class="tealc">1か月の確認実験</span>になる可能性。
+  </div>
+</div></section>
+
+<section class="scene" id="s10"><div class="wrap">
+  <div style="position:absolute;left:140px;right:140px;top:230px;display:flex;flex-direction:column;gap:24px">
+    <div class="step item" id="j1"><div class="t">検索が速くなる</div><div class="v">文書の奥まで届く</div></div>
+    <div class="step item" id="j2"><div class="t">資料づくりが速くなる</div><div class="v">置き場所をまたいで1回で</div></div>
+    <div class="step hero item" id="j3"><div class="t">研究のスピードが上がる</div><div class="v">3か月 → 1か月</div></div>
+  </div>
+  <div class="h2 item" id="j4" style="position:absolute;left:140px;right:140px;top:660px;text-align:center">
+    置き場所は、そのままで。<span class="tealc">見つけるのはAI、決めるのは人。</span>
+  </div>
+  <div class="sm item" id="j5" style="position:absolute;left:0;right:0;top:810px;text-align:center">VOICEVOX:剣崎雌雄</div>
+</div></section>
+@@SCRIPT@@
+(function(){
+"use strict";
+var S=[
+ {id:"s1", d:18.2},{id:"s2", d:15.2},{id:"s3", d:17.6},{id:"s4", d:19.8},{id:"s5", d:12.8},
+ {id:"s6", d:13.6},{id:"s7", d:12.2},{id:"s8", d:17.2},{id:"s9", d:16.6},{id:"s10",d:16.0}
+];
+var acc=0; S.forEach(function(s){ s.t0=acc; acc+=s.d; s.el=document.getElementById(s.id); });
+var TOTAL=acc; window.__total=TOTAL;
+function cl(v,a,b){ return v<a?a:(v>b?b:v); }
+function ease(x){ x=cl(x,0,1); return x*x*(3-2*x); }
+function seg(l,at,len){ return cl((l-at)/len,0,1); }
+function q(id){ return document.getElementById(id); }
+function rise(el,l,at,len,dy){ if(!el) return; var p=ease(seg(l,at,len||0.55));
+  el.style.opacity=p; el.style.transform="translateY("+((1-p)*(dy===undefined?26:dy))+"px)"; }
+function fade(el,l,at,len){ if(!el) return; el.style.opacity=ease(seg(l,at,len||0.5)); }
+function grp(el,on){ if(el) el.style.visibility=on?"visible":"hidden"; }
+function typeTo(el,txt,l,at,cps){ if(!el) return;
+  var n=Math.floor(cl((l-at)*cps,0,txt.length)); el.textContent=txt.slice(0,n); }
+function ring(el,l,at){ if(!el) return; var p=seg(l,at,0.4);
+  el.style.opacity=p*(0.6+0.4*Math.abs(Math.sin((l-at)*3.2))); }
+
+/* 128ページの帯 */
+(function(){ var b=q("d_band"); if(!b) return; var h="";
+  for(var i=0;i<128;i++) h+='<div class="bar'+(i<4?' lit':'')+'"></div>'; b.innerHTML=h; })();
+/* 8つの検索条件 */
+var QUERIES=[["同じテーマの過去検討","Box"],["研究テーマの中止理由","Box"],["最終報告書 考察","Box"],
+ ["今後の課題・宿題","Box"],["当時の試験データ","ファイルサーバー"],["湿熱耐久 測定記録","ファイルサーバー"],
+ ["接着剤 耐湿グレード","Box"],["現在の要求条件","Box"]];
+(function(){ var g=q("f_q"); if(!g) return; var h="";
+  QUERIES.forEach(function(x,i){ h+='<div class="nstep" id="fq'+i+'" style="opacity:0"><i>'+(i+1)+'</i>'+x[0]
+    +'<span style="margin-left:auto;font-size:15px;color:#8A97A8">'+x[1]+'</span></div>'; });
+  g.innerHTML=h; })();
+
+var PROMPT="過去に社内や共同研究で同じテーマの検討が行われていないか調べ、行われていた場合は、その結論と、いまもその結論が有効かどうかを確認してください。";
+
+var DRAW={
+ s1:function(l){ rise(q("a1"),l,0.2,.5); rise(q("a2"),l,0.7,.6);
+   rise(q("a3"),l,3.4,.5); rise(q("a4"),l,4.0,.5); rise(q("a5"),l,4.6,.5); rise(q("a6"),l,11.6,.6); },
+ s2:function(l){ rise(q("b1"),l,0.2,.5); rise(q("b2"),l,0.6,.6);
+   rise(q("b3"),l,5.3,.6); rise(q("b4"),l,10.0,.6); rise(q("b5"),l,12.6,.6); },
+ s3:function(l){ rise(q("c1"),l,0.2,.5); rise(q("c2"),l,0.5,.6); rise(q("c3"),l,1.6,.6);
+   var txt="",g1=false,g2=false;
+   if(l<5.8){ txt="保持率"; typeTo(q("c_q"),txt,l,1.0,6); g1=(l>2.6); }
+   else if(l<8.8){ typeTo(q("c_q"),"85℃・85%RH",l,6.0,6); g1=(l>7.4); }
+   else { typeTo(q("c_q"),"陽極酸化",l,9.0,6); g2=(l>11.0); }
+   grp(q("c_g1"),g1); grp(q("c_g2"),g2); },
+ s4:function(l){ rise(q("d1"),l,0.2,.5); rise(q("d_band"),l,0.6,.6); rise(q("d2"),l,1.4,.5);
+   fade(q("d_flag"),l,5.0,.5); rise(q("d3"),l,8.4,.6);
+   rise(q("d4"),l,10.0,.6); rise(q("d5"),l,12.6,.6); rise(q("d6"),l,15.4,.6); },
+ s5:function(l){ rise(q("e1"),l,0.2,.5); rise(q("e2"),l,0.5,.6); rise(q("e3"),l,0.9,.6);
+   rise(q("e4"),l,2.2,.6); rise(q("e5"),l,7.9,.6);
+   typeTo(q("e_q"),PROMPT,l,8.2,22); ring(q("e_ring"),l,11.6); },
+ s6:function(l){ rise(q("f1"),l,0.2,.5); rise(q("f2"),l,0.5,.6); rise(q("f3"),l,0.8,.6);
+   rise(q("f4"),l,2.4,.6); rise(q("f5"),l,7.8,.6);
+   var n=0; if(l>=2.0) n=Math.min(8,1+Math.floor((l-2.0)/1.25));
+   for(var i=0;i<8;i++) fade(q("fq"+i),l,2.0+i*1.25,.35);
+   q("f_n").textContent=Math.max(1,n); },
+ s7:function(l){ rise(q("g1"),l,0.2,.5); rise(q("g2"),l,0.5,.6); },
+ s8:function(l){ rise(q("h1"),l,0.2,.5); rise(q("h2"),l,0.6,.7); rise(q("h3"),l,10.9,.7); },
+ s9:function(l){ rise(q("i1"),l,0.2,.5); rise(q("i2"),l,0.6,.6); rise(q("i3"),l,1.0,.5);
+   rise(q("i4"),l,1.3,.6); rise(q("i5"),l,4.0,.6); rise(q("i6"),l,10.3,.7);
+   var p=ease(seg(l,2.2,2.4)); q("i_b").textContent=Math.round(52+34*p)+"%"; },
+ s10:function(l){ rise(q("j1"),l,0.4,.6); rise(q("j2"),l,2.4,.6); rise(q("j3"),l,4.6,.7);
+   rise(q("j4"),l,10.3,.7); fade(q("j5"),l,13.2,.8); }
+};
+
+/* 右上の場面ラベル：解説＝expl／Neuron画面＝real（入力の場面は出さない） */
+var MODE={s1:"expl",s2:"expl",s3:"expl",s4:"expl",s5:"",s6:"real",s7:"real",s8:"expl",s9:"expl",s10:"expl"};
+
+var CAPS=[
+ ["s1",0.6,2.9,"セイワ工機、先行開発部。"],
+ ["s1",2.9,11.4,"お客様の自動車メーカーの次期車種のドアを、アルミと樹脂で軽くする研究に取り組んでいます。"],
+ ["s1",11.4,18.2,"表面処理と接着の条件を、3週間後の計画審査までに決める必要があります。"],
+ ["s2",0.6,5.3,"手がかりになる資料は、2か所に分かれています。"],
+ ["s2",5.3,10.0,"大学や材料メーカーとの共同研究の報告書はBox。"],
+ ["s2",10.0,15.2,"これまでの実験結果のファイルは、ファイルサーバーです。"],
+ ["s3",0.6,5.8,"Boxで、保持率、と検索します。何も検索されません。"],
+ ["s3",5.8,8.8,"試験条件で探しても、同じです。"],
+ ["s3",8.8,11.6,"陽極酸化、では見つかります。"],
+ ["s3",11.6,17.6,"ただし、128ページのファイルが、そのまま出てくるだけです。"],
+ ["s4",0.6,8.2,"Boxの検索では、ファイルの先頭から1万バイトまでが検索対象となっています。"],
+ ["s4",8.2,11.4,"日本語なら、3〜5ページ分ほど。"],
+ ["s4",11.4,19.8,"研究報告書に記載されている実験結果や考察、結論は、後半にかかれていることが多いです。"],
+ ["s5",0.6,7.9,"エージェント検索では、Boxとファイルサーバーの両方を、まとめて探せます。"],
+ ["s5",7.9,12.8,"過去に同じ検討がなかったか、そのまま質問します。"],
+ ["s6",0.6,3.2,"検索は8回実行されました。"],
+ ["s6",3.2,7.8,"AIエージェントが自分で検索条件を変えながら、"],
+ ["s6",7.8,13.6,"2つの置き場所を行き来して、目的の情報にたどり着いたのです。"],
+ ["s7",0.6,4.3,"見つかったのは、3年前の共同研究です。"],
+ ["s7",4.3,12.2,"同じテーマを検討し、耐久試験の保持率が目標より低いということで、中止していました。"],
+ ["s8",0.6,6.4,"報告書の98ページには、当時の担当者が残した一文があります。"],
+ ["s8",6.4,10.9,"耐湿グレードの接着剤で、再評価する価値がある。"],
+ ["s8",10.9,17.2,"ファイルサーバーにあった当時の実験結果も、あわせて示されました。"],
+ ["s9",0.6,6.4,"そして、その接着剤には、2025年に改良グレードが出ています。"],
+ ["s9",6.4,10.3,"同じ条件で、目標値をクリアできそうです。"],
+ ["s9",10.3,16.6,"3か月の再実験が、1か月の確認実験になる可能性を見いだせました。"],
+ ["s10",0.6,4.3,"検索が速くなり、資料づくりも速くなり、"],
+ ["s10",4.3,10.3,"やらなくてよい実験が見つかることで研究のスピードも上がります。"],
+ ["s10",10.3,12.5,"置き場所はそのままで。"],
+ ["s10",12.5,16.0,"見つけるのはAI、決めるのは人です。"]
+];
+var CAPL=[]; (function(){ var t0={}; S.forEach(function(x){ t0[x.id]=x.t0; });
+  CAPS.forEach(function(c){ CAPL.push({a:t0[c[0]]+c[1], b:t0[c[0]]+c[2], t:c[3]}); }); })();
+var capEl=q("cap"), capCur=-1;
+function drawCap(t){ var idx=-1,i;
+  for(i=0;i<CAPL.length;i++){ if(t>=CAPL[i].a && t<CAPL[i].b){ idx=i; break; } }
+  if(idx<0){ capEl.style.opacity=0; capCur=-1; return; }
+  if(idx!==capCur){ capEl.textContent=CAPL[idx].t; capCur=idx; }
+  var c=CAPL[idx];
+  capEl.style.opacity=cl(Math.min(ease(cl((t-c.a)/0.2,0,1)), ease(cl((c.b-t)/0.2,0,1))),0,1); }
+
+var modeEl=q("mode"), FADE=0.4;
+function seek(t){ t=cl(t,0,TOTAL); var curId=null;
+  S.forEach(function(s){ var l=t-s.t0, on=(l>=0&&l<s.d)||(s===S[S.length-1]&&t>=TOTAL);
+    if(on!==s.el.classList.contains("on")) s.el.classList.toggle("on",on);
+    if(!on) return; curId=s.id; DRAW[s.id](l,s.d);
+    var o=Math.min(ease(l/FADE), ease((s.d-l)/FADE)); if(s===S[S.length-1]) o=ease(l/FADE);
+    s.el.style.opacity=cl(o,0,1); });
+  var m=curId?MODE[curId]:"";
+  if(m){ modeEl.style.display=""; modeEl.className=m;
+    modeEl.textContent=(m==="real")?"■ Neuron の画面（実際の表示内容を再現）":"解説イメージ"; }
+  else { modeEl.style.display="none"; }
+  drawCap(t); q("prog").style.width=(t/TOTAL*100)+"%"; }
+window.__seek=seek; seek(0);
+})();
