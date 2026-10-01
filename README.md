@@ -35,3 +35,5 @@ https://masaoy0730.github.io/ai-seminar-demo/neuron-agent-demo-cad.html
 IT部門
 https://masaoy0730.github.io/ai-seminar-demo/neuron-agent-demo-it.html
 
+Z−12デモ（Neuronとの比較、3分でわかるエージェント検索）
+https://masaoy0730.github.io/ai-seminar-demo/movie-z12.html
