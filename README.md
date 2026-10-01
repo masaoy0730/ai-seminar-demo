@@ -40,3 +40,6 @@ https://masaoy0730.github.io/ai-seminar-demo/movie-z12.html
 
 自治体向け 議会答弁シナリオ（さくら浜市・管理不全空家）：3分動画版
 https://masaoy0730.github.io/ai-seminar-demo/movie-gikai.html
+
+IT部門の日報シナリオ（システムのトラブル兆候）：動画版
+https://masaoy0730.github.io/ai-seminar-demo/movie-it.html
