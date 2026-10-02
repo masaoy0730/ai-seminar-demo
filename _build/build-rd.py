@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 import re, base64, subprocess, os, sys
-REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.dirname(HERE)
 Z12  = os.path.join(REPO, 'movie-z12.html')
-BODY = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'rd-body.html')
+BODY = os.path.join(HERE, 'rd-body.html')
+IMG  = os.path.join(HERE, 'img')
 OUT  = os.path.join(REPO, 'movie-rd.html')
 NARR = sys.argv[1] if len(sys.argv) > 1 else ''   # 本編ナレーションMP3（未指定なら無音）
 
@@ -16,7 +18,6 @@ def block(kind, part):
     return m.group(0)        # 目印ごとそのまま持ってくる
 
 base_css = z[z.find('<style>')+7 : z.find('</style>')]
-# 念のため、z12側のNEURONスタイルは base_css に含まれたまま使う
 nlogo = re.search(r'class="nlogo" src="(data:[^"]+)"', z).group(1)
 player_js = re.findall(r'<script>(.*?)</script>', z, re.S)[-1]
 
@@ -24,6 +25,17 @@ parts = re.split(r'@@CSS@@|@@MARKUP@@|@@SCRIPT@@', b)
 if len(parts) != 4: raise SystemExit('body markers broken: %d' % len(parts))
 _, extra_css, markup, timeline = parts
 markup = markup.replace('@@NLOGO@@', nlogo)
+
+# 主人公の画像（_build/img/）をデータURIで埋め込む
+MIME = {'.webp':'image/webp', '.png':'image/png', '.jpg':'image/jpeg'}
+for key, fn in (('@@IMG1@@','nakai1.webp'), ('@@IMG2@@','nakai2.webp')):
+    if key not in markup: continue
+    p = os.path.join(IMG, fn)
+    if not os.path.exists(p): raise SystemExit('missing image: ' + p)
+    mime = MIME[os.path.splitext(fn)[1].lower()]
+    d = base64.b64encode(open(p, 'rb').read()).decode('ascii')
+    markup = markup.replace(key, 'data:%s;base64,%s' % (mime, d))
+    print('  embed %s  %s (%d KB)' % (key, fn, os.path.getsize(p)//1024))
 
 # 本編の長さ（タイムラインの S から合計する）
 secs = [float(x) for x in re.findall(r'd:\s*([0-9.]+)', timeline)]
