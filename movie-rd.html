@@ -255,10 +255,15 @@ video.clip.on{display:block;}
 .loop .lt{font-size:22px;font-weight:700;color:var(--teal);letter-spacing:.1em;}
 .loop .lr{display:flex;justify-content:center;gap:14px;margin-top:12px;font-size:23px;color:var(--ink);flex-wrap:wrap;}
 .loop .lr span{background:#132038;border:1px solid var(--line);border-radius:999px;padding:7px 16px;}
-.nstep{display:flex;align-items:center;gap:12px;font-size:19px;color:#3A4757;padding:9px 12px;border:1px solid #DDE3EA;border-radius:8px;background:#fff;}
-.nstep i{font-style:normal;font-weight:700;color:#2F6FB8;background:#E6ECF2;border-radius:5px;padding:1px 9px;flex:none;}
-.nstep.fs i{color:#0E6E62;background:#D7F5F0;}
-.nstep.fs{border-color:#2DD4BF;box-shadow:0 0 0 2px rgba(45,212,191,.35);}
+.qbox2{margin-top:14px;background:#fff;border:1px solid #E3E8EF;border-radius:10px;overflow:hidden;}
+.qrow{display:flex;align-items:center;gap:14px;font-size:19px;color:#3A4757;padding:9px 16px;border-bottom:1px dashed #DDE3EA;}
+.qrow:last-child{border-bottom:0;}
+.qrow .qn{flex:none;font-weight:700;font-size:15px;color:#2F6FB8;background:#E6ECF2;border-radius:6px;padding:2px 11px;}
+.qrow .qq{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.qrow .qs{margin-left:auto;flex:none;font-size:15px;color:#8A97A8;}
+.qrow.fs{background:#F2FCFA;}
+.qrow.fs .qn{color:#0E6E62;background:#D7F5F0;}
+.qrow.fs .qs{color:#0E6E62;font-weight:700;}
 .quotebig{position:absolute;left:140px;right:140px;top:300px;background:#2A1E0B;border-left:10px solid var(--amber);border-radius:16px;padding:52px 60px;}
 .quotebig .k{font-size:26px;color:var(--amber);font-weight:700;}
 .quotebig .v{font-size:56px;line-height:1.45;color:#FFE9C4;margin-top:22px;}
@@ -469,9 +474,9 @@ video.clip.on{display:block;}
       <span class="nreal">実際の画面の内容（再現）</span></div>
     <div class="nmain" style="left:0;padding:20px 34px;">
       <div style="display:flex;justify-content:flex-end;"><div class="nbub" style="font-size:17px;padding:10px 16px;max-width:780px;line-height:1.55;">過去に社内や共同研究で同じテーマの検討が行われていないか調べ、行われていた場合は、その結論と、いまもその結論が有効かどうかを確認してください。</div></div>
-      <div class="nans" style="margin-top:16px;padding:18px 24px;">
-        <div class="nproc">処理の経過　<span class="nnum" id="i_n">1</span><div style="font-size:16px;color:#6B7787;margin-top:4px;">Box と ファイルサーバーを横断して確認しています</div></div>
-        <div id="i_q" style="display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;margin-top:16px;"></div>
+      <div class="nans" style="margin-top:14px;padding:18px 24px;">
+        <div class="nproc" style="display:block;">処理の経過　<span class="nnum" id="i_n">1</span><div style="font-size:16px;color:#6B7787;margin-top:4px;">検索キーワードを変えながら、Box と ファイルサーバーを検索しています</div></div>
+        <div class="qbox2" id="i_q"></div>
       </div>
     </div>
   </div>
@@ -659,12 +664,18 @@ function ring(el,l,at){ if(!el) return; var p=seg(l,at,0.4);
   for(var i=0;i<128;i++) h+='<div class="bar'+(i<4?' lit':'')+'"></div>'; b.innerHTML=h; })();
 
 /* 8つの検索条件（5・6番がファイルサーバー） */
-var QUERIES=[["同じテーマの過去検討","Box",0],["研究テーマの中止理由","Box",0],["最終報告書 考察","Box",0],
- ["今後の課題・宿題","Box",0],["当時の試験データ","ファイルサーバー",1],["湿熱耐久 測定記録","ファイルサーバー",1],
- ["接着剤 耐湿グレード","Box",0],["現在の要求条件","Box",0]];
+var QUERIES=[
+ ["ドアインナー AND アルミ AND 樹脂 AND 接合","Box",0],
+ ["研究テーマ AND (中止 OR 継続せず)","Box",0],
+ ["陽極酸化 AND 接着 AND 考察","Box",0],
+ ["今後の課題 OR 残課題 OR 宿題","Box",0],
+ ["接着試験 AND (保持率 OR せん断強度)","ファイルサーバー",1],
+ ["湿熱耐久 AND 1000h AND 測定記録","ファイルサーバー",1],
+ ["接着剤 AND 耐湿グレード AND 2025","Box",0],
+ ["要求条件 AND 保持率 AND 80%","Box",0]];
 (function(){ var g=q("i_q"); if(!g) return; var h="";
-  QUERIES.forEach(function(x,i){ h+='<div class="nstep'+(x[2]?' fs':'')+'" id="iq'+i+'" style="opacity:0"><i>'+(i+1)+'</i>'+x[0]
-    +'<span style="margin-left:auto;font-size:15px;color:'+(x[2]?'#0E6E62':'#8A97A8')+'">'+x[1]+'</span></div>'; });
+  QUERIES.forEach(function(x,i){ h+='<div class="qrow'+(x[2]?' fs':'')+'" id="iq'+i+'" style="opacity:0">'
+    +'<span class="qn">検索 '+(i+1)+'</span><span class="qq">'+x[0]+'</span><span class="qs">'+x[1]+'</span></div>'; });
   g.innerHTML=h; })();
 
 var PROMPT1="過去に社内や共同研究で同じテーマの検討が行われていないか調べ、行われていた場合は、その結論と、いまもその結論が有効かどうかを確認してください。";
@@ -761,9 +772,9 @@ var DRAW={
    rise(q("h4"),l,2.2,.6); rise(q("h5"),l,5.4,.6);
    typeTo(q("h_q"),PROMPT1,l,5.8,22); ring(q("h_ring"),l,10.2); },
  s9:function(l){ rise(q("i1"),l,0.2,.5); rise(q("i2"),l,0.5,.6); rise(q("i3"),l,0.8,.6);
-   rise(q("i4"),l,2.2,.6); rise(q("i5"),l,9.6,.6);
-   var n=0; if(l>=3.0) n=Math.min(8,1+Math.floor((l-3.0)/2.2));
-   for(var i=0;i<8;i++) fade(q("iq"+i),l,3.0+i*2.2,.35);
+   rise(q("i4"),l,2.0,.6); rise(q("i5"),l,10.0,.6);
+   var n=0; if(l>=2.6) n=Math.min(8,1+Math.floor((l-2.6)/1.95));
+   for(var i=0;i<8;i++) rise(q("iq"+i),l,2.6+i*1.95,.40,16);
    q("i_n").textContent=Math.max(1,n); },
  s10:function(l){ rise(q("j1"),l,0.2,.5); rise(q("j2"),l,0.5,.6); },
  s11:function(l){ rise(q("k1"),l,0.2,.5); rise(q("k2"),l,0.6,.7); rise(q("k3"),l,8.6,.7); },
