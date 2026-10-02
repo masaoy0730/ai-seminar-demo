@@ -46,3 +46,6 @@ https://masaoy0730.github.io/ai-seminar-demo/movie-it.html
 
 研究開発シナリオ（アルミ軽量化・Box＋ファイルサーバーの横断検索）：動画版
 https://masaoy0730.github.io/ai-seminar-demo/movie-rd.html
+
+品質管理部シナリオ（設備メーカーの長い書類・Box＋社内の品質記録）：3分動画版
+https://masaoy0730.github.io/ai-seminar-demo/movie-qc.html
