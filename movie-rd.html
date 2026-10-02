@@ -217,7 +217,6 @@ video.clip.on{display:block;}
   box-shadow:0 18px 50px rgba(0,0,0,.45),0 0 0 3px rgba(255,255,255,.10);color:#1F2A37;}
 .bxside{width:212px;background:#0061D5;padding:18px 14px;color:#fff;flex:none;}
 .bxlogo{font-size:29px;font-weight:700;display:flex;align-items:center;gap:9px;letter-spacing:-.02em;}
-.bxlogo span{background:#2C7BE5;border-radius:5px;font-size:13px;font-weight:400;padding:2px 7px;letter-spacing:0;}
 .bxnav{font-size:19px;color:#CFE2FB;padding:7px 12px;border-radius:999px;margin-top:4px;}
 .bxnav.on{background:#004FB0;color:#fff;font-weight:700;}
 .bxsep{height:1px;background:#2C7BE5;margin:14px 6px;}
@@ -226,10 +225,18 @@ video.clip.on{display:block;}
 .bxfield{flex:1;display:flex;align-items:center;gap:12px;height:46px;border:1px solid #CFD8E3;border-radius:999px;padding:0 20px;font-size:23px;min-width:0;}
 .bxmag{width:16px;height:16px;border:2px solid #7A8A9C;border-radius:50%;flex:none;position:relative;}
 .bxmag::after{content:"";position:absolute;right:-6px;bottom:-3px;width:9px;height:2px;background:#7A8A9C;transform:rotate(45deg);}
-.bxbuy{background:#6E41E2;color:#fff;border-radius:8px;font-size:17px;padding:8px 16px;flex:none;}
 .bxav{width:40px;height:40px;border-radius:50%;background:#F7D154;color:#6B5200;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none;}
 .bxcrumb{font-size:20px;color:#5B6878;}
 .bxcrumb b{font-size:28px;color:#1F2A37;}
+.bxh2{font-size:27px;font-weight:700;color:#1F2A37;line-height:1.4;}
+.bxh2 b{color:#0061D5;}
+.bxchips{display:flex;gap:10px;margin-top:2px;}
+.bxchips span{font-size:16px;color:#1F2A37;background:#F2F5F8;border-radius:999px;padding:7px 14px;display:flex;align-items:center;gap:7px;}
+.bxchips i{font-style:normal;background:#0061D5;color:#fff;border-radius:50%;width:19px;height:19px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;}
+.bxzero2{font-size:25px;font-weight:700;color:#1F2A37;}
+.bxmsg{font-size:19px;color:#5B6878;line-height:1.65;margin-top:12px;}
+.bxglass{width:74px;height:74px;margin:0 auto 20px;border:3px solid #B9D3F2;border-radius:10px 10px 4px 4px;position:relative;}
+.bxglass::after{content:"";position:absolute;right:-16px;bottom:-12px;width:30px;height:30px;border:3px solid #B9D3F2;border-radius:50%;background:#fff;}
 .bxhd{display:flex;font-size:17px;color:#5B6878;border-bottom:1px solid #E4E9EF;padding-bottom:8px;}
 .bxrow{display:flex;align-items:center;gap:14px;font-size:21px;border-bottom:1px solid #EEF1F5;padding:13px 0;}
 .bxic{width:26px;height:26px;border-radius:4px;background:#2F7CE0;flex:none;}
@@ -261,9 +268,13 @@ video.clip.on{display:block;}
 .pctn{font-size:150px;font-weight:700;line-height:1;}
 .goalpill{display:inline-block;border:2px dashed var(--sub);border-radius:999px;padding:12px 32px;font-size:28px;}
 /* --- 成果物スライド（実物を縮小して2×2） --- */
-.slot{width:499px;height:281px;position:relative;overflow:hidden;border-radius:10px;background:#f5f4f0;
-  box-shadow:0 14px 40px rgba(0,0,0,.5);opacity:0;}
-.slot .sc{position:absolute;left:0;top:0;transform:scale(0.26);transform-origin:0 0;}
+.slot{width:860px;height:484px;position:relative;overflow:hidden;border-radius:10px;background:#f5f4f0;flex:none;
+  box-shadow:0 14px 40px rgba(0,0,0,.5);}
+.slot .sc{position:absolute;left:0;top:0;transform:scale(0.447917);transform-origin:0 0;}
+#n_win{position:absolute;left:530px;top:166px;width:860px;height:648px;overflow:hidden;
+  -webkit-mask-image:linear-gradient(180deg,rgba(0,0,0,0) 0,#000 9%,#000 91%,rgba(0,0,0,0) 100%);
+  mask-image:linear-gradient(180deg,rgba(0,0,0,0) 0,#000 9%,#000 91%,rgba(0,0,0,0) 100%);}
+#n_deck{position:absolute;left:0;top:0;width:860px;display:flex;flex-direction:column;gap:30px;}
 .fname{display:inline-block;background:var(--panel);border:2px solid var(--teal);border-radius:10px;padding:10px 26px;font-size:26px;color:var(--teal);}
 
 </style></head>
@@ -332,7 +343,7 @@ video.clip.on{display:block;}
   <div class="kicker item" id="d1">Box で検索する</div>
   <div class="bxscr item" id="d2" style="left:140px;top:240px;width:1140px;height:600px">
     <div class="bxside">
-      <div class="bxlogo">box<span>トライアル</span></div>
+      <div class="bxlogo">box</div>
       <div class="bxnav on" style="margin-top:16px">ファイル</div>
       <div class="bxnav">Notes</div><div class="bxnav">Automate</div>
       <div class="bxnav">統合</div><div class="bxnav">その他</div>
@@ -342,14 +353,17 @@ video.clip.on{display:block;}
     <div class="bxmain">
       <div class="bxtop">
         <div class="bxfield"><i class="bxmag"></i><span id="d_q"></span><span class="ncur" style="height:26px"></span></div>
-        <div class="bxbuy">今すぐ購入</div><div class="bxav">AA</div>
+        <div class="bxav">KN</div>
       </div>
-      <div class="bxcrumb">ファイル ＞ <b>demo_test</b></div>
-      <div class="grp" id="d_g1" style="margin-top:34px"><div class="bxzero">該当するファイルがありません</div>
-        <div class="bxnote" style="margin-top:22px">報告書はこの中にある。それでも、検索には出てこない。</div></div>
+      <div class="bxh2"><b>軽量化材料</b>で<b id="d_kw">&quot;保持率&quot;</b>を検索した結果</div>
+      <div class="bxchips"><span>ファイルの種類 ▾</span><span>更新日 ▾</span><span>タイトルのみ検索</span><span>すべてのフィルタ <i>1</i></span></div>
+      <div class="grp" id="d_g1" style="text-align:center;margin-top:40px">
+        <div class="bxglass"></div>
+        <div class="bxzero2">検索対象が見つかりませんでした。</div>
+        <div class="bxmsg">より簡単な検索語句を使用して検索結果を絞り込んでください。<br>それでも見つからない場合は、Box Product Support までお問い合わせください。</div>
+      </div>
       <div class="grp" id="d_g2">
-        <div class="bxcrumb" style="margin-top:6px">検索結果 ＞ <b>“陽極酸化”</b>　<span style="font-size:19px">1件</span></div>
-        <div class="bxhd" style="margin-top:12px"><span style="flex:1">名前 ↓</span><span style="width:260px">更新日</span><span style="width:120px">サイズ</span></div>
+        <div class="bxhd" style="margin-top:18px"><span style="flex:1">名前 ↓</span><span style="width:260px">更新日</span><span style="width:120px">サイズ</span></div>
         <div class="bxrow"><i class="bxic"></i><span style="flex:1">共同研究 最終報告書（2023年度）.docx</span>
           <span style="width:260px;color:#5B6878;font-size:18px">2023年3月14日、更新者: …</span>
           <span style="width:120px;color:#5B6878;font-size:18px">4.2 MB</span></div>
@@ -359,10 +373,10 @@ video.clip.on{display:block;}
     </div>
   </div>
   <table class="xt item" id="d3" style="position:absolute;left:1340px;top:240px;width:440px">
-    <tr><th style="width:56%">検索した言葉</th><th>結果</th></tr>
-    <tr><td>保持率</td><td class="redc" style="font-weight:700">0件</td></tr>
-    <tr><td>85℃・85%RH</td><td class="redc" style="font-weight:700">0件</td></tr>
-    <tr><td>陽極酸化</td><td class="tealc" style="font-weight:700">1件</td></tr>
+    <tr><th style="width:56%">検索した言葉（完全一致）</th><th>結果</th></tr>
+    <tr><td>"保持率"</td><td class="redc" style="font-weight:700">0件</td></tr>
+    <tr><td>"85℃・85%RH"</td><td class="redc" style="font-weight:700">0件</td></tr>
+    <tr><td>"陽極酸化"</td><td class="tealc" style="font-weight:700">1件</td></tr>
   </table>
 </div></section>
 
@@ -404,13 +418,13 @@ video.clip.on{display:block;}
     <div class="flow">
       <div class="fl lit">目的を伝える</div><div class="far">▼</div>
       <div class="loop"><div class="lt">AI エージェント</div>
-        <div class="lr"><span>検索語を考える</span><span>結果を読む</span><span>足りなければ探し直す</span></div></div>
+        <div class="lr"><span>検索キーワードを考える</span><span>結果を読む</span><span>足りなければ探し直す</span></div></div>
       <div class="far">▼</div>
       <div class="fl lit">根拠つきで回答</div>
     </div>
   </div>
-  <div class="p item" id="g4" style="position:absolute;left:140px;right:140px;top:812px;text-align:center;font-size:30px">
-    検索語を考えるのも、結果を読むのも、<span class="tealc">AIの側</span>に移る。</div>
+  <div class="p item" id="g4" style="position:absolute;left:140px;right:140px;top:806px;text-align:center;font-size:29px;line-height:1.5">
+    <span class="tealc">AIエージェント</span>が、検索キーワードを生成して検索し、<br>情報の不足を判断して、繰り返し情報を探索する</div>
 </div></section>
 
 <section class="scene" id="s8"><div class="wrap">
@@ -444,7 +458,7 @@ video.clip.on{display:block;}
     </div>
   </div>
   <div class="call item" id="h4" style="top:300px"><div class="callh">取得元は2つ</div>Box と ファイルサーバーに<b>同時にチェック</b>。1回の指示で両方を探す</div>
-  <div class="call item" id="h5" style="top:560px"><div class="callh">指示は1本だけ</div>困っていることを、そのまま書く。<b>検索語を考えるのはAI</b></div>
+  <div class="call item" id="h5" style="top:560px"><div class="callh">指示は1本だけ</div>困っていることを、そのまま書く。<b>検索キーワードを考えるのはAI</b></div>
 </div></section>
 
 <section class="scene" id="s9"><div class="wrap">
@@ -546,8 +560,8 @@ video.clip.on{display:block;}
 
 <section class="scene" id="s14"><div class="wrap">
   <div class="kicker item" id="n1">成果物：スライド 4枚</div>
-  <div id="n_deck" style="position:absolute;left:445px;top:180px;display:grid;grid-template-columns:499px 499px;gap:28px 32px"></div>
-  <div class="item" id="n2" style="position:absolute;left:0;right:0;top:806px;text-align:center">
+  <div class="item" id="n_win"><div id="n_deck"></div></div>
+  <div class="item" id="n2" style="position:absolute;left:0;right:0;top:826px;text-align:center">
     <span class="fname">テーマ計画見直し案_HX-50ドアインナー.pptx</span></div>
 </div></section>
 
@@ -635,7 +649,7 @@ function q(id){ return document.getElementById(id); }
 function rise(el,l,at,len,dy){ if(!el) return; var p=ease(seg(l,at,len||0.55));
   el.style.opacity=p; el.style.transform="translateY("+((1-p)*(dy===undefined?26:dy))+"px)"; }
 function fade(el,l,at,len){ if(!el) return; el.style.opacity=ease(seg(l,at,len||0.5)); }
-function grp(el,on){ if(el) el.style.display=on?"":"none"; }
+function grp(el,on){ if(!el) return; el.style.display=on?"":"none"; el.style.visibility=on?"visible":"hidden"; }
 function typeTo(el,txt,l,at,cps){ if(!el) return;
   var n=Math.floor(cl((l-at)*cps,0,txt.length)); el.textContent=txt.slice(0,n); }
 function ring(el,l,at){ if(!el) return; var p=seg(l,at,0.4);
@@ -720,7 +734,7 @@ var SLIDE4='<div style="'+SLD+'gap:26px">'
 +'<p style="position:absolute;right:128px;bottom:64px;font-size:24px;color:#5c6773">4 / 4</p></div>';
 var SLIDES=[SLIDE1,SLIDE2,SLIDE3,SLIDE4];
 (function(){ var d=q("n_deck"); if(!d) return; var h="";
-  SLIDES.forEach(function(s,i){ h+='<div class="slot" id="sl'+i+'"><div class="sc">'+s+'</div></div>'; });
+  SLIDES.forEach(function(s,i){ h+='<div class="slot"><div class="sc">'+s+'</div></div>'; });
   d.innerHTML=h; })();
 
 var DRAW={
@@ -733,10 +747,11 @@ var DRAW={
  s4:function(l){ rise(q("c1"),l,0.2,.5); rise(q("c2"),l,0.6,.6); rise(q("c0"),l,1.2,.9,40);
    rise(q("c3"),l,5.2,.6); fade(q("c5"),l,9.0,.6); rise(q("c4"),l,10.2,.6); rise(q("c6"),l,13.2,.6); },
  s5:function(l){ rise(q("d1"),l,0.2,.5); rise(q("d2"),l,0.5,.6); rise(q("d3"),l,1.6,.6);
-   var g1=false,g2=false;
-   if(l<5.4){ typeTo(q("d_q"),"保持率",l,1.0,6); g1=(l>2.8); }
-   else if(l<8.6){ typeTo(q("d_q"),"85℃・85%RH",l,5.6,7); g1=(l>7.4); }
-   else { typeTo(q("d_q"),"陽極酸化",l,8.8,6); g2=(l>10.6); }
+   var g1=false,g2=false,kw="\u0022保持率\u0022";
+   if(l<5.4){ typeTo(q("d_q"),"\u0022保持率\u0022",l,1.0,7); g1=(l>2.8); }
+   else if(l<8.6){ typeTo(q("d_q"),"\u002285℃・85%RH\u0022",l,5.6,8); g1=(l>7.4); kw="\u002285℃・85%RH\u0022"; }
+   else { typeTo(q("d_q"),"\u0022陽極酸化\u0022",l,8.8,7); g2=(l>10.6); kw="\u0022陽極酸化\u0022"; }
+   q("d_kw").textContent=kw;
    grp(q("d_g1"),g1); grp(q("d_g2"),g2); },
  s6:function(l){ rise(q("e1"),l,0.2,.5); rise(q("e_band"),l,0.6,.6); rise(q("e2"),l,1.4,.5);
    fade(q("e_flag"),l,5.0,.5); rise(q("e3"),l,8.4,.6);
@@ -758,16 +773,18 @@ var DRAW={
    var p=ease(seg(l,2.2,2.4)); q("l_b").textContent=Math.round(52+34*p)+"%"; },
  s13:function(l){ rise(q("m1"),l,0.2,.5); rise(q("m2"),l,0.6,.6); rise(q("m3"),l,2.6,.6);
    typeTo(q("m_q"),PROMPT2,l,3.6,20); ring(q("m_ring"),l,6.6); },
- s14:function(l){ rise(q("n1"),l,0.2,.5);
-   for(var i=0;i<4;i++) rise(q("sl"+i),l,1.2+i*0.8,.6,22);
-   rise(q("n2"),l,5.4,.7); },
+ s14:function(l){ rise(q("n1"),l,0.2,.5); rise(q("n_win"),l,0.9,.7,30);
+   var d=q("n_deck"), w=q("n_win");
+   var span=Math.max(0, d.scrollHeight - w.clientHeight);
+   d.style.transform="translateY("+(-ease(seg(l,1.9,10.4))*span)+"px)";
+   rise(q("n2"),l,12.6,.7); },
  s15:function(l){ rise(q("z1"),l,0.4,.6); rise(q("z2"),l,1.4,.6); rise(q("z3"),l,3.6,.7);
    rise(q("z4"),l,5.2,.7); fade(q("z5"),l,7.4,.8); }
 };
 
 /* 右上の場面ラベル：解説＝expl／Neuronの回答画面＝real（入力・成果物の場面は出さない） */
 var MODE={s1:"expl",s2:"expl",s3:"expl",s4:"expl",s5:"expl",s6:"expl",s7:"expl",
- s8:"",s9:"real",s10:"real",s11:"expl",s12:"expl",s13:"",s14:"",s15:"expl"};
+ s8:"",s9:"",s10:"",s11:"expl",s12:"expl",s13:"",s14:"",s15:"expl"};
 
 var CAPS=[
  ["s2",0.6,6.8,"このデモの主人公は、セイワ工機、先行開発部の仲井さんです。"],
@@ -785,7 +802,7 @@ var CAPS=[
  ["s6",8.2,11.4,"日本語なら、3〜5ページ分ほど。"],
  ["s6",11.4,18.0,"実験結果や考察、結論は、報告書の後半にかかれていることが多いのです。"],
  ["s7",0.6,5.0,"エージェント検索は、目的を伝えるだけ。"],
- ["s7",5.0,13.0,"AIが検索語を考え、結果を読み、足りなければ言葉を変えて、探し直します。"],
+ ["s7",5.0,13.0,"AIが検索キーワードを考え、結果を読み、足りなければキーワードを変えて、探し直します。"],
  ["s7",13.0,20.0,"調べ終えたら、根拠つきで回答します。"],
  ["s8",0.6,7.0,"仲井さんは、過去に同じ検討がなかったかを、そのまま質問します。"],
  ["s8",7.0,12.0,"取得元は、Boxとファイルサーバーの両方です。"],
