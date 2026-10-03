@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Box 画面モック 部品集</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0E1726; --panel:#18273F; --line:#2B3E5C;
+  --ink:#EAF1FB; --sub:#9DB2CE; --mute:#6F86A6;
+  --teal:#2DD4BF; --amber:#F0A83C; --red:#E5484D;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"BIZ UDPGothic","BIZ UDPゴシック","Hiragino Sans","Noto Sans JP",sans-serif;
+  line-height:1.7;}
+.page{max-width:1180px;margin:0 auto;padding:48px 16px 96px;}
+h1{font-size:30px;margin:0 0 10px;letter-spacing:.01em;}
+h1 .t{color:var(--teal);}
+.lead{color:var(--sub);font-size:16px;margin:0 0 8px;}
+hr.rule{border:0;border-top:2px solid var(--teal);width:72px;margin:22px 0 34px;}
+h2{font-size:21px;margin:52px 0 6px;padding-top:18px;border-top:1px solid var(--line);}
+h3{font-size:16px;color:var(--teal);margin:30px 0 8px;letter-spacing:.04em;}
+p,li{font-size:15px;color:var(--sub);}
+ol,ul{padding-left:1.3em;}
+li{margin:5px 0;}
+b.k{color:var(--ink);}
+code.inline{background:#132038;border:1px solid var(--line);border-radius:5px;padding:1px 6px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13.5px;color:var(--ink);}
+pre{background:#0A1322;border:1px solid var(--line);border-radius:10px;padding:16px 18px;overflow:auto;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;color:#CFE0F5;}
+.note{background:rgba(240,168,60,.08);border-left:3px solid var(--amber);border-radius:0 8px 8px 0;
+  padding:12px 16px;margin:16px 0;}
+.note p{color:var(--ink);margin:0;font-size:14.5px;}
+.stage{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:18px;overflow:hidden;}
+.frame{width:1140px;height:600px;transform-origin:0 0;}
+.scaler{overflow:hidden;}
+.cap{font-size:13px;color:var(--mute);margin:8px 0 0;}
+</style>
+
+<!-- ============ ここから下の CSS が「部品」本体。そのままコピーして使う ============ -->
+<script type="text/plain" id="src-css">
+/* --- Box画面（実画面に寄せたモック：右の共有パネルは出さない） --- */
+.bxscr{position:absolute;background:#fff;border-radius:14px;overflow:hidden;display:flex;
+  box-shadow:0 18px 50px rgba(0,0,0,.45),0 0 0 3px rgba(255,255,255,.10);color:#1F2A37;}
+.bxside{width:212px;background:#0061D5;padding:18px 14px;color:#fff;flex:none;}
+.bxlogo{font-size:29px;font-weight:700;display:flex;align-items:center;gap:9px;letter-spacing:-.02em;}
+.bxnav{font-size:19px;color:#CFE2FB;padding:7px 12px;border-radius:999px;margin-top:4px;}
+.bxnav.on{background:#004FB0;color:#fff;font-weight:700;}
+.bxsep{height:1px;background:#2C7BE5;margin:14px 6px;}
+.bxmain{flex:1;padding:18px 26px;min-width:0;display:flex;flex-direction:column;gap:13px;}
+.bxtop{display:flex;align-items:center;gap:16px;}
+.bxfield{flex:1;display:flex;align-items:center;gap:12px;height:46px;border:1px solid #CFD8E3;border-radius:999px;padding:0 20px;font-size:23px;min-width:0;}
+.bxmag{width:16px;height:16px;border:2px solid #7A8A9C;border-radius:50%;flex:none;position:relative;}
+.bxmag::after{content:"";position:absolute;right:-6px;bottom:-3px;width:9px;height:2px;background:#7A8A9C;transform:rotate(45deg);}
+.bxav{width:40px;height:40px;border-radius:50%;background:#F7D154;color:#6B5200;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none;}
+.bxcrumb{font-size:20px;color:#5B6878;}
+.bxcrumb b{font-size:28px;color:#1F2A37;}
+.bxh2{font-size:27px;font-weight:700;color:#1F2A37;line-height:1.4;}
+.bxh2 b{color:#0061D5;}
+.bxchips{display:flex;gap:10px;margin-top:2px;}
+.bxchips span{font-size:16px;color:#1F2A37;background:#F2F5F8;border-radius:999px;padding:7px 14px;display:flex;align-items:center;gap:7px;}
+.bxchips i{font-style:normal;background:#0061D5;color:#fff;border-radius:50%;width:19px;height:19px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;}
+.bxzero2{font-size:25px;font-weight:700;color:#1F2A37;}
+.bxglass{width:74px;height:74px;margin:0 auto 20px;border:3px solid #B9D3F2;border-radius:10px 10px 4px 4px;position:relative;}
+.bxglass::after{content:"";position:absolute;right:-16px;bottom:-12px;width:30px;height:30px;border:3px solid #B9D3F2;border-radius:50%;background:#fff;}
+.bxhd{display:flex;font-size:17px;color:#5B6878;border-bottom:1px solid #E4E9EF;padding-bottom:8px;}
+.bxrow{display:flex;align-items:center;gap:14px;font-size:21px;border-bottom:1px solid #EEF1F5;padding:13px 0;}
+.bxic{width:26px;height:26px;border-radius:4px;background:#2F7CE0;flex:none;}
+.bxnm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bxnote{font-size:22px;color:#9A6200;line-height:1.5;}
+.bximg{position:absolute;right:18px;bottom:14px;font-size:15px;font-weight:700;color:#6B7787;background:#EEF2F6;border:1px solid #CFD8E3;border-radius:999px;padding:5px 14px;}
+/* 入力キャレット（Neuron画面の部品と共用） */
+.ncur{display:inline-block;width:2px;height:24px;background:#1F2A37;margin-left:2px;vertical-align:middle;}
+/* 表示の切り替え（本編のベースCSSと同じ） */
+.grp{visibility:hidden;}
+</script>
+</head>
+<body>
+<div class="page">
+
+<h1>Box <span class="t">画面モック</span> 部品集</h1>
+<p class="lead">研究開発部門向けデモ（movie-rd.html）で作った Box 画面のモックを、ほかの HTML 版デモでも同じ見た目で使えるようにまとめたものです。</p>
+<p class="lead">実画面のキャプチャに合わせて作っています。<b class="k">右の共有パネルは出しません。</b></p>
+<hr class="rule">
+
+<h2>使い方</h2>
+<ol>
+<li>下の <b class="k">CSS</b> を、デモ本体の <code class="inline">&lt;style&gt;</code>（または <code class="inline">@@CSS@@</code> ブロック）に貼る。</li>
+<li>見せたい状態の <b class="k">マークアップ</b> を、シーンの中に貼る。<code class="inline">.bxscr</code> に <code class="inline">left / top / width / height</code> を指定して置く。</li>
+<li><b class="k">DRAW 関数</b>で <code class="inline">typeTo()</code> と <code class="inline">grp()</code> を呼び、検索語の打ち込みと結果の切り替えをする。</li>
+</ol>
+<div class="note"><p>この部品は <code class="inline">position:absolute</code> で置く前提です。1920×1080 のステージなら <code class="inline">left:140px; top:240px; width:1140px; height:600px</code> が収まりの良い位置です（字幕帯にかからない）。</p></div>
+
+<h2>画面の状態</h2>
+<p>下は実物と同じ HTML／CSS をそのまま描いています（表示の都合で縮小しています）。</p>
+
+<h3>A ── 検索結果 0件</h3>
+<div class="stage"><div class="scaler" id="sc-a"><div class="frame" id="fr-a"></div></div></div>
+<p class="cap">Box で検索しても出てこない場面。実画面の文言は「検索対象が見つかりませんでした。」の1行だけで、その下の案内文（「より簡単な検索語句を…」）は出しません。</p>
+
+<h3>B ── 検索結果 1件</h3>
+<div class="stage"><div class="scaler" id="sc-b"><div class="frame" id="fr-b"></div></div></div>
+<p class="cap">ヒットはするが、長い文書のどこに答えがあるか分からない、という対照の場面。</p>
+
+<h3>C ── フォルダを開いたところ（検索前）</h3>
+<div class="stage"><div class="scaler" id="sc-c"><div class="frame" id="fr-c"></div></div></div>
+<p class="cap">「ファイルはきちんと置いてある」ことを先に見せる場面。パンくず <code class="inline">.bxcrumb</code> を使います。</p>
+
+<h2>CSS</h2>
+<pre id="out-css"></pre>
+
+<h2>マークアップ</h2>
+<p>A と B は同じ枠の中身を <code class="inline">.grp</code> で切り替えています。C は検索前の一覧です。</p>
+<h3>A／B（検索結果）</h3>
+<pre id="out-ab"></pre>
+<h3>C（検索前のフォルダ一覧）</h3>
+<pre id="out-c"></pre>
+
+<h2>動かし方（DRAW 関数）</h2>
+<p>時間 <code class="inline">l</code>（シーン先頭からの秒数）で切り替えます。<code class="inline">typeTo</code>／<code class="inline">grp</code> は本編側のヘルパーです。</p>
+<pre>
+ s5:function(l){ rise(q("d1"),l,0.2,.5); rise(q("d2"),l,0.5,.6); rise(q("d3"),l,1.6,.6);
+   var g1=false,g2=false,kw=""保持率"";
+   if(l&lt;5.2){ typeTo(q("d_q"),""保持率"",l,0.8,7); g1=(l&gt;2.6); }
+   else if(l&lt;8.4){ typeTo(q("d_q"),""85℃・85%RH"",l,5.4,8); g1=(l&gt;7.2); kw=""85℃・85%RH""; }
+   else { typeTo(q("d_q"),""陽極酸化"",l,8.6,7); g2=(l&gt;10.4); kw=""陽極酸化""; }
+   q("d_kw").textContent=kw;
+   grp(q("d_g1"),g1); grp(q("d_g2"),g2); },
+</pre>
+<div class="note"><p><b class="k">注意：</b><code class="inline">grp()</code> は <code class="inline">display</code> と <code class="inline">visibility</code> の<b class="k">両方</b>を切り替えること。ベースCSSの <code class="inline">.grp{visibility:hidden}</code> が残って、要素が見えなくなる不具合が出たことがあります。</p></div>
+<pre>
+function grp(el,on){ if(!el) return;
+  el.style.display   = on ? "" : "none";
+  el.style.visibility= on ? "visible" : "hidden"; }
+</pre>
+
+<h2>守るルール（確認済み）</h2>
+<ul>
+<li>右側の<b class="k">共有パネルは出さない</b>（画面が狭くなり、検索結果が読めなくなるため）。</li>
+<li>右上の<b class="k">「今すぐ購入」は出さない</b>。<b class="k">「トライアル」バッジも出さない</b>（契約済みの顧客を想定するため）。</li>
+<li>アバターの頭文字は<b class="k">主人公のイニシャル</b>にする（研究開発部門デモでは仲井さんで <code class="inline">KN</code>）。</li>
+<li>フォルダ名は<b class="k">デモシナリオのフォルダ名</b>にする（<code class="inline">demo_test</code> のような作業用の名前を残さない）。</li>
+<li>検索語は <b class="k">&quot; で囲って完全一致検索</b>にする。ヒットしない理由を「表記ゆれでは？」と疑われないため。</li>
+<li>0件のときは<b class="k">「検索対象が見つかりませんでした。」の1行だけ</b>。その下の案内文は出さない。</li>
+<li>画面の右下に<b class="k">「Box画面はイメージです」</b>のバッジを必ず置く。</li>
+<li>実在の企業・製品・人名は出さない。ステージ左下に「※ 登場する企業・製品・文書・人名はすべて架空です」を出す。</li>
+<li>Box を否定する見せ方にしない。<b class="k">「Boxに置いたまま、文書の奥まで探せる」</b>という補完関係で見せる。</li>
+</ul>
+
+<h2>関連</h2>
+<ul>
+<li>Neuron 側の画面部品 ── スキル <code class="inline">/neuron-screen-mock</code></li>
+<li>HTML版デモ動画の作り方 ── スキル <code class="inline">/neuron-html-demo-movie</code></li>
+<li>実装例 ── <code class="inline">movie-rd.html</code>（研究開発部門向けデモ）のシーン s5</li>
+</ul>
+
+</div>
+
+<!-- ============ 部品のマークアップ（そのままコピーして使う） ============ -->
+<script type="text/plain" id="src-ab">
+<div class="bxscr item" id="d2" style="left:140px;top:240px;width:1140px;height:600px">
+  <div class="bxside">
+    <div class="bxlogo">box</div>
+    <div class="bxnav on" style="margin-top:16px">ファイル</div>
+    <div class="bxnav">Notes</div><div class="bxnav">Automate</div>
+    <div class="bxnav">統合</div><div class="bxnav">その他</div>
+    <div class="bxsep"></div>
+    <div class="bxnav">コレクション</div><div class="bxnav">お気に入り</div>
+  </div>
+  <div class="bxmain">
+    <div class="bxtop">
+      <div class="bxfield"><i class="bxmag"></i><span id="d_q"></span><span class="ncur" style="height:26px"></span></div>
+      <div class="bxav">KN</div>
+    </div>
+    <div class="bxh2"><b>軽量化材料</b>で<b id="d_kw">&quot;保持率&quot;</b>を検索した結果</div>
+    <div class="bxchips"><span>ファイルの種類 ▾</span><span>更新日 ▾</span><span>タイトルのみ検索</span><span>すべてのフィルタ <i>1</i></span></div>
+    <div class="grp" id="d_g1" style="text-align:center;margin-top:40px">
+      <div class="bxglass"></div>
+      <div class="bxzero2">検索対象が見つかりませんでした。</div>
+    </div>
+    <div class="grp" id="d_g2">
+      <div class="bxhd" style="margin-top:18px"><span style="flex:1">名前 ↓</span><span style="width:260px">更新日</span><span style="width:120px">サイズ</span></div>
+      <div class="bxrow"><i class="bxic"></i><span class="bxnm">共同研究 最終報告書（2023年度）.docx</span>
+        <span style="width:260px;color:#5B6878;font-size:18px">2023年3月14日、更新者: …</span>
+        <span style="width:120px;color:#5B6878;font-size:18px">4.2 MB</span></div>
+      <div class="bxnote" style="margin-top:22px">見つかった。ただし、128ページのどこに書いてあるかは分からない。</div>
+    </div>
+    <div class="bximg">Box画面はイメージです</div>
+  </div>
+</div>
+</script>
+
+<script type="text/plain" id="src-c">
+<div class="bxscr item" id="d2" style="left:140px;top:240px;width:1140px;height:600px">
+  <div class="bxside">
+    <div class="bxlogo">box</div>
+    <div class="bxnav on" style="margin-top:16px">ファイル</div>
+    <div class="bxnav">Notes</div><div class="bxnav">Automate</div>
+    <div class="bxnav">統合</div><div class="bxnav">その他</div>
+    <div class="bxsep"></div>
+    <div class="bxnav">コレクション</div><div class="bxnav">お気に入り</div>
+  </div>
+  <div class="bxmain">
+    <div class="bxtop">
+      <div class="bxfield"><i class="bxmag"></i><span style="color:#A0ABB9">ファイルやフォルダを検索</span></div>
+      <div class="bxav">KN</div>
+    </div>
+    <div class="bxcrumb">共同研究・外部連携 ＞ <b>軽量化材料</b></div>
+    <div class="bxhd" style="margin-top:6px"><span style="flex:1">名前 ↓</span><span style="width:260px">更新日</span><span style="width:120px">サイズ</span></div>
+    <div class="bxrow"><i class="bxic"></i><span class="bxnm">共同研究 最終報告書（2023年度）.docx</span>
+      <span style="width:260px;color:#5B6878;font-size:18px">2023年3月14日</span>
+      <span style="width:120px;color:#5B6878;font-size:18px">4.2 MB</span></div>
+    <div class="bxrow"><i class="bxic"></i><span class="bxnm">構造用接着剤 テクニカルガイド 2025年版.docx</span>
+      <span style="width:260px;color:#5B6878;font-size:18px">2025年6月2日</span>
+      <span style="width:120px;color:#5B6878;font-size:18px">2.8 MB</span></div>
+    <div class="bxrow"><i class="bxic"></i><span class="bxnm">表面処理条件別 接着試験 試験成績報告書.docx</span>
+      <span style="width:260px;color:#5B6878;font-size:18px">2023年2月8日</span>
+      <span style="width:120px;color:#5B6878;font-size:18px">1.9 MB</span></div>
+    <div class="bximg">Box画面はイメージです</div>
+  </div>
+</div>
+</script>
+
+<script>
+(function(){
+  function txt(id){ return document.getElementById(id).textContent.replace(/^\n/,'').replace(/\s+$/,''); }
+  // CSS を適用しつつ、同じ文字列をページにも出す（見本とコードが必ず一致する）
+  var css = txt('src-css');
+  var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+  document.getElementById('out-css').textContent = css;
+
+  var ab = txt('src-ab'), c = txt('src-c');
+  document.getElementById('out-ab').textContent = ab;
+  document.getElementById('out-c').textContent  = c;
+
+  function put(frameId, html, show){
+    var fr = document.getElementById(frameId);
+    fr.innerHTML = html;
+    var box = fr.querySelector('.bxscr');
+    box.style.left = '0'; box.style.top = '0';
+    box.style.width = '1140px'; box.style.height = '600px';
+    if (show){
+      fr.querySelectorAll('.grp').forEach(function(el){
+        var on = (el.id === show);
+        el.style.display    = on ? '' : 'none';
+        el.style.visibility = on ? 'visible' : 'hidden';
+      });
+    }
+    return fr;
+  }
+  put('fr-a', ab, 'd_g1');
+  put('fr-b', ab, 'd_g2');
+  put('fr-c', c,  null);
+  // 検索語を入れておく
+  document.querySelectorAll('#fr-a #d_q, #fr-b #d_q').forEach(function(e,i){
+    e.textContent = i === 0 ? '"保持率"' : '"陽極酸化"';
+  });
+  var b2 = document.querySelector('#fr-b #d_kw'); if (b2) b2.textContent = '"陽極酸化"';
+
+  function fit(){
+    [['sc-a','fr-a'],['sc-b','fr-b'],['sc-c','fr-c']].forEach(function(p){
+      var sc = document.getElementById(p[0]), fr = document.getElementById(p[1]);
+      var k = Math.min(1, sc.clientWidth / 1140);
+      fr.style.transform = 'scale(' + k + ')';
+      sc.style.height = (600 * k) + 'px';
+    });
+  }
+  fit(); window.addEventListener('resize', fit);
+})();
+</script>
+</body>
+</html>
