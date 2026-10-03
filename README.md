@@ -7,16 +7,6 @@ https://masaoy0730.github.io/ai-seminar-demo/
 neuronのエージェント検索のイメージデモ
 https://masaoy0730.github.io/ai-seminar-demo/neuron-search-demo.html
 
-研究論文シナリオ
-車載リチウムバッテリー
-https://masaoy0730.github.io/ai-seminar-demo/neuron-agent-demo-battery.html<br>
-
-自動車向けアルミニウム
-https://masaoy0730.github.io/ai-seminar-demo/neuron-agent-demo-al.html
-
-ヒヤリハットシナリオ
-https://masaoy0730.github.io/ai-seminar-demo/neuron-agent-demo-nearmiss.html
-
 ヒヤリハットシナリオ（AL-2ラインの締結工程・日報からの気づき）：HTML動画版
 https://masaoy0730.github.io/ai-seminar-demo/movie-nearmiss.html
 
@@ -32,9 +22,6 @@ https://masaoy0730.github.io/ai-seminar-demo/movie-z12.html
 - 見どころ：エージェント検索を初めて見る人向けの短い紹介。人がNeuronのキーワード検索で探す場合（左側）と、AIエージェントが検索する場合（右側）を並べて見せる。キーワード検索では10件のファイルが見つかるが、原因や対応は1件ずつ開いて確かめる必要がある。エージェント検索では「起きていること」と「してほしいこと」を書くだけで、結論（巻取り機を停止し再起動を保留）・原因候補4つ（優先順）・一次対応5つが、過去の不具合報告書などを出典として示され、プレビューでその場で中身を確かめられる。Neuronの画面は「実際の画面の内容（再現）」、それ以外は「解説イメージ」と区別して表示
 - 構成：タイトル（3分でわかる エージェント検索とは？ 設備トラブル編） → 場面設定・2つの探し方の比較 → キーワード検索の画面 → キーワード検索の結果 → エージェント検索の使い方 → 指示の入力 → 回答（結論） → 原因候補と一次対応 → 出典と関連ファイルの一覧 → プレビュー → まとめ
 - 尺：2分28秒（オープニング・クロージング込み）。ナレーション：VOICEVOX:剣崎雌雄。字幕のON/OFF切替あり。画面内の文言はシナリオから作った再現
-
-設備トラブルシナリオ：動画版
-https://masaoy0730.github.io/ai-seminar-demo/movie-setsubi.html
 
 ロボットの安全設計シナリオ
 https://masaoy0730.github.io/ai-seminar-demo/neuron-agent-demo-safety.html
