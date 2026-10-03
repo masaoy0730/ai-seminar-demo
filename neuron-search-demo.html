@@ -1253,10 +1253,16 @@
   requestAnimationFrame(paint);
 
   /* =========================================================
-     表示領域に合わせて全体を縮小（はみ出すときだけ。拡大はしない）
-     data-nrn-fit="off" を付けると無効化できます
+     表示領域に合わせて全体を拡大・縮小
+       - 小さい画面：はみ出さないように縮める
+       - 大きい画面（Studio Display など）：読みやすい大きさまで拡大する
+     data-nrn-fit="off"        … 拡大・縮小をしない
+     data-nrn-max-scale="1"    … 拡大だけをやめる（縮小は従来どおり）
      ========================================================= */
   var SCALE = 1;
+  var MAX_SCALE = parseFloat(root.getAttribute('data-nrn-max-scale'));
+  if (!(MAX_SCALE > 0)) MAX_SCALE = 1.7;
+  var GROW_FROM = 1500;   /* 表示領域がこの幅以上のときだけ拡大する */
   var holder = null;
   if (root.getAttribute('data-nrn-fit') !== 'off') {
     holder = document.createElement('div');
@@ -1275,8 +1281,11 @@
     if (!(top > 0) || top > vh * 0.6) top = 20;      /* 画面外にあるときは上余白20pxと仮定 */
     var availW = holder.clientWidth || natW;
     var availH = Math.max(320, vh - top - 14);
-    var sc = Math.min(1, availW / natW, availH / natH);
-    if (sc > 0.995) { SCALE = 1; return; }
+    /* 拡大するのは大きなディスプレイのときだけ。
+       ノートPCサイズ（表示領域が GROW_FROM 未満）は従来どおり等倍のままにする */
+    var cap = (availW >= GROW_FROM) ? MAX_SCALE : 1;
+    var sc = Math.min(cap, availW / natW, availH / natH);
+    if (sc > 0.995 && sc < 1.005) { SCALE = 1; return; }
     SCALE = sc;
     root.style.transform = 'scale(' + sc + ')';
     holder.style.height = Math.round(natH * sc) + 'px';
