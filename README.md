@@ -46,6 +46,12 @@ https://masaoy0730.github.io/ai-seminar-demo/movie-z12.html
 自治体向け 議会答弁シナリオ（さくら浜市・管理不全空家）：3分動画版
 https://masaoy0730.github.io/ai-seminar-demo/movie-gikai.html
 
+自治体向け サプライヤー支援シナリオ（あおば野市・中小部品メーカーの電動化・事業転換）：動画版
+https://masaoy0730.github.io/ai-seminar-demo/movie-supplier.html
+
+- 内容：あおば野市 産業振興課の水野 さやかさん（ものづくり支援係 係長）が主人公。完成車メーカーがエンジン車の生産ラインの縮小を発表し、市内の部品メーカーへの影響と市のこれまでの支援を、市長レクまでに整理する
+- 見どころ：産業振興課・環境政策課（ファイルサーバー）、企業立地課（SharePoint Online）、商工会議所（Box）に分かれた同じ企業の記録を、エージェント検索がつなぐ。途切れていた相談と、セイワ工機の協力企業の募集が一致することを見つける（「支援の種は、もう市の中にあった」）
+
 IT部門の日報シナリオ（システムのトラブル兆候）：動画版
 https://masaoy0730.github.io/ai-seminar-demo/movie-it.html
 
