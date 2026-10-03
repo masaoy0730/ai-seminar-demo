@@ -1,0 +1,1635 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>エージェント検索 自動デモ｜生産ライン立ち上げ中のヒヤリハット横断調査</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Roboto+Mono:wght@400;500&display=swap');
+:root{
+  --k:1;                          /* 再生速度に応じたアニメーションの倍率（1/速度） */
+  --bg:#f5f6f8; --surface:#fff; --border:#e2e5ea; --border-strong:#cdd3db;
+  --text:#1d2430; --muted:#697586;
+  --accent:#2f6df6; --accent-dark:#2255d0; --accent-soft:#eaf1ff;
+  --ok:#17845a; --ok-soft:#e6f6ee; --warn:#9a6200; --warn-soft:#fdf3e2;
+  --err:#c0392f; --err-soft:#fdecea;
+  --radius:10px; --shadow:0 1px 2px rgba(16,24,40,.05),0 4px 16px rgba(16,24,40,.06);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'BIZ UDPGothic','BIZ UDPゴシック','Noto Sans JP','Hiragino Sans',system-ui,-apple-system,sans-serif;
+  font-size:14px;line-height:1.7;-webkit-font-smoothing:antialiased;
+  padding:18px 16px 28px;
+}
+.app{max-width:1240px;margin:0 auto;}
+
+/* ---------- ヘッダー ---------- */
+.topbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px;}
+.logo{flex:none;height:40px;width:auto;display:block;}
+.vr{flex:none;width:1px;height:22px;background:var(--border-strong);}
+.brand{font-size:16px;font-weight:700;}
+.brand span{color:var(--muted);font-weight:500;margin-left:8px;font-size:13px;}
+.badge{margin-left:auto;font-size:11px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:3px 10px;white-space:nowrap;}
+
+/* ---------- ステージ ---------- */
+.stage{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+.viewport{position:relative;overflow:hidden;display:flex;flex-direction:column;
+  height:clamp(560px, calc(100vh - 160px), 1040px);}
+.log{order:1;flex:1 1 auto;min-height:0;overflow-y:auto;overflow-anchor:none;padding:18px 20px 24px;scroll-behavior:smooth;}
+/* 入力バー（画面下に固定） */
+.bottombar{order:2;flex:none;position:relative;z-index:3;border-top:1px solid var(--border);
+  background:var(--surface);padding:14px 20px 16px;}
+.bottombar .blk{display:block;margin-bottom:0;}
+.bottombar .steplabel{display:none;}
+.viewport.split .bottombar{padding-right:396px;}
+.log::-webkit-scrollbar{width:10px;}
+.log::-webkit-scrollbar-thumb{background:#d8dde4;border-radius:6px;border:3px solid var(--surface);}
+
+.blk{display:none;margin-bottom:16px;}
+.blk.show{display:block;}
+.blk.anim{animation:rise calc(.45s * var(--k)) cubic-bezier(.2,.8,.3,1) both;}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.blk.pending .prompt,.blk.pending .card,.blk.pending .rstatus{opacity:0;}
+
+.steplabel{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:3px 10px;margin-bottom:8px;}
+.card{border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;background:var(--surface);transition:opacity .35s ease;}
+.card.tint{background:#fafbfc;}
+
+/* プロンプト */
+.prompt{display:flex;gap:12px;align-items:center;border:1px solid var(--border-strong);border-radius:var(--radius);padding:14px 16px;background:#fff;transition:opacity .35s ease;}
+.prompt .ico{flex:none;width:30px;height:30px;border-radius:8px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;}
+.prompt p{flex:1;min-width:0;margin:0;font-size:16px;font-weight:700;line-height:1.65;}
+.prompt p.ph{color:#9AA3AE;font-weight:400;}
+
+/* リポジトリ */
+.repos{display:flex;flex-wrap:wrap;gap:8px;}
+.repo{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:700;background:var(--surface);border:1px solid var(--border-strong);border-radius:999px;padding:8px 16px;}
+.repo svg{color:var(--accent);}
+.repo .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);}
+
+/* ---------- 質問バブル（右揃え） ---------- */
+.qask{display:flex;justify-content:flex-end;margin:2px 0 14px;opacity:0;transition:opacity .38s ease;}
+.qask.on{opacity:1;}
+.qask-t{max-width:76%;background:#eaf1ff;border:1px solid #c3d8fb;border-radius:16px 16px 5px 16px;
+  padding:12px 18px;font-size:17px;font-weight:700;line-height:1.6;color:var(--text);
+  box-shadow:0 3px 10px rgba(47,109,246,.10);
+  transform:translateY(6px);transition:transform .38s cubic-bezier(.2,.8,.3,1);}
+.qask.on .qask-t{transform:none;}
+
+/* ---------- 検索対象のリポジトリ（1行表示） ---------- */
+.rstatus{display:flex;align-items:center;gap:9px;font-size:13.5px;color:var(--muted);transition:opacity .35s ease;}
+.rstatus b{color:var(--text);}
+.rstatus .sp{width:13px;height:13px;border-radius:50%;flex:none;
+  border:2px solid rgba(47,109,246,.25);border-top-color:var(--accent);animation:rspin calc(.8s * var(--k)) linear infinite;}
+@keyframes rspin{to{transform:rotate(360deg)}}
+.rstatus .ck{display:none;width:15px;height:15px;flex:none;color:var(--ok);}
+.rstatus .m2{display:none;}
+.rstatus.done .sp{display:none;}
+.rstatus.done .ck{display:flex;}
+.rstatus.done .m1{display:none;}
+.rstatus.done .m2{display:inline;}
+
+/* ---------- 再生速度 ---------- */
+.spd{display:flex;gap:5px;flex:none;}
+.spd button{border:1px solid var(--border-strong);background:var(--surface);color:var(--muted);
+  font-family:inherit;font-size:11.5px;font-weight:700;border-radius:999px;padding:4px 10px;cursor:pointer;
+  transition:background-color .15s ease,color .15s ease,border-color .15s ease;}
+.spd button:hover{background:var(--bg);color:var(--text);}
+.spd button.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+/* ---------- 検索プロセス（フロー＋検索カード） ---------- */
+.proc{display:grid;grid-template-columns:300px 1fr;gap:18px;align-items:start;}
+.searches > *{display:none;}
+.searches > *.show{display:block;}
+.searches > *.anim{animation:rise calc(.35s * var(--k)) cubic-bezier(.2,.8,.3,1) both;}
+.scard{border:1px solid var(--border);border-radius:8px;padding:9px 12px;margin-bottom:7px;background:var(--surface);}
+.blkhead{display:flex;align-items:center;gap:10px;margin-bottom:5px;}
+.blkhead .t{font-size:13px;font-weight:700;}
+.hit{margin-left:auto;font-size:11.5px;font-weight:700;color:var(--accent-dark);background:var(--accent-soft);border-radius:999px;padding:1px 9px;white-space:nowrap;}
+.q{display:block;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;font-weight:500;line-height:1.6;
+  color:var(--text);background:#e6ecf5;border:1px solid #b9c5d6;border-radius:6px;padding:6px 9px;margin-bottom:6px;overflow-x:auto;white-space:pre;}
+.q .op{color:var(--accent-dark);font-weight:700;}
+.scard{box-shadow:0 1px 2px rgba(16,24,40,.04);}
+.notes{margin:0;padding:0;list-style:none;}
+.notes li{position:relative;padding-left:15px;margin-bottom:2px;color:var(--muted);font-size:12px;line-height:1.6;}
+.notes li::before{content:'→';position:absolute;left:0;color:var(--border-strong);}
+.notes li:last-child{margin-bottom:0;}
+.notes b{color:var(--text);}
+.notes li.turn{color:var(--text);background:var(--warn-soft);border-left:3px solid var(--warn);border-radius:0 6px 6px 0;padding:5px 9px 5px 10px;margin-top:6px;}
+.notes li.turn::before{content:none;}
+.notes li.turn em{font-style:normal;font-weight:700;color:var(--warn);}
+.done{display:flex;gap:10px;align-items:flex-start;background:var(--ok-soft);border:1px solid #bfe3d2;border-radius:8px;padding:12px 14px;margin-top:2px;}
+.done svg{flex:none;color:var(--ok);margin-top:2px;}
+.done p{margin:0;font-size:13px;}
+.done b{color:var(--ok);}
+
+/* ---------- 処理フロー図 ---------- */
+.flowwrap{position:sticky;top:0;display:flex;justify-content:center;}
+.flow{position:relative;width:280px;height:348px;}
+.flowsvg{position:absolute;left:0;top:0;width:280px;height:348px;overflow:visible;}
+.fb{position:absolute;left:56px;width:220px;border:1px solid #b9c5d6;background:#e6ecf5;border-radius:8px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 12px;
+  font-size:15px;font-weight:700;color:var(--text);transition:border-color .3s ease,color .3s ease,background-color .3s ease;}
+.f1{top:0;height:44px;} .f2{top:68px;height:44px;} .f3{top:136px;height:44px;} .f4{top:204px;height:58px;}
+.f5{top:296px;height:52px;background:var(--accent);border-color:var(--accent);color:#fff;font-size:16px;}
+.f4sub{display:block;font-size:11.5px;font-weight:400;color:var(--muted);margin-top:2px;}
+.ar{position:absolute;left:155px;width:22px;height:22px;color:#94b5f6;}
+.a1{top:46px;} .a2{top:114px;} .a3{top:182px;} .ya{top:266px;color:var(--accent);}
+.nolabel{position:absolute;left:-3px;top:238px;width:38px;text-align:center;font-size:12px;font-weight:700;color:var(--warn);}
+.yeslabel{position:absolute;left:186px;top:270px;font-size:12px;font-weight:700;color:var(--accent-dark);opacity:0;}
+.nopath{stroke-dasharray:600;stroke-dashoffset:0;}
+
+.fcount{position:absolute;left:0;top:40px;width:52px;text-align:center;font-size:11px;font-weight:700;color:var(--accent-dark);background:var(--accent-soft);border-radius:999px;padding:2px 0;opacity:0;transition:opacity .3s ease;}
+.flow.counting .fcount{opacity:1;}
+
+.blk.anim .fb,.blk.anim .ar,.blk.anim .f4sub,.blk.anim .nolabel,.blk.anim .nohead{animation:fin calc(.42s * var(--k)) ease both;}
+@keyframes fin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.blk.anim .f1{animation-delay:calc(.14s * var(--k))}
+.blk.anim .a1{animation-delay:calc(.40s * var(--k))}
+.blk.anim .f2{animation-delay:calc(.66s * var(--k))}
+.blk.anim .a2{animation-delay:calc(.92s * var(--k))}
+.blk.anim .f3{animation-delay:calc(1.18s * var(--k))}
+.blk.anim .a3{animation-delay:calc(1.44s * var(--k))}
+.blk.anim .f4{animation-delay:calc(1.70s * var(--k))}
+.blk.anim .f4sub{animation-delay:calc(2.06s * var(--k))}
+.blk.anim .nolabel{animation-delay:calc(2.40s * var(--k))}
+.blk.anim .nopath{animation:draw calc(1.05s * var(--k)) linear calc(2.50s * var(--k)) both;}
+@keyframes draw{from{stroke-dashoffset:600}to{stroke-dashoffset:0}}
+.blk.anim .nohead{animation-delay:calc(3.60s * var(--k))}
+.blk.anim .f5,.blk.anim .ya,.blk.anim .yeslabel{animation:none;}
+/* YES／回答する は検索完了まで出さない */
+.flow .ya,.flow .yeslabel,.flow .f5{opacity:0 !important;}
+.flow.final .ya,.flow.final .yeslabel,.flow.final .f5{opacity:1 !important;transition:opacity .4s ease;}
+/* 「回答する」を少し強調する */
+@keyframes popin{0%{transform:scale(.86)}62%{transform:scale(1.07)}100%{transform:scale(1)}}
+@keyframes glow{0%{box-shadow:0 0 0 0 rgba(47,109,246,.55)}70%{box-shadow:0 0 0 18px rgba(47,109,246,0)}100%{box-shadow:0 0 0 0 rgba(47,109,246,0)}}
+@keyframes ydrop{0%{transform:translateY(-6px)}100%{transform:translateY(0)}}
+.flow.emph .f5{animation:popin calc(.55s * var(--k)) cubic-bezier(.2,1.4,.4,1) both, glow calc(1.5s * var(--k)) ease-out calc(.3s * var(--k)) 2;}
+.flow.emph .ya{animation:ydrop calc(.5s * var(--k)) ease both;}
+/* 検索を繰り返すたびに光らせる */
+.flow.pulse .f2{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-dark);animation:ring calc(.9s * var(--k)) ease-out;}
+@keyframes ring{0%{box-shadow:0 0 0 0 rgba(47,109,246,.45)}100%{box-shadow:0 0 0 12px rgba(47,109,246,0)}}
+.flow.pulse .nopath{animation:draw calc(.8s * var(--k)) linear;}
+
+/* ---------- 回答 ---------- */
+.answer-head{display:flex;align-items:center;gap:10px;padding-bottom:10px;border-bottom:2px solid var(--text);margin-bottom:12px;}
+.answer-head h2{margin:0;font-size:19px;font-weight:700;}
+.answer-head .by{margin-left:auto;font-size:11.5px;color:var(--muted);}
+.lead{margin:0;font-size:15px;line-height:1.9;}
+
+
+h3.sec{font-size:15px;font-weight:700;margin:0 0 10px;padding-left:10px;border-left:4px solid var(--accent);line-height:1.4;}
+.tblwrap{overflow-x:auto;border:1px solid var(--border);border-radius:8px;}
+table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:560px;}
+th,td{border-bottom:1px solid var(--border);padding:7px 10px;text-align:left;vertical-align:top;}
+th{background:var(--bg);font-weight:700;white-space:nowrap;color:var(--muted);font-size:11.5px;}
+tr:last-child td{border-bottom:0;}
+td code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:var(--muted);}
+td .idx{font-weight:700;color:var(--accent-dark);}
+
+.docs{display:grid;grid-template-columns:1fr;gap:10px;}
+.docs{gap:18px;}
+.doc h4{margin:0 0 4px;font-size:13.5px;font-weight:700;}
+.doc p{margin:0 0 5px;font-size:13px;line-height:1.8;}
+.doc ul{margin:0;padding-left:22px;font-size:13px;line-height:1.8;list-style:disc;}
+.doc li{margin-bottom:3px;}
+.doc .key,.doc .cau{font-weight:700;color:var(--text);}
+.doc .key::after,.doc .cau::after{content:'：';}
+
+ol.flowlist{margin:10px 0 0;padding-left:20px;font-size:12.5px;line-height:1.75;}
+ol.flowlist li{margin-bottom:6px;}
+
+
+.imps{display:grid;grid-template-columns:1fr;gap:16px;}
+.imp h4{margin:0 0 4px;font-size:13.5px;font-weight:700;}
+.imp p{margin:0;font-size:13px;line-height:1.8;}
+
+ul.acts{margin:0;padding-left:18px;font-size:13px;}
+ul.acts li{margin-bottom:5px;}
+.ask{margin:10px 0 0;font-size:12.5px;color:var(--muted);background:var(--bg);border:1px dashed var(--border-strong);border-radius:8px;padding:9px 12px;}
+
+
+/* ---------- 成果物（報告書）とプレビューパネル ---------- */
+.sldesc{margin:0 0 10px;font-size:15px;line-height:1.9;}
+ol.sllist{margin:0 0 12px;padding-left:22px;font-size:13.5px;line-height:1.85;}
+ol.sllist li{margin-bottom:2px;}
+.slnote{margin:0;font-size:13px;line-height:1.85;color:var(--muted);}
+
+.dlcard{display:flex;align-items:center;gap:12px;border:1px solid var(--border-strong);border-radius:12px;background:#fff;padding:10px 12px;max-width:620px;box-shadow:0 1px 2px rgba(16,24,40,.05);}
+.dlico{flex:none;width:40px;height:40px;border-radius:10px;background:#cfe0f7;color:#1d4f96;display:flex;align-items:center;justify-content:center;}
+.dlmeta{flex:1;min-width:0;}
+.dlname{font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dlsub{font-size:11.5px;color:var(--muted);}
+.dlbtn{flex:none;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border-strong);border-radius:9px;background:#fff;color:var(--text);font-family:inherit;font-size:12.5px;font-weight:700;padding:7px 13px;cursor:default;}
+.dlbtn svg{color:var(--muted);}
+
+.preview{position:absolute;top:0;right:0;bottom:0;width:366px;z-index:4;display:flex;flex-direction:column;background:#fbfbfa;border-left:1px solid var(--border);box-shadow:-10px 0 28px rgba(16,24,40,.07);transform:translateX(103%);pointer-events:none;transition:transform .55s cubic-bezier(.2,.8,.3,1);}
+.preview.on{transform:none;pointer-events:auto;}
+.viewport.split .log{padding-right:386px;}
+.pvhead{flex:none;display:flex;align-items:center;gap:9px;padding:9px 11px;border-bottom:1px solid var(--border);background:#fff;}
+.pvhead .dlico{width:28px;height:28px;border-radius:8px;}
+.pvtitle{flex:1;min-width:0;}
+.pvtitle b{display:block;font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;}
+.pvtitle span{font-size:10.5px;color:var(--muted);}
+.pvicon{flex:none;width:26px;height:26px;border-radius:7px;border:1px solid var(--border);background:#fff;color:var(--muted);display:flex;align-items:center;justify-content:center;}
+.pvbody{flex:1;overflow-y:auto;padding:14px 14px 22px;display:flex;flex-direction:column;gap:12px;}
+.pvbody::-webkit-scrollbar{width:8px;}
+.pvbody::-webkit-scrollbar-thumb{background:#dfe3e9;border-radius:6px;border:2px solid #fbfbfa;}
+
+.sl{position:relative;flex:none;aspect-ratio:16/9;border:1px solid var(--border-strong);border-radius:7px;background:#fff;overflow:hidden;box-shadow:0 1px 3px rgba(16,24,40,.09);padding:10px 12px;}
+/* Word報告書のページは縦長で表示する */
+.sl.pg-doc{aspect-ratio:1/1.414;padding:13px 14px;}
+.sl.pg-doc h5{border-bottom-color:var(--text);}
+.sl .pg{position:absolute;right:6px;bottom:5px;font-size:7px;font-weight:700;color:#fff;background:rgba(29,36,48,.7);border-radius:5px;padding:2px 6px;letter-spacing:.03em;}
+.sl h5{margin:0 0 5px;font-size:9px;font-weight:700;line-height:1.35;padding-bottom:4px;border-bottom:1.5px solid var(--accent);}
+.sl p{margin:0;font-size:7px;line-height:1.5;color:#41506a;}
+.sl ul{margin:0;padding-left:8px;list-style:disc;}
+.sl li{margin:0 0 2px;font-size:7px;line-height:1.45;color:#41506a;}
+.sl .two{display:grid;grid-template-columns:1fr 1fr;gap:4px 7px;}
+.sl .chip{display:block;font-size:6.5px;font-weight:700;color:var(--accent-dark);background:var(--accent-soft);border-radius:4px;padding:1.5px 4px;margin-bottom:2px;}
+.sl table{width:100%;min-width:0;border-collapse:collapse;font-size:6.5px;}
+.sl th,.sl td{border-bottom:.5px solid var(--border);padding:1.5px 3px;white-space:nowrap;text-align:left;}
+.sl th{background:#f2f5f9;color:var(--muted);font-size:6px;font-weight:700;}
+.sl.cover{background:linear-gradient(135deg,#2c4372,#1b2a49);border-color:#1b2a49;display:flex;flex-direction:column;justify-content:center;padding:14px 16px;}
+.sl.cover .bar{width:32px;height:2.5px;background:var(--accent);margin-bottom:8px;}
+.sl.cover h5{border:0;padding:0;color:#fff;font-size:11px;line-height:1.45;margin-bottom:6px;}
+.sl.cover p{color:#bcccec;font-size:7px;}
+
+@media (max-width:900px){
+  .preview{left:0;right:0;top:auto;height:250px;width:auto;border-left:0;border-top:1px solid var(--border);box-shadow:0 -10px 26px rgba(16,24,40,.09);transform:translateY(104%);}
+  .viewport.split .log{padding-right:20px;padding-bottom:268px;}
+  .pvbody{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:start;}
+}
+
+/* 関連ファイル（回答の右段） */
+.ansgrid{display:grid;grid-template-columns:1fr;gap:0;align-items:start;}
+.ansgrid.withfiles{grid-template-columns:minmax(0,1fr) 330px;gap:26px;}
+.anscol{min-width:0;}
+.rfcol{display:none;min-width:0;border-left:1px solid var(--border);padding-left:18px;}
+.ansgrid.withfiles .rfcol{display:block;}
+.rfhead{display:flex;align-items:center;gap:7px;padding-bottom:8px;margin-bottom:4px;border-bottom:1px solid var(--border);color:var(--muted);}
+.rfhead svg{flex:none;color:var(--accent-dark);}
+.rfhead b{font-size:12.5px;font-weight:700;color:var(--text);}
+.rfhead span{font-size:10.5px;}
+.rfitem{display:flex;gap:9px;padding:10px 6px;border-bottom:1px solid var(--border);}
+.rfitem:last-child{border-bottom:0;}
+.rfitem.cur{background:#fdeeee;border-radius:8px;border-bottom-color:transparent;}
+.rfck{flex:none;width:13px;height:13px;margin-top:3px;border:1.5px solid var(--border-strong);border-radius:3px;background:#fff;position:relative;}
+.rfck.on{background:var(--accent);border-color:var(--accent);}
+.rfck.on::after{content:'';position:absolute;left:3.4px;top:.6px;width:3px;height:6px;border:solid #fff;border-width:0 1.6px 1.6px 0;transform:rotate(45deg);}
+.rftxt{flex:1;min-width:0;}
+.rfname{font-size:12px;font-weight:700;color:var(--accent-dark);line-height:1.55;}
+.rfpv{display:inline-block;margin-left:6px;font-size:8.5px;font-weight:700;color:#fff;background:#8a93a2;border-radius:4px;padding:1px 5px;vertical-align:1.5px;}
+.rfsnip{font-size:10.5px;color:var(--muted);line-height:1.6;margin-top:3px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.rfsrc{color:#7d879a;}
+
+/* ---------- 検索カード内の件数分布 ---------- */
+.dist{margin:7px 0 6px;border:1px solid var(--border);border-radius:7px;background:#fbfcfd;padding:9px 10px 7px;}
+.dist .dh{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:7px;}
+.dist .dlgd{display:flex;gap:12px;font-size:10.5px;color:var(--muted);margin-bottom:6px;}
+.dist .dlgd i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;vertical-align:0px;}
+.dgrid{display:grid;grid-template-columns:104px repeat(9,minmax(0,1fr));gap:0 3px;align-items:center;min-width:390px;}
+.dscroll{overflow-x:auto;}
+.drow{font-size:10.5px;color:var(--muted);white-space:nowrap;padding-right:6px;}
+.dcell{height:20px;display:flex;align-items:center;justify-content:center;gap:2px;border-radius:3px;}
+.dcell.on{background:rgba(105,117,134,.09);}
+.dmk{width:7px;height:7px;border-radius:50%;}
+.dyr{font-size:9.5px;color:#94a0ae;text-align:center;font-variant-numeric:tabular-nums;padding-top:3px;}
+.dcut{grid-column:5 / span 1;position:relative;height:0;}
+.dcut i{position:absolute;right:-2px;top:-49px;width:2px;height:49px;
+  background:repeating-linear-gradient(#c0392f 0 3px,transparent 3px 6px);}
+.dnote{margin-top:6px;font-size:10.5px;color:#c0392f;}
+
+/* ---------- 拡大表示（スポットライト） ---------- */
+.spot{position:absolute;inset:0;z-index:5;pointer-events:none;display:flex;align-items:center;justify-content:center;padding:28px;}
+.spot.ans{align-items:stretch;padding:20px;}
+.spot-in.is-ans{max-width:1040px;height:100%;}
+.big-ans{height:100%;overflow:hidden;padding:20px 26px;}
+.ansroll{will-change:transform;}
+.ansroll .blk{display:block !important;margin-bottom:18px;animation:none !important;opacity:1 !important;transform:none !important;}
+.ansroll .steplabel{display:none;}
+.ansroll .answer-head h2{font-size:23px;}
+.ansroll .lead{font-size:18px;line-height:1.95;}
+.ansroll h3.sec{font-size:18px;margin-bottom:12px;}
+.ansroll table{font-size:14px;}
+.ansroll th,.ansroll td{padding:9px 12px;}
+.ansroll .doc h4{font-size:15px;}
+.ansroll .docs{gap:22px;}
+.ansroll .doc p,.ansroll .doc ul{font-size:14.5px;}
+.ansroll ol.flowlist{font-size:14px;}
+.ansroll .imp h4{font-size:15px;}
+.ansroll .imp p{font-size:14.5px;}
+.ansroll .imps{gap:20px;}
+.ansroll ul.acts{font-size:15px;}
+.ansroll .ask{font-size:13.5px;}
+.spot-bg{position:absolute;inset:0;background:rgba(29,36,48,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);opacity:0;transition:opacity .32s ease;}
+.spot.on .spot-bg{opacity:1;}
+.spot-in{position:relative;width:100%;max-width:900px;transform-origin:50% 50%;opacity:0;will-change:transform,opacity;}
+.big{background:#fff;border-radius:14px;box-shadow:0 20px 50px rgba(16,24,40,.35);padding:26px 30px;}
+.big-bar{display:flex;align-items:center;gap:16px;border:2px solid var(--border-strong);border-radius:14px;padding:16px 16px 16px 20px;transition:border-color .25s ease,box-shadow .25s ease;}
+.big.focus .big-bar{border-color:var(--accent);box-shadow:0 0 0 4px rgba(47,109,246,.16);}
+.big-bar .ico{flex:none;color:var(--accent);display:flex;}
+.big-q{flex:1;min-width:0;font-size:25px;font-weight:700;line-height:1.55;}
+.sendbtn{flex:none;display:flex;align-items:center;gap:7px;border:0;border-radius:9px;background:var(--accent);color:#fff;
+  font-family:inherit;font-size:14px;font-weight:700;letter-spacing:.06em;padding:10px 18px;cursor:default;
+  transition:transform .12s ease,background-color .12s ease,box-shadow .12s ease;box-shadow:0 2px 6px rgba(47,109,246,.32);}
+.sendbtn.pressed{transform:scale(.93);background:var(--accent-dark);box-shadow:0 0 0 rgba(47,109,246,0);}
+.big-cap{font-size:15px;font-weight:700;color:var(--accent-dark);margin-bottom:16px;padding-left:12px;border-left:4px solid var(--accent);}
+.big-repos{display:flex;flex-direction:column;gap:10px;}
+.big-repo{display:flex;align-items:center;justify-content:center;gap:12px;font-size:22px;font-weight:700;background:var(--accent-soft);border:1px solid #bed3fb;border-radius:999px;padding:14px 20px;}
+.big-repo .dot{width:10px;height:10px;border-radius:50%;background:var(--ok);}
+.big-repo svg{color:var(--accent);}
+
+/* ---------- プレイヤー ---------- */
+.player{display:flex;align-items:center;gap:12px;border-top:1px solid var(--border);background:var(--surface);padding:10px 14px;}
+.pbtn{flex:none;width:36px;height:36px;border-radius:50%;border:0;cursor:pointer;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;transition:background .15s ease;}
+.pbtn:hover{background:var(--accent-dark);}
+.pbtn.ghost{background:transparent;color:var(--muted);border:1px solid var(--border);width:32px;height:32px;}
+.pbtn.ghost:hover{background:var(--bg);color:var(--text);}
+.pbtn:focus-visible{outline:2px solid var(--accent-dark);outline-offset:2px;}
+.track{position:relative;flex:1;height:26px;cursor:pointer;touch-action:none;}
+.rail{position:absolute;left:0;right:0;top:11px;height:4px;border-radius:2px;background:var(--border);}
+.fill{position:absolute;left:0;top:11px;height:4px;border-radius:2px;background:var(--accent);width:0;}
+.tick{position:absolute;top:8px;width:2px;height:10px;border-radius:1px;background:#fff;box-shadow:0 0 0 1px var(--border);}
+.knob{position:absolute;top:6px;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:#fff;border:2px solid var(--accent);box-shadow:0 1px 3px rgba(16,24,40,.2);left:0;}
+.meta{display:flex;align-items:center;gap:10px;flex:none;}
+.chap{font-size:12px;font-weight:700;white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis;}
+.time{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.foot{margin-top:9px;font-size:11.5px;color:var(--muted);}
+
+@media (max-width:860px){
+  .proc{grid-template-columns:1fr;gap:14px;}
+  .flowwrap{position:static;}
+}
+@media (max-width:720px){
+  body{padding:12px 10px 24px;font-size:13.5px;}
+  .logo{height:30px;}
+  .vr{height:18px;}
+  .topbar{gap:10px;}
+  .viewport{height:calc(100vh - 190px);}
+  .log{padding:14px 13px 20px;}
+  .bottombar{padding:11px 13px 13px;}
+  .qask-t{font-size:15px;padding:10px 14px;max-width:88%;}
+  .spd button{font-size:11px;padding:3px 8px;}
+  .spot{padding:14px;align-items:flex-start;padding-top:60px;}
+  .big{padding:16px;border-radius:12px;}
+  .big-q{font-size:17px;gap:10px;}
+  .big-q .ico{width:28px;height:28px;}
+  .big-cap{font-size:13px;margin-bottom:12px;}
+  .big-repo{font-size:15px;padding:11px 16px;}
+  .chap{display:none;}
+  .player{gap:9px;padding:9px 10px;}
+}
+@media (max-width:1040px){
+  .ansgrid.withfiles{grid-template-columns:minmax(0,1fr);gap:0;}
+  .ansgrid.withfiles .rfcol{border-left:0;border-top:1px solid var(--border);padding-left:0;padding-top:12px;margin-top:16px;}
+}
+@media (prefers-reduced-motion: reduce){
+  .blk.anim,.blk.anim *{animation:none !important;opacity:1 !important;transform:none !important;}
+  .blk.anim .nopath{stroke-dashoffset:0 !important;}
+  .log{scroll-behavior:auto;}
+}
+
+/* ===== ROUND 1（日報 Step 0）追加分 ===== */
+.roundtag{display:inline-flex;align-items:center;gap:7px;margin:0 0 10px;font-size:11px;font-weight:700;
+  letter-spacing:.04em;color:#fff;background:var(--accent);border-radius:20px;padding:3px 12px;}
+.roundtag.r2{background:#33476a;}
+.rexc{display:inline-block;margin-left:6px;font-size:11px;color:var(--muted);background:#f1f3f6;border-radius:20px;padding:2px 9px;vertical-align:1px;}
+.nprows{margin:9px 0 2px;border:1px solid var(--border);border-radius:7px;overflow:hidden;background:#fff;}
+.nprow{display:grid;grid-template-columns:172px minmax(0,1fr) 74px;gap:10px;align-items:center;
+  padding:7px 10px;border-bottom:1px solid var(--border);font-size:11.5px;line-height:1.5;}
+.nprow:last-child{border-bottom:0;}
+.nprow .npl{font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.nprow .npx{color:var(--muted);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.nprow .npt{justify-self:end;font-size:10px;font-weight:700;border-radius:20px;padding:2px 8px;
+  color:#8a93a2;background:#f1f3f6;white-space:nowrap;}
+.nprow.mid .npt{color:var(--warn);background:#fdf3e2;}
+.nprow.hit{background:#fff7e6;}
+.nprow.hit .npl{color:#7a4e00;}
+.nprow.hit .npx{color:#4a3a1c;font-weight:600;}
+.nprow.hit .npt{color:#fff;background:var(--warn);}
+.npfound{margin:10px 0 0;border-left:3px solid var(--warn);background:#fffaf0;border-radius:0 7px 7px 0;
+  padding:10px 13px;font-size:12.5px;line-height:1.75;color:var(--text);}
+.npfound b{color:#7a4e00;}
+.npfound .npq{display:block;margin:5px 0 0;font-size:13px;font-weight:700;}
+.handoff{display:flex;align-items:center;gap:11px;margin:2px 0 4px;padding:12px 15px;
+  border:1px dashed var(--border-strong);border-radius:9px;background:#f7f9fc;font-size:12.5px;line-height:1.7;color:var(--muted);}
+.handoff b{color:var(--text);}
+.handoff .hoar{flex:none;color:var(--accent);}
+.scard.show .nprow{animation:rise calc(.4s * var(--k)) cubic-bezier(.2,.8,.3,1) both;
+  animation-delay:calc(var(--i) * .15s * var(--k));}
+.scard.show .npfound{animation:rise calc(.45s * var(--k)) cubic-bezier(.2,.8,.3,1) both;
+  animation-delay:calc(1.8s * var(--k));}
+.nphl{background:#fff3d6;border-radius:3px;padding:1px 3px;}
+.nphl2{background:#ffe9e4;border-radius:3px;padding:1px 3px;}
+@media (max-width:860px){
+  .nprow{grid-template-columns:118px minmax(0,1fr);row-gap:3px;align-items:start;}
+  .nprow .npl{white-space:normal;}
+  .nprow .npx{white-space:normal;text-overflow:clip;}
+  .nprow .npt{grid-column:2;justify-self:start;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <img class="logo" src="data:image/png;base64,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" alt="Neuron Enterprise Search">
+    <span class="vr" aria-hidden="true"></span>
+    <div class="brand">エージェント検索 <span>｜ 自動デモ</span></div>
+    <div class="badge">イメージデモ</div>
+  </div>
+
+  <div class="stage">
+    <div class="viewport" id="vp">
+
+      <div class="bottombar">
+        <section class="blk show">
+          <div class="prompt">
+            <span class="ico" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg></span>
+            <p>昨日（9月14日）の日報の中から、生産技術として確認したほうがよさそうな記載を見つけて、理由とあわせて挙げてください。</p>
+            <button class="sendbtn" id="promptSend" type="button" tabindex="-1" aria-hidden="true">検索<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M12 5l7 7-7 7"/></svg></button>
+          </div>
+        </section>
+      </div>
+
+
+      <div id="log" class="log">
+
+
+        <section class="blk" data-dur="6" data-label="プロンプト①（日報）" data-spot="q" data-hold="2600" data-ask="ask" data-setq="昨日（9月14日）の日報の中から、生産技術として確認したほうがよさそうな記載を見つけて、理由とあわせて挙げてください。">
+          <div class="roundtag">ROUND 1　朝いちばん　昨日の日報を見る</div>
+        </section>
+
+        <div class="qask" id="ask"><div class="qask-t" id="askT"></div></div>
+
+        <section class="blk" data-dur="4" data-label="検索対象（日報）" data-spot="r1" data-hold="2200">
+          <div class="steplabel">01 ／ 検索対象</div>
+          <div class="rstatus" id="rstat1">
+            <span class="sp" aria-hidden="true"></span>
+            <span class="ck" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+            <span><b>2つのリポジトリ</b>（ファイルサーバー・SharePoint Online）<span class="m1">を対象に検索しています…</span><span class="m2">を対象に検索しました</span><span class="rexc">Box は社外との共有フォルダのため対象外</span></span>
+          </div>
+        </section>
+
+        <section class="blk" id="nproc" data-dur="4.4" data-label="日報を読む">
+          <div class="steplabel">02 ／ 検索プロセス</div>
+          <div class="card tint">
+            <h3 class="sec">必要な情報がそろうまで検索を繰り返す</h3>
+            <div class="proc">
+              <div class="flowwrap">
+                <div class="flow" id="flow1">
+                  <svg class="flowsvg" viewBox="0 0 280 348" fill="none" aria-hidden="true">
+                    <path class="nopath" d="M56 233 H16 V90 H44" stroke="#9a6200" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                    <polygon class="nohead" points="44,83.5 57,90 44,96.5" fill="#9a6200"/>
+                  </svg>
+                  <div class="fb f1">目的（質問内容）</div>
+                  <span class="ar a1"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 2h6v12h5l-8 8-8-8h5z"/></svg></span>
+                  <div class="fb f2">Neuronで検索を実行</div>
+                  <span class="fcount">検索 <b class="fcn">1</b></span>
+                  <span class="ar a2"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 2h6v12h5l-8 8-8-8h5z"/></svg></span>
+                  <div class="fb f3">検索結果を確認</div>
+                  <span class="ar a3"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 2h6v12h5l-8 8-8-8h5z"/></svg></span>
+                  <div class="fb f4">情報は足りたか？<span class="f4sub">足りなければ 検索に戻る</span></div>
+                  <span class="nolabel">NO</span>
+                  <span class="ar ya"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 2h6v12h5l-8 8-8-8h5z"/></svg></span>
+                  <span class="yeslabel">YES</span>
+                  <div class="fb f5">回答する</div>
+                </div>
+              </div>
+
+              <div class="searches">
+              <div class="scard" data-dur="6" data-label="検索 1／1（日報）" data-pulse="1" data-repodone="1">
+                <div class="blkhead"><span class="t">検索 1</span><span class="hit">10件ヒット</span></div>
+                <code class="q">日報 <b class="op">AND</b> 2026年9月14日
+＋ 文書種別を日報に絞り込み</code>
+                <ul class="notes">
+                  <li><b>ファイルサーバー</b>　製造部／組立課／01_日報／2026年度／09月／20260914 … <b>10件</b>。AL-2ライン3件、AL-1／MC-1／MC-2 各1件、生産技術部・設備保全課・品質保証部・部品課 各1件。</li>
+                  <li><b>SharePoint Online</b>　各部門サイトのドキュメントも同時に対象。日付が一致する日報は0件だが、<b>部門サイト側に日報を置いている部署があればそのまま拾える</b>。</li>
+                  <li>10件すべての<b>「気づき・申し送り」欄</b>を読み、立ち上げ中のラインの品質・設備に関わる記載を優先して評価する。</li>
+                </ul>
+                  <div class="nprow " style="--i:0"><span class="npl">AL-2 部品供給・圧入</span><span class="npx">圧入荷重のばらつきが前回より大きく見える／部品の供給待ち</span><span class="npt">—</span></div>
+                  <div class="nprow hit" style="--i:1"><span class="npl">AL-2 締結工程</span><span class="npx">入れ直すと3本で完了ランプ。再現したら「4/4 完了」表示</span><span class="npt">要確認</span></div>
+                  <div class="nprow " style="--i:2"><span class="npl">AL-2 外観検査・梱包</span><span class="npx">擦り傷2件。搬送パレットの緩衝材が劣化</span><span class="npt">—</span></div>
+                  <div class="nprow " style="--i:3"><span class="npl">AL-1 組立</span><span class="npx">朝のエア圧低下でサイクルタイムが2秒延びた</span><span class="npt">—</span></div>
+                  <div class="nprow mid" style="--i:4"><span class="npl">MC-1 組立</span><span class="npx">締付順序の誤り1件（今月2件目）。治具の番号表示が見えにくい</span><span class="npt">参考</span></div>
+                  <div class="nprow " style="--i:5"><span class="npl">MC-2 組立</span><span class="npx">ワーク詰まりが同じ箇所で継続</span><span class="npt">—</span></div>
+                  <div class="nprow mid" style="--i:6"><span class="npl">生産技術部 第2G</span><span class="npx">AL-2立会い。締結治具の位置決めピンに軽微な摩耗</span><span class="npt">参考</span></div>
+                  <div class="nprow " style="--i:7"><span class="npl">設備保全課</span><span class="npx">AL-2のリセットボタンの銘板が剥がれかけ／エア元圧を調整</span><span class="npt">—</span></div>
+                  <div class="nprow " style="--i:8"><span class="npl">品質保証部 検査係</span><span class="npx">AL-2工程能力調査1ロット目。Cpk 1.62で安定</span><span class="npt">—</span></div>
+                  <div class="nprow " style="--i:9"><span class="npl">生産管理部 部品課</span><span class="npx">ブラケット入荷遅延でAL-2に12分の供給待ち</span><span class="npt">—</span></div>
+                <div class="npfound">
+                  <b>AL-2ライン 締結工程の日報に、次の記載を確認。</b>
+                  <span class="npq">「リワークでワークを一度治具から外して入れ直すと、3本しか締めていないのに完了ランプが点いた気がする」</span>
+                </div>
+              </div>
+
+              <div data-dur="3" data-label="日報の確認完了" data-final="1">
+                <div class="done">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                  <p>昨日の日報 <b>10件</b>すべての「気づき・申し送り」欄を読み、確認すべき記載を特定しました。</p>
+                </div>
+              </div>
+            </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="blk" data-dur="6.5" data-label="日報の確認結果">
+          <div class="steplabel">03 ／ 回答</div>
+          <div class="answer-head">
+            <h2>昨日の日報の確認結果</h2>
+            <span class="by">エージェント検索の回答</span>
+          </div>
+          <p class="lead">10件の日報を確認しました。いずれも工程内で処置済みですが、<b>次の3件は生産技術として見ておいたほうがよい</b>と考えます。とくに1件目は、不良になっていないため品質データには残らない記載です。</p>
+          <div class="tblwrap">
+            <table style="table-layout:fixed">
+              <colgroup><col style="width:52px"><col style="width:150px"><col style="width:33%"><col></colgroup>
+              <thead><tr><th>優先</th><th>日報</th><th>記載内容</th><th>確認したほうがよい理由</th></tr></thead>
+              <tbody>
+                <tr><td class="idx">高</td><td><b>AL-2 締結工程</b><br><span class="small">組立課 第2係</span></td><td>リワークで入れ直すと、3本しか締めていないのに完了ランプが点いたとの申し出。再現したところ「4/4 完了」表示</td><td><b>本数が合っていないのに完了と判定されている。</b>不良になっておらず不具合報告も起票されていないため、品質データには残らない。見落とすと気づく機会がない</td></tr>
+                <tr><td class="idx">中</td><td>生産技術部 第2G<br><span class="small">AL-2 立会い</span></td><td>締結治具の位置決めピンに軽微な摩耗</td><td>試作段階での摩耗。量産後の交換周期の見直しにつながる</td></tr>
+                <tr><td class="idx">中</td><td>MC-1 組立<br><span class="small">組立課 第1係</span></td><td>締付順序の誤り1件（今月2件目）。治具の番号表示が見えにくいとの声</td><td>人の習熟の問題として処理されているが、表示の見やすさは設備側で対処できる</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="blk" data-dur="6" data-label="日報を開く" data-panel="nippo">
+          <ol class="flowlist">
+            <li><b>優先度「高」の日報を開きました。</b>　気づき・申し送り欄に、作業者の申し出がそのまま書かれています。最後の一行は「不良にはなっていないので不具合報告は起票していない」。</li>
+          </ol>
+        </section>
+
+        <section class="blk" data-dur="3.2" data-label="次の指示へ">
+          <div class="handoff">
+            <span class="hoar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M12 5l7 7-7 7"/></svg></span>
+            <span>この1件をきっかけに、<b>過去の他ラインで同じことが起きていないか</b>を調べます。ここから2回目の指示に移ります。</span>
+          </div>
+        </section>
+
+        <section class="blk" data-dur="7.2" data-label="プロンプト②（本調査）" data-spot="q" data-hold="3200" data-ask="ask2" data-setq="AL-2ラインの締結工程で、リワークでワークを一度治具から外して入れ直すと、締付本数のカウントがずれる可能性があるとの指摘が現場から出ています。過去の他ラインで同種の事例がないか調べて、原因と確認すべきことを整理してください。調べた内容はWordの報告書にしてください。">
+          <div class="roundtag r2">ROUND 2　過去の類似事例を調べる</div>
+        </section>
+
+        <div class="qask" id="ask2"><div class="qask-t" id="askT2"></div></div>
+
+        <section class="blk" data-dur="5.5" data-label="検索対象のリポジトリ" data-spot="r" data-hold="2800">
+          <div class="steplabel">04 ／ 検索対象</div>
+          <div class="rstatus" id="rstatusMain">
+            <span class="sp" aria-hidden="true"></span>
+            <span class="ck" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+            <span><b>3つのリポジトリ</b>（ファイルサーバー・Box・SharePoint Online）<span class="m1">を横断検索しています…</span><span class="m2">を横断検索しました</span></span>
+          </div>
+        </section>
+
+        <section class="blk" id="proc" data-dur="4.4" data-label="エージェントの処理フロー">
+          <div class="steplabel">05 ／ 検索プロセス</div>
+          <div class="card tint">
+            <h3 class="sec">必要な情報がそろうまで検索を繰り返す</h3>
+            <div class="proc">
+              <div class="flowwrap">
+                <div class="flow" id="flow">
+                  <svg class="flowsvg" viewBox="0 0 280 348" fill="none" aria-hidden="true">
+                    <path class="nopath" d="M56 233 H16 V90 H44" stroke="#9a6200" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                    <polygon class="nohead" points="44,83.5 57,90 44,96.5" fill="#9a6200"/>
+                  </svg>
+                  <div class="fb f1">目的（質問内容）</div>
+                  <span class="ar a1"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 2h6v12h5l-8 8-8-8h5z"/></svg></span>
+                  <div class="fb f2">Neuronで検索を実行</div>
+                  <span class="fcount">検索 <b id="fcnum">1</b></span>
+                  <span class="ar a2"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 2h6v12h5l-8 8-8-8h5z"/></svg></span>
+                  <div class="fb f3">検索結果を確認</div>
+                  <span class="ar a3"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 2h6v12h5l-8 8-8-8h5z"/></svg></span>
+                  <div class="fb f4">情報は足りたか？<span class="f4sub">足りなければ 検索に戻る</span></div>
+                  <span class="nolabel">NO</span>
+                  <span class="ar ya"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 2h6v12h5l-8 8-8-8h5z"/></svg></span>
+                  <span class="yeslabel">YES</span>
+                  <div class="fb f5">回答する</div>
+                </div>
+              </div>
+
+              <div class="searches">
+                <div class="scard" data-dur="1.3" data-label="検索 1／7" data-pulse="1">
+                  <div class="blkhead"><span class="t">検索 1</span><span class="hit">2件ヒット</span></div>
+                  <code class="q">締付 <b class="op">AND</b> (未締め <b class="op">OR</b> 締め忘れ <b class="op">OR</b> トルク不足)
+＋ 文書種別を不具合・是正処置報告に絞り込み</code>
+                  <ul class="notes">
+                    <li>NCR-2019-008・NCR-2020-014 の2件。いずれも<b>すでに不良になった事例</b>。</li>
+                    <li>NCR-2020-014 に「本件はリワーク品ではなく、通常流動の初回投入品である」と明記。今回の条件と合致しない。</li>
+                    <li class="turn"><em>方針転換</em>　不良として顕在化した記録だけでは、ポカヨケをすり抜ける条件は分からない。<b>寸前で止まった事例＝ヒヤリハット報告</b>へ対象を広げる。</li>
+                  </ul>
+                </div>
+
+                <div class="scard" data-dur="1.4" data-label="検索 2／7" data-pulse="2">
+                  <div class="blkhead"><span class="t">検索 2</span><span class="hit">9件</span></div>
+                  <code class="q">(入れ直 <b class="op">OR</b> 再投入 <b class="op">OR</b> やり直し <b class="op">OR</b> リワーク <b class="op">OR</b> 取り外し)
+  <b class="op">AND</b> (カウント <b class="op">OR</b> カウンタ <b class="op">OR</b> 本数 <b class="op">OR</b> ランプ <b class="op">OR</b> 完了)</code>
+                  <ul class="notes">
+                    <li>報告の様式が拠点で異なる（本社工場＝Word個票／第二工場＝Excel一覧表）ため、技術用語ではなく<b>現場が書いた口語</b>を検索語に含めて捕捉。</li>
+                    <li>9件のうち<b>8件が同一構造</b>の事象。残る1件（HH-2022-031）は締付データの紐付けに関するもので系統が異なる。</li>
+                  </ul>
+                </div>
+
+                <div class="scard" data-dur="4.2" data-label="検索 3／7" data-pulse="3">
+                  <div class="blkhead"><span class="t">検索 3</span><span class="hit">分布を集計</span></div>
+                  <code class="q">ライン別・年別のファセット集計（rows:0／文書本体は取得しない）</code>
+                  <div class="dist">
+                    <div class="dh">再投入時のカウント継続に関する報告件数（ライン別・年別）</div>
+                    <div class="dlgd"><span><i style="background:#C0690E"></i>第二工場 SM-1</span><span><i style="background:#0E7FB8"></i>本社工場 MC-1／MC-2／AL-1</span></div>
+                    <div class="dscroll"><div class="dgrid">
+                      <div class="drow">第二工場 SM-1</div><div class="dcell on"><span class="dmk" style="background:#C0690E"></span></div><div class="dcell on"><span class="dmk" style="background:#C0690E"></span></div><div class="dcell on"><span class="dmk" style="background:#C0690E"></span><span class="dmk" style="background:#C0690E"></span></div><div class="dcell on"><span class="dmk" style="background:#C0690E"></span></div><div class="dcell"></div><div class="dcell"></div><div class="dcell"></div><div class="dcell"></div><div class="dcell"></div>
+                      <div class="drow">本社工場 MC-1／MC-2／AL-1</div><div class="dcell"></div><div class="dcell on"><span class="dmk" style="background:#0E7FB8"></span></div><div class="dcell on"><span class="dmk" style="background:#0E7FB8"></span></div><div class="dcell"></div><div class="dcell on"><span class="dmk" style="background:#0E7FB8"></span></div><div class="dcell"></div><div class="dcell on"><span class="dmk" style="background:#0E7FB8"></span></div><div class="dcell"></div><div class="dcell"></div>
+                      <div class="drow"></div><div class="dyr">2018</div><div class="dyr">2019</div><div class="dyr">2020</div><div class="dyr">2021</div><div class="dyr">2022</div><div class="dyr">2023</div><div class="dyr">2024</div><div class="dyr">2025</div><div class="dyr">2026</div>
+                      <div class="drow"></div><div class="dcut"><i></i></div>
+                    </div></div>
+                    <div class="dnote">▲ 2021年6月15日　SM-1 締付管理ユニットの設備改造（MNT-2021-047）。第二工場の最後の報告は同年6月9日</div>
+                  </div>
+                  <ul class="notes">
+                    <li>第二工場 SM-1 は 2018〜2021年に5件。<b>2021年6月以降はゼロ件</b>。</li>
+                    <li>本社工場 MC-1／MC-2／AL-1 は 2019年から2024年まで<b>断続的に継続</b>。</li>
+                    <li class="turn"><em>仮説</em>　第二工場側で2021年半ばに対策が入ったのではないか。その時期の記録を探索する。</li>
+                  </ul>
+                </div>
+
+                <div class="scard" data-dur="1.3" data-label="検索 4／7" data-pulse="4">
+                  <div class="blkhead"><span class="t">検索 4</span><span class="hit">2件</span></div>
+                  <code class="q">(在荷センサ <b class="op">OR</b> クランプ解除) <b class="op">AND</b> (リセット <b class="op">OR</b> カウンタ)
+＋ 文書種別を保全・設備改造記録／作業標準に絞り込み</code>
+                  <ul class="notes">
+                    <li>MNT-2021-047（2021/6/15）：在荷センサOFFと治具クランプ解除をカウンタのリセット条件に追加。再投入20回の検証で全件リセットを確認。</li>
+                    <li>STD-2021-03 第2版（2021/7/20）：5.3項「リワーク品の再投入」を新設。<b>設備と運用の両面で対策されている</b>。</li>
+                  </ul>
+                </div>
+
+                <div class="scard" data-dur="1.5" data-label="検索 5／7" data-pulse="5">
+                  <div class="blkhead"><span class="t">検索 5</span><span class="hit">2件</span></div>
+                  <code class="q">水平展開 <b class="op">AND</b> (対象外 <b class="op">OR</b> 機種 <b class="op">OR</b> 他ライン)
+＋ 文書種別を議事録・設計審査記録に絞り込み</code>
+                  <ul class="notes">
+                    <li>DR-2021-11：本社工場は締付管理ユニットが<b>TQ-500 で機種が異なり</b>、I/O拡張ユニットの追加（2ラインで約180万円・各2日停止）が必要なため<b>展開対象外</b>と決議。代替として作業標準の改訂を次回会議で報告することとされた。</li>
+                    <li>DR-2021-12：その次回会議。「組立課より報告があった」との記載はあるが<b>報告の内容が記録されていない</b>。備考に「議事メモをもとに作成した簡易版」とある。</li>
+                    <li class="turn"><em>裏取りへ</em>　議事録の記載だけでは、実施されたのか見送られたのか判断できない。<b>作業標準の現物で確認する。</b></li>
+                  </ul>
+                </div>
+
+                <div class="scard" data-dur="1.4" data-label="検索 6／7" data-pulse="6">
+                  <div class="blkhead"><span class="t">検索 6</span><span class="hit">4件</span></div>
+                  <code class="q">締結工程 <b class="op">AND</b> (作業標準 <b class="op">OR</b> 改訂履歴 <b class="op">OR</b> カウンタ)
+＋ 文書種別を作業標準／設備仕様・取説／保全記録に絞り込み</code>
+                  <ul class="notes">
+                    <li>STD-2019-11（MC-1）は<b>第1版のまま</b>で改訂履歴は制定の1行のみ。STD-2026-02（AL-2 暫定版）にもリワークの記載なし。<b>作業標準への反映は行われていない</b>と現物で確認。</li>
+                    <li>SPEC-AL2-004（TQ-500 取説 4.4項）に「在荷センサ・クランプ解除は<b>標準設定ではクリア条件に含まれない</b>」と明記。</li>
+                    <li>設備保全ログ：2026/7/2 AL-2 据付・初期設定は<b>AL-1の設定値を複写</b>。AL-1 は HH-2024-018 が発生したライン。</li>
+                  </ul>
+                </div>
+
+                <div class="scard" data-dur="1.5" data-label="検索 7／7" data-pulse="7">
+                  <div class="blkhead"><span class="t">検索 7</span><span class="hit">2件</span></div>
+                  <code class="q">(停電 <b class="op">OR</b> 瞬停 <b class="op">OR</b> 非常停止 <b class="op">OR</b> 段取り替え <b class="op">OR</b> 型替え)
+  <b class="op">AND</b> (カウンタ <b class="op">OR</b> 本数)</code>
+                  <ul class="notes">
+                    <li class="turn"><em>自己点検</em>　リワークという条件に絞って調べたが、<b>同じ構造のすり抜けは他の条件でも起こりうる</b>と判断し、条件を広げて再検索。</li>
+                    <li>HH-2023-052（2023/8・MC-2・瞬停復帰後にカウンタが残存）を発見。SPEC-AL2-004 4.4項の「20ms未満の電圧低下では電源再投入によるクリアが行われない」と<b>現象が整合</b>。</li>
+                  </ul>
+                </div>
+
+                <div data-dur="4.6" data-label="検索完了" data-final="1">
+                  <div class="done">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                    <p>計7回の検索で、ヒヤリハット報告・不具合報告・保全記録・作業標準・設備仕様・議事録の <b>6種類の文書群</b>を横断し、関連する <b>20件</b>の文書を特定しました。</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="ansgrid" id="ansGrid">
+        <div class="anscol">
+        <div id="answerWrap">
+
+        <section class="blk" data-dur="1.4" data-label="調査結果" data-panel="files" data-scroll="#answerWrap">
+          <div class="steplabel">06 ／ 回答</div>
+          <div class="answer-head">
+            <h2>調査結果</h2>
+            <span class="by">エージェント検索の回答</span>
+          </div>
+          <p class="lead">ヒヤリハット報告・不具合報告・保全記録・作業標準・設備仕様・議事録を横断検索した結果、ご指摘の事象は <b>2018年以降、両拠点で9件報告されており、いずれも工程内で発見されて不良にはなっていない</b>ことが分かりました。不具合報告や品質データには痕跡が残らず、<b>ヒヤリハット報告にしか記録がない</b>タイプの事象です。</p>
+        </section>
+
+        <section class="blk" data-dur="0.45" data-label="1. 見つかった過去事例" data-panel="files" data-noscroll="1">
+          <h3 class="sec">1. 見つかった過去事例</h3>
+          <div class="tblwrap">
+            <table>
+              <thead><tr><th>#</th><th>報告番号</th><th>発生日</th><th>拠点・ライン</th><th>事象の要点</th></tr></thead>
+              <tbody>
+                <tr><td class="idx">①</td><td><code>HH-S-2018-009</code></td><td>2018/9/11</td><td>第二工場 SM-1</td><td>やり直し品を入れ直したら、本数が合わないのに完了になった</td></tr>
+                <tr><td class="idx">②</td><td><code>HH-S-2019-014</code></td><td>2019/3/6</td><td>第二工場 SM-1</td><td>一度外して入れ直したら、2本で完了ランプが点いた</td></tr>
+                <tr><td class="idx">③</td><td><code>HH-2019-107</code></td><td>2019/11/12</td><td>本社工場 MC-1</td><td>入れ直し後、2本目で完了ランプ点灯。残り2本が未締め</td></tr>
+                <tr><td class="idx">④</td><td><code>HH-2020-033</code></td><td>2020/4/8</td><td>本社工場 MC-1</td><td>入れ直しで本数カウントが異常。ランプはOK</td></tr>
+                <tr><td class="idx">⑤</td><td><code>HH-S-2020-027</code></td><td>2020/9/15</td><td>第二工場 SM-1</td><td>再投入時にカウントが継続。3本目で完了判定</td></tr>
+                <tr><td class="idx">⑥</td><td><code>HH-S-2020-041</code></td><td>2020/11/30</td><td>第二工場 SM-1</td><td>カウンタ未リセットで締め忘れに気づかず流しかけた</td></tr>
+                <tr><td class="idx">⑦</td><td><code>HH-S-2021-022</code></td><td>2021/6/9</td><td>第二工場 SM-1</td><td>再投入時にカウンタが残存（設備改造の直前）</td></tr>
+                <tr><td class="idx">⑧</td><td><code>HH-2022-031</code></td><td>2022/7/5</td><td>本社工場 MC-2</td><td>再投入品の締付データが前のワークの記録に追記された</td></tr>
+                <tr><td class="idx">⑨</td><td><code>HH-2024-018</code></td><td>2024/5/16</td><td>本社工場 <b>AL-1</b></td><td>リワーク後、3本で完了判定。現物も3本しか締まっていなかった</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <ol class="flowlist">
+            <li><b>⑨ HH-2024-018 は、AL-2と同一の設備構成をもつ姉妹ライン AL-1 で2年前に起きた事例です。</b>　上長確認欄は「作業者への周知で対応する。設備対策は費用を要するため要検討とし、生産技術部へ申し送りする」で終わっており、その後の記録は見つかりませんでした。</li>
+          </ol>
+        </section>
+
+        <section class="blk" data-dur="0.45" data-label="2. 第二工場で止まった経緯" data-panel="files" data-noscroll="1">
+          <h3 class="sec">2. 第二工場で発生が止まった経緯と、本社工場に届かなかった理由</h3>
+          <div class="docs">
+            <div class="doc">
+              <h4>MNT-2021-047　設備改造（2021/6/15・第二工場 SM-1）</h4>
+              <p>締付管理ユニット（日鋼テクノ NTC-300）のパラメータ変更。</p>
+              <ul>
+                <li>ワーク在荷センサOFFと治具クランプ解除を、<b>カウンタのリセット条件に追加</b>。</li>
+                <li>再投入時の締付結果を新規レコードとして記録する設定に変更。</li>
+                <li><span class="key">検証</span>リワークを想定した再投入20回で、すべてカウンタがリセットされることを確認。</li>
+              </ul>
+            </div>
+            <div class="doc">
+              <h4>STD-2021-03 第2版　作業標準の改訂（2021/7/20）</h4>
+              <p>5.3項「リワーク品の再投入」を新設。</p>
+              <ul>
+                <li>識別トレイ、カウンタ「0/4」の目視確認、ワークIDの読み直し、データ4本分の確認を明文化。</li>
+                <li><span class="key">要点</span>第二工場は<b>設備と運用の両面</b>で対策しており、以降ゼロ件。</li>
+              </ul>
+            </div>
+            <div class="doc">
+              <h4>DR-2021-11　水平展開検討会（2021/8/24）</h4>
+              <p>SM-1の改造を他ラインへ展開するかを審議。</p>
+              <ul>
+                <li>第二工場 SM-2 へは適用。<b>本社工場は締付管理ユニットが東海精機工業 TQ-500 で機種が異なり</b>、I/O拡張ユニットの追加（2ラインで約180万円・各2日停止）が必要。</li>
+                <li>費用と停止日数に対して優先度は高くないと判断し、<b>今回の展開対象外</b>と決議。代替として作業標準の改訂を検討し、次回会議で報告することとされた。</li>
+              </ul>
+            </div>
+            <div class="doc">
+              <h4>DR-2021-12　水平展開検討会 第2回（2021/11/16）</h4>
+              <p>前回の決議事項のフォロー。</p>
+              <ul>
+                <li>「決議事項3について組立課より報告があった」との記載はあるが、<b>報告の内容が記録されていない</b>。決議は「現行の運用状況を踏まえて対応する」のみ。</li>
+                <li>備考に「本議事録は当日の議事メモをもとに作成した簡易版である。配布資料および詳細な議論内容は記録していない」とある。</li>
+                <li><span class="cau">判断できないこと</span>代替策が実施されたのか見送られたのかは、記載内容からは読み取れない。</li>
+              </ul>
+            </div>
+            <div class="doc">
+              <h4>現物での裏取り　STD-2019-11 は第1版のまま</h4>
+              <p>議事録で判断できないため、本社工場の作業標準の現物を確認。</p>
+              <ul>
+                <li>STD-2019-11（MC-1 締結工程）は 2019年4月の制定から<b>一度も改訂されていない</b>。</li>
+                <li>今回の STD-2026-02（AL-2 暫定版）にも、リワーク品の再投入に関する記載はない。</li>
+                <li><span class="key">確認できること</span>議事録では読み取れないが、<b>少なくとも作業標準への反映は行われなかった</b>。</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="blk" data-dur="0.45" data-label="3. AL-2ラインの設備仕様との照合" data-panel="files" data-noscroll="1">
+          <h3 class="sec">3. AL-2ラインの設備仕様との照合</h3>
+          <div class="tblwrap">
+            <table>
+              <thead><tr><th>確認した記載</th><th>内容</th></tr></thead>
+              <tbody>
+                <tr><th>SPEC-AL2-004 4.3</th><td>カウンタのクリア条件は「完了信号出力時／外部リセット入力（端子X12）ON時／制御電源再投入時」の<b>3つのみ</b></td></tr>
+                <tr><th>SPEC-AL2-004 4.4</th><td>在荷センサ・クランプ解除は<b>標準設定ではクリア条件に含まれない</b>。ワークを途中で取り外して再度セットした場合、カウンタは取り外し前の値を保持したまま計数を継続する</td></tr>
+                <tr><th>SPEC-AL2-004 4.4 注記</th><td>電圧低下時間が20ms未満の場合、保持電源により制御状態が維持されるため、電源再投入によるクリアも行われない</td></tr>
+                <tr><th>設備保全ログ 2026/7/2</th><td>AL-2 締付管理ユニット 据付・初期設定（<b>AL-1の設定値を複写</b>）</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <ol class="flowlist">
+            <li>取説の記載は、現場から提起された指摘の内容と一致します。ただし <b>AL-2実機のパラメータ P-214／P-215 の設定値は文書からは確認できない</b>ため、現地での確認が必要です。</li>
+          </ol>
+        </section>
+
+        <section class="blk" data-dur="0.45" data-label="4. 原因候補" data-panel="files" data-noscroll="1">
+          <h3 class="sec">4. 原因候補（1つに断定できません）</h3>
+          <div class="tblwrap">
+            <table>
+              <thead><tr><th>#</th><th>原因候補</th><th>この候補を支持する根拠</th><th>この候補だけでは説明できないこと</th></tr></thead>
+              <tbody>
+                <tr><td class="idx">①</td><td>本数カウンタのリセット条件に在荷センサ・クランプ解除が含まれていない</td><td>SPEC-AL2-004 4.3〜4.4／MNT-2021-047／HH-2019-107／HH-2024-018</td><td>HH-2022-031 のデータ紐付けのずれ</td></tr>
+                <tr><td class="idx">②</td><td>締付結果とワークIDの紐付けが再投入時に引き継がれない（P-230：連続追記）</td><td>HH-2022-031／SPEC-AL2-004（P-230）／MNT-2021-047</td><td>完了ランプが早く点灯する現象そのもの</td></tr>
+                <tr><td class="idx">③</td><td>リワーク品の再投入手順が作業標準に定義されていない（運用側）</td><td>STD-2026-02（記載なし）／STD-2019-11（記載なし）／STD-2021-03 5.3</td><td>設備が自動リセットしない限り運用だけでは取りこぼしが残る</td></tr>
+                <tr><td class="idx">④</td><td>工具側の空回し検出条件が緩く、着座していない締付がカウントされる</td><td>NCR-2019-008／HH-2024-018（1本が座面に着いていなかった）</td><td>再投入という条件との関係</td></tr>
+                <tr><td class="idx">＋</td><td>停電・瞬停・非常停止からの復帰時にカウンタが残存する</td><td>HH-2023-052／SPEC-AL2-004 4.4</td><td>リワーク時の事象とは別系統。併せて確認が必要</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <ol class="flowlist">
+            <li><b>①と③は排他ではなく、両方が同時に成立している可能性が高いと考えられます。</b>　第二工場は設備（MNT-2021-047）と運用（STD-2021-03）の両方を実施したうえで発生が止まっています。</li>
+          </ol>
+        </section>
+
+        <section class="blk" data-dur="0.45" data-label="5. 現地確認チェックリスト" data-panel="files" data-noscroll="1">
+          <h3 class="sec">5. 現地確認チェックリスト</h3>
+          <div class="tblwrap">
+            <table>
+              <thead><tr><th>#</th><th>確認すること</th><th>確認方法</th><th>該当した場合</th><th>根拠</th></tr></thead>
+              <tbody>
+                <tr><td class="idx">1</td><td>I/O拡張ユニット（TQ-500-EX）の装着有無と P-214 の設定値</td><td>制御盤内の実機確認</td><td>未装着なら①が確定。拡張ユニットの追加を検討</td><td><code>SPEC-AL2-004</code></td></tr>
+                <tr><td class="idx">2</td><td>3本締めた状態で外し、再投入して4本目を締めたときに完了信号が出るか</td><td>実機での再現試験</td><td>出るなら①が実機で成立</td><td><code>MNT-2021-047</code></td></tr>
+                <tr><td class="idx">3</td><td>再投入したワークの締付データが新規レコードになるか（P-230）</td><td>管理システムでレコードを確認</td><td>連続追記なら②。P-230 を「1」に変更</td><td><code>HH-2022-031</code></td></tr>
+                <tr><td class="idx">4</td><td>締付角度の下限値が、座面に着かない締付をNGにできる値か</td><td>締付プログラム設定値の照合</td><td>緩ければ④。設定値を見直し</td><td><code>NCR-2019-008</code></td></tr>
+                <tr><td class="idx">5</td><td>瞬停・非常停止からの復帰時にカウンタがクリアされるか</td><td>復帰手順でカウンタ表示を確認</td><td>残存するなら復帰手順に外部リセットを組み込む</td><td><code>HH-2023-052</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <ol class="flowlist">
+            <li>いずれも <b>AL-1ラインでも同じ確認が必要</b>です。AL-2 は AL-1 の設定値を複写しているためです。</li>
+          </ol>
+        </section>
+
+        <section class="blk" data-dur="0.45" data-label="6. 立ち上げ中の今だから選べる対策" data-panel="files" data-noscroll="1">
+          <h3 class="sec">6. 立ち上げ中の今だから選べる対策</h3>
+          <div class="tblwrap">
+            <table>
+              <thead><tr><th>対策</th><th>内容</th><th>費用・工期の目安</th><th>実施できるタイミング</th></tr></thead>
+              <tbody>
+                <tr><th>設備改造</th><td>TQ-500-EX を追加し、P-214／P-215 を設定。在荷センサ・クランプ解除でカウンタを自動リセット</td><td>DR-2021-11 の見積では2ラインで約180万円・各2日停止。<b>AL-2は量産前のためライン停止によるロスが発生しない</b></td><td>量産移行判定（2026年10月）まで</td></tr>
+                <tr><th>パラメータ変更</th><td>P-230 を「1」に変更し、再投入時の締付結果を新規レコード化</td><td>費用なし。設定変更のみ</td><td>即時</td></tr>
+                <tr><th>作業標準の改訂</th><td>STD-2026-02 暫定版に、STD-2021-03 5.3項に相当する再投入手順を追加</td><td>費用なし。暫定版のため改訂の手間が小さい</td><td>正式版制定まで</td></tr>
+                <tr><th>検査の追加</th><td>最終検査で締付本数を全数確認</td><td>恒常的な工数増</td><td>量産開始後でも可</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <ol class="flowlist">
+            <li>量産開始後は同じ対策でもライン停止を伴います。DR-2021-11 で本社工場が展開対象外とされた理由の一つが停止日数であったことを踏まえると、<b>停止ロスが発生しない現時点は費用対効果の判断が変わる局面</b>といえます。実施の可否および優先順位のご判断は、生産技術部および関係部門でお願いします。</li>
+          </ol>
+        </section>
+
+        <section class="blk" data-dur="2.8" data-label="7. 今回わからなかったこと" data-panel="files" data-noscroll="1">
+          <h3 class="sec">7. 今回わからなかったこと／次のアクション候補</h3>
+          <div class="imps">
+            <div class="imp">
+              <h4>(1) DR-2021-12 の報告内容が記録されていない</h4>
+              <p>代替策が検討されたのか見送られたのかは、記載内容からは判断できません。当時の出席者への確認が必要です。ただし STD-2019-11 が第1版のままであることから、<b>作業標準への反映が行われなかったことは確認できます</b>。</p>
+            </div>
+            <div class="imp">
+              <h4>(2) AL-2実機のパラメータ設定値は文書からは確認できない</h4>
+              <p>据付記録には「AL-1の設定値を複写」との記載があるのみで、個別の設定値は記録されていません。</p>
+            </div>
+            <div class="imp">
+              <h4>(3) 電子化されていない記録がある</h4>
+              <p>第二工場の2018年以前のヒヤリハット記録は一覧表に含まれていません。また HH-2024-018 の「生産技術部へ申し送りする」以降の記録も見つかりません。</p>
+            </div>
+          </div>
+          <ul class="acts">
+            <li>チェックリストの5項目について、AL-2 と AL-1 で実機確認を行う（試作流動中に実施可能）</li>
+            <li>DR-2021-11 の出席者に、本社工場向け代替策のその後を確認する</li>
+            <li>確認結果を、2026年10月の第3回設計審査（量産移行判定）の議題に追加する</li>
+          </ul>
+          <p class="ask"><b>さらに調べますか？</b>　「AL-1でも同じ事象が起きていないかデータで確認する」「TQ-500-EX の見積を過去の購買記録から探す」「他の工程で同種のポカヨケすり抜けがないか横断的に調べる」などをご指示ください。</p>
+        </section>
+        </div><!-- /#answerWrap -->
+
+        <div data-dur="13" data-label="回答を読む" data-panel="files" data-scrollrun="1" data-slow="1"></div>
+
+        <div data-dur="2.2" data-label="7. 今回わからなかったこと" data-panel="files"></div>
+
+        <section class="blk" data-dur="4.6" data-label="報告書の説明" data-panel="files">
+          <p class="sldesc">調査結果を <b>全6ページ・11章の報告書</b> にまとめました。10月の量産移行判定（第3回設計審査）にそのまま提出できる構成にしています。</p>
+          <ol class="sllist">
+            <li>調査の背景と目的</li>
+            <li>調査方法 － 横断した6種類の文書群</li>
+            <li>調査結果の要約</li>
+            <li>確認された過去事例（9件）</li>
+            <li>第二工場で発生が止まった経緯</li>
+            <li>AL-2ラインの設備仕様との照合</li>
+            <li>原因候補（4系統＋別系統1）</li>
+            <li>現地確認チェックリスト（5項目）</li>
+            <li>対策案の比較</li>
+            <li>本調査で確認できなかった事項</li>
+            <li>参照文書一覧（20件）</li>
+          </ol>
+          <p class="slnote">原因の断定は行わず、現地確認の結果を書き込めば量産移行判定の資料になる構成です。参照した20件は文書番号・日付・表題を一覧にして巻末に添付しています。</p>
+          <p class="slnote">※ Skills の組み込みによる個別開発、またはお使いの生成AIツールから Neuron を呼び出す MCPサーバー（有償オプション）でのご提供も可能です。</p>
+        </section>
+
+        <section class="blk" data-dur="3.4" data-label="報告書をダウンロード" data-panel="files">
+          <div class="dlcard">
+            <div class="dlico"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h5"/><path d="M8.5 13h1.2l1 3.4 1-3.4h1.3l-1.6 5.4H9.9z"/></svg></div>
+            <div class="dlmeta">
+              <div class="dlname">AL-2ライン締結工程_本数カウント事象_調査報告書.docx</div>
+              <div class="dlsub">Word文書 ・ 6 ページ ・ 0.4 MB</div>
+            </div>
+            <span class="dlbtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg>ダウンロード</span>
+          </div>
+        </section>
+
+        <div data-dur="6.5" data-label="報告書のプレビュー" data-panel="slides" data-pscroll="1"></div>
+
+        <div data-dur="4" data-label="関連ファイル" data-panel="files" data-scroll="#answerWrap"></div>
+
+        </div><!-- /.anscol -->
+
+        <aside class="rfcol" id="rfCol">
+          <div class="rfhead">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-7.5L10.6 4.6A2 2 0 0 0 9.2 4H4a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1z"/></svg>
+            <b>関連ファイル</b><span>回答候補のファイル一覧 ・ 10 件</span>
+          </div>
+          <div class="rfitem cur"><span class="rfck on"></span><div class="rftxt"><div class="rfname">ヒヤリハット報告書　HH-2024-018<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">本社工場 安全衛生委員会 様式1／ 2024-05-17</span>　リワーク後に流したワークで、締付データが4本のうち3本分しか残っていないのに完了判定になっていました。</div></div></div>
+          <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">設備改造記録　MNT-2021-047<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">第二工場 設備保全課 様式ME-02／ 2021-06-15</span>　在荷センサOFF・クランプ解除をカウンタのリセット条件に追加。再投入20回の検証で全件リセットを確認。</div></div></div>
+          <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">水平展開検討会 議事録　DR-2021-11<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">生産技術部／ 2021-08-24</span>　本社工場は締付管理ユニットの機種が異なり、I/O拡張ユニットの追加に約180万円・各2日停止を要するため対象外と決議。</div></div></div>
+          <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">水平展開検討会（第2回）議事録　DR-2021-12<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">生産技術部／ 2021-11-16</span>　組立課より報告があった旨の記載はあるが報告内容は記録されていない。備考に「議事メモをもとに作成した簡易版」。</div></div></div>
+          <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">締付管理ユニット TQ-500 取扱説明書（抜粋）　SPEC-AL2-004<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">東海精機工業／ AL-2ライン 設備仕様書 添付資料</span>　在荷センサ入力および治具クランプ解除信号は、標準設定では本数カウンタのクリア条件に含まれません。</div></div></div>
+          <div class="rfitem"><span class="rfck on"></span><div class="rftxt"><div class="rfname">作業標準書 締結工程（MC-1ライン）第1版　STD-2019-11<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">本社工場 製造部 組立課／ 2019-04-01 制定</span>　改訂履歴は制定の1行のみ。リワーク品の再投入に関する記載はない。</div></div></div>
+          <div class="rfitem"><span class="rfck"></span><div class="rftxt"><div class="rfname">ヒヤリハット一覧表（第二工場）2018-2026<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">第二工場 製造課／ Excel 一覧表 12件</span>　締結工程のカウント継続は2018〜2021年に5件。2021年6月の設備改造以降はゼロ件。</div></div></div>
+          <div class="rfitem"><span class="rfck"></span><div class="rftxt"><div class="rfname">不具合・是正処置報告書　NCR-2020-014<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">品質保証部 様式QA-03／ 2020-02-14</span>　ネジ1本の未締め。原因は作業者の手順逸脱。本件はリワーク品ではなく通常流動の初回投入品である。</div></div></div>
+          <div class="rfitem"><span class="rfck"></span><div class="rftxt"><div class="rfname">設備保全ログ 2019-2026<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">設備保全課／ Excel 27行</span>　2026-07-02 AL-2 締付管理ユニット 据付・初期設定（AL-1の設定値を複写）を含む。</div></div></div>
+          <div class="rfitem"><span class="rfck"></span><div class="rftxt"><div class="rfname">AL-2ライン 量産立ち上げ 第2回設計審査 議事録　DR-2026-03<span class="rfpv">Preview</span></div><div class="rfsnip"><span class="rfsrc">生産技術部／ 2026-08-05</span>　締結工程はAL-1の設備構成を踏襲。AL-1で量産実績があるため個別の検証は省略し設定値をそのまま適用する。</div></div></div>
+        </aside>
+        </div>
+
+      </div><!-- /#log -->
+
+
+      <div class="spot" id="spot" aria-hidden="true"><div class="spot-bg"></div><div class="spot-in" id="spotIn"></div></div>
+
+      <aside class="preview" id="npPanel" aria-hidden="true">
+        <div class="pvhead">
+          <div class="dlico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h5"/><path d="M8.5 13h1.2l1 3.4 1-3.4h1.3l-1.6 5.4H9.9z"/></svg></div>
+          <div class="pvtitle">
+            <b>日報_20260914_AL-2ライン_締結工程_組立課第2係.docx</b>
+            <span>Word文書 ・ 1 ページ</span>
+          </div>
+          <span class="pvicon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></span>
+        </div>
+        <div class="pvbody">
+          <div class="sl pg-doc">
+            <h5>作業日報　2026年9月14日（月）</h5>
+            <p style="margin-bottom:4px">セイワ工機株式会社　本社工場　製造部　様式7</p>
+            <table>
+              <tbody>
+                <tr><th>ライン／工程</th><td>AL-2ライン　締結工程（試作流動）</td></tr>
+                <tr><th>所属</th><td>製造部 組立課 第2係</td></tr>
+                <tr><th>記入者</th><td>班長　石田 卓也</td></tr>
+                <tr><th>生産数／予定数</th><td>42台／45台</td></tr>
+              </tbody>
+            </table>
+            <h5 style="margin-top:7px">3. 品質状況</h5>
+            <p>締付トルク・角度とも全数判定OK。工程内不良ゼロ、次工程への流出なし。</p>
+            <h5 style="margin-top:7px;border-bottom-color:#c98a00">4. 気づき・申し送り</h5>
+            <p class="nphl"><b>午後のリワーク品の再投入のときに、作業者の井口から「リワークでワークを一度治具から外して入れ直すと、3本しか締めていないのに完了ランプが点いた気がする」との申し出があった。</b></p>
+            <p style="margin-top:3px">本人に同じ手順をやってもらったところ、ネジが3本しか締まっていないのに、締付管理ユニットは「4/4 完了」と表示して、完了ランプが点いた。その場で残り1本を締め直し、次工程には流していない。</p>
+            <p style="margin-top:3px" class="nphl2">トルクも角度も判定はOKで、不良にはなっていないので<b>不具合報告は起票していない</b>。ただ、量産に入ってから同じことが起きると気づけないおそれがあるので、生産技術部に一度見てもらったほうがよいか判断をお願いしたい。</p>
+            <p style="margin-top:3px">なお、リワーク品を入れ直すときの手順は、暫定版の作業標準には書かれていない。</p>
+            <span class="pg">Page 1 / 1</span>
+          </div>
+        </div>
+      </aside>
+
+      <aside class="preview" id="pvPanel" aria-hidden="true">
+        <div class="pvhead">
+          <div class="dlico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h5"/><path d="M8.5 13h1.2l1 3.4 1-3.4h1.3l-1.6 5.4H9.9z"/></svg></div>
+          <div class="pvtitle">
+            <b>AL-2ライン締結工程_本数カウント事象_調査報告書.docx</b>
+            <span>Word文書 ・ 6 ページ</span>
+          </div>
+          <span class="pvicon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg></span>
+          <span class="pvicon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></span>
+        </div>
+        <div class="pvbody" id="pvBody">
+
+          <div class="sl pg-doc cover">
+            <div class="bar"></div>
+            <h5>AL-2ライン 締結工程<br>本数カウント事象 調査報告書</h5>
+            <p>生産技術部 第2グループ ／ 文書番号 RPT-PE-2026-014</p>
+            <p>2026-09 ／ エージェント検索による自動作成</p>
+            <span class="pg">Page 1 / 6</span>
+          </div>
+
+          <div class="sl pg-doc">
+            <h5>1. 調査の背景と目的／2. 調査方法</h5>
+            <p>AL-2ライン立ち上げ試作流動中、締結工程において「リワークで再投入すると締付本数のカウントがずれる可能性がある」との指摘が現場から提起された。</p>
+            <ul>
+              <li>試作流動中の品質不良は発生していない</li>
+              <li>量産移行判定（2026年10月）を前に原因候補と確認事項を整理する</li>
+              <li>本報告書は原因の断定を行わない</li>
+            </ul>
+            <table>
+              <tbody><tr><th>文書群</th><th>主な内容</th></tr>
+              <tr><td>ヒヤリハット報告</td><td>本社＝個票／第二工場＝一覧表</td></tr>
+              <tr><td>不具合・是正処置報告</td><td>社内不良・客先流出案件</td></tr>
+              <tr><td>設備保全・改造記録</td><td>保全ログ・改造記録</td></tr>
+              <tr><td>作業標準／設備仕様／議事録</td><td>各ライン・設計審査</td></tr>
+            </tbody></table>
+            <span class="pg">Page 2 / 6</span>
+          </div>
+
+          <div class="sl pg-doc">
+            <h5>3. 調査結果の要約／4. 確認された過去事例</h5>
+            <ul>
+              <li>同一構造の事象が2018年以降、両拠点で<b>計9件</b>。いずれも工程内で発見</li>
+              <li>第二工場は2021年6月の設備改造以降<b>ゼロ件</b></li>
+              <li>本社工場は機種差を理由に展開対象外。作業標準への反映もなし</li>
+              <li>AL-2はAL-1の設定値を複写して立ち上げ</li>
+            </ul>
+            <table>
+              <tbody><tr><th>報告番号</th><th>発生日</th><th>ライン</th></tr>
+              <tr><td>HH-S-2018-009</td><td>2018/9/11</td><td>SM-1</td></tr>
+              <tr><td>HH-2019-107</td><td>2019/11/12</td><td>MC-1</td></tr>
+              <tr><td>HH-S-2020-041</td><td>2020/11/30</td><td>SM-1</td></tr>
+              <tr><td>HH-2022-031</td><td>2022/7/5</td><td>MC-2</td></tr>
+              <tr><td>HH-2024-018</td><td>2024/5/16</td><td>AL-1</td></tr>
+            </tbody></table>
+            <span class="pg">Page 3 / 6</span>
+          </div>
+
+          <div class="sl pg-doc">
+            <h5>5. 第二工場で発生が止まった経緯／6. 設備仕様との照合</h5>
+            <div class="two">
+              <div><span class="chip">MNT-2021-047</span><p>在荷センサOFF・クランプ解除をリセット条件に追加。</p></div>
+              <div><span class="chip">STD-2021-03 第2版</span><p>5.3項「リワーク品の再投入」を新設。</p></div>
+              <div><span class="chip">DR-2021-11</span><p>機種差と費用を理由に本社工場は対象外と決議。</p></div>
+              <div><span class="chip">DR-2021-12</span><p>報告があった旨のみ記載。内容は記録されていない。</p></div>
+            </div>
+            <p>SPEC-AL2-004 4.4：在荷センサ・クランプ解除は標準設定ではクリア条件に含まれない。20ms未満の電圧低下では電源再投入によるクリアも行われない。</p>
+            <span class="pg">Page 4 / 6</span>
+          </div>
+
+          <div class="sl pg-doc">
+            <h5>7. 原因候補／8. 現地確認チェックリスト</h5>
+            <table>
+              <tbody><tr><th>#</th><th>原因候補</th><th>根拠</th></tr>
+              <tr><td>①</td><td>カウンタのリセット条件</td><td>SPEC 4.3-4.4</td></tr>
+              <tr><td>②</td><td>ワークIDの紐付け</td><td>HH-2022-031</td></tr>
+              <tr><td>③</td><td>作業標準に未定義</td><td>STD-2026-02</td></tr>
+              <tr><td>④</td><td>空回し検出条件</td><td>NCR-2019-008</td></tr>
+              <tr><td>＋</td><td>停電復帰時の残存</td><td>HH-2023-052</td></tr>
+            </tbody></table>
+            <ul>
+              <li>現地確認は5項目。AL-1でも同じ確認が必要</li>
+            </ul>
+            <span class="pg">Page 5 / 6</span>
+          </div>
+
+          <div class="sl pg-doc">
+            <h5>9. 対策案の比較／10. 確認できなかった事項／11. 参照文書一覧</h5>
+            <ul>
+              <li>設備改造は<b>量産前ならライン停止のロスなし</b>（当時の見積は2ラインで約180万円・各2日停止）</li>
+              <li>P-230 の変更と作業標準の改訂は費用なしで即時可能</li>
+              <li>DR-2021-12 の報告内容、AL-2実機の設定値、2018年以前の記録は未確認</li>
+              <li>参照文書 20 件を文書番号・日付・表題で一覧化</li>
+            </ul>
+            <span class="pg">Page 6 / 6</span>
+          </div>
+
+        </div>
+      </aside>
+    </div><!-- /#vp -->
+
+    <div class="player">
+      <button class="pbtn" id="pp" type="button" aria-label="再生"></button>
+      <div class="track" id="track" role="slider" aria-label="再生位置" tabindex="0" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div class="rail"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+      </div>
+      <div class="meta">
+        <div class="spd" id="spd">
+          <button type="button" data-r="1" class="on">×1</button>
+          <button type="button" data-r="1.5">×1.5</button>
+          <button type="button" data-r="2">×2</button>
+        </div>
+        <span class="chap" id="chap"></span>
+        <span class="time"><span id="cur">0:00</span> / <span id="tot">0:00</span></span>
+        <button class="pbtn ghost" id="rst" type="button" aria-label="最初から再生">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <p class="foot">※ 企業名・ライン名・製品名・文書ID・型式・金額はすべて架空のデモ用データです。</p>
+</div>
+<script>
+(function () {
+  var log = document.getElementById('log');
+  var askEl = document.getElementById('ask'), askT = document.getElementById('askT');
+  var spdBox = document.getElementById('spd');
+  var promptP = document.querySelector('.bottombar .prompt p');
+  var QUERY_TEXT = promptP ? promptP.textContent : '';
+  var PLACEHOLDER = '質問を入力してください';
+  if (askT) askT.textContent = QUERY_TEXT;
+  var rstatus = document.getElementById('rstatusMain') || document.querySelector('.rstatus');
+  /* 再生速度（×1／×1.5／×2）— アニメーションは --k で追従 */
+  var rate = 1;
+  function ms(v) { return Math.max(1, Math.round(v / rate)); }
+  var pp = document.getElementById('pp'), rst = document.getElementById('rst');
+  var track = document.getElementById('track'), fill = document.getElementById('fill');
+  var knob = document.getElementById('knob'), ticks = document.getElementById('ticks');
+  var chap = document.getElementById('chap'), curEl = document.getElementById('cur'), totEl = document.getElementById('tot');
+  var spot = document.getElementById('spot'), spotIn = document.getElementById('spotIn');
+  var flow = document.getElementById('flow'), fcnum = document.getElementById('fcnum');
+  var procSec = document.getElementById('proc');
+  /* フロー図は ROUND ごとに1つ。ステップがどのカードに属するかで対応づける */
+  var allFlows = [].slice.call(document.querySelectorAll('.flow'));
+  var allProcs = [].slice.call(document.querySelectorAll('.blk')).filter(function (b) { return b.querySelector('.flow'); });
+  function flowOf(el) {
+    var card = el.closest ? el.closest('.card') : null;
+    var f = card ? card.querySelector('.flow') : null;
+    return f || flow;
+  }
+  function setFcount(f, n) { var b = f.querySelector('.fcount b'); if (b) b.textContent = n; }
+
+  var ICON_PLAY  = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+  var ICON_PAUSE = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+  var SPOT_IN = 340, SPOT_OUT = 620;
+
+  /* 拡大表示の中身 */
+  function esc(v) { return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  var SPOTS = {
+    q: function (txt) {
+      return '<div class="big" id="bigq"><div class="big-bar">' +
+        '<span class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg></span>' +
+        '<span class="big-q">' + esc(txt) + '</span>' +
+        '</div></div>';
+    },
+    r1: function () {
+      return '<div class="big"><div class="big-cap">昨日の日報を横断検索</div><div class="big-repos">' +
+        '<span class="big-repo"><span class="dot"></span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>ファイルサーバー</span>' +
+        '<span class="big-repo"><span class="dot"></span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11"/></svg>SharePoint Online</span>' +
+        '</div></div>';
+    },
+    r: function () {
+      return '<div class="big"><div class="big-cap">社内リポジトリを横断検索</div><div class="big-repos">' +
+        '<span class="big-repo"><span class="dot"></span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>ファイルサーバー</span>' +
+        '<span class="big-repo"><span class="dot"></span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>Box</span>' +
+        '<span class="big-repo"><span class="dot"></span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11"/></svg>SharePoint Online</span>' +
+        '</div></div>';
+    }
+  };
+  var SPOT_TARGET = { q: '.prompt', r: '.rstatus', r1: '.rstatus' };
+
+  /* ---- タイムライン ---- */
+  var nodes = [].slice.call(document.getElementById('vp').querySelectorAll('[data-dur]'));
+  var steps = nodes.map(function (el) {
+    return {
+      el: el, dur: parseFloat(el.dataset.dur || '4') * 1000, label: el.dataset.label || '',
+      spot: el.dataset.spot || null, hold: parseFloat(el.dataset.hold || '2600'),
+      pulse: el.dataset.pulse ? parseInt(el.dataset.pulse, 10) : 0,
+      final: el.dataset.final === '1', phase: null
+    };
+  });
+  var starts = [], total = 0;
+  steps.forEach(function (s) { starts.push(total); total += s.dur; });
+  /* 質問バブルが出る時刻（= プロンプトの拡大表示が閉じ、検索を押した約1秒後）。ラウンドごとに1つ */
+  var qSteps = [];
+  steps.forEach(function (s, i) {
+    if (s.spot !== 'q') return;
+    var bubble = document.getElementById(s.el.dataset.ask || 'ask');
+    var text = s.el.dataset.setq || QUERY_TEXT;
+    qSteps.push({ i: i, at: starts[i] + SPOT_IN + s.hold + SPOT_OUT + 450 + 1000, bubble: bubble, text: text });
+    if (bubble) { var tt = bubble.querySelector('.qask-t'); if (tt) tt.textContent = text; }
+  });
+  if (qSteps.length && promptP) { promptP.textContent = qSteps[0].text; }
+
+  function fmt(ms) { var s = Math.max(0, Math.round(ms / 1000)); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
+  totEl.textContent = fmt(total);
+  steps.forEach(function (s, i) {
+    if (!i) return;
+    var t = document.createElement('i'); t.className = 'tick';
+    t.style.left = (starts[i] / total * 100) + '%'; ticks.appendChild(t);
+  });
+
+  /* 回答セグメント（拡大してスクロール表示する範囲） */
+  var ansIdx = [];
+  steps.forEach(function (s, i) { if (s.el.dataset.ans === '1') ansIdx.push(i); });
+  var ansStart = ansIdx.length ? starts[ansIdx[0]] : Infinity;
+  var ansEnd = ansIdx.length ? starts[ansIdx[ansIdx.length - 1]] + steps[ansIdx[ansIdx.length - 1]].dur : Infinity;
+  var ANS_IN = 300, ANS_OUT = 600;
+
+  /* 右サイドパネル（関連ファイル／報告書プレビュー） */
+  var vp = document.getElementById('vp');
+  var ansGrid = document.getElementById('ansGrid');
+  var pvPanel = document.getElementById('pvPanel');
+  var pvBody = document.getElementById('pvBody');
+  var npPanel = document.getElementById('npPanel');
+  /* 現在のステップに紐づく右側表示（切り替えは少しだけ先読み） */
+  function panelAt(ms) {
+    var i = indexAt(ms);
+    if (i + 1 < steps.length && ms >= starts[i + 1] - 200) i += 1;
+    return { name: steps[i].el.dataset.panel || null, i: i };
+  }
+  function drivePanels(instant) {
+    var cur = panelAt(t);
+    var files = cur.name === 'files', slides = cur.name === 'slides', nip = cur.name === 'nippo';
+    if (ansGrid) ansGrid.classList.toggle('withfiles', files);
+    if (pvPanel && slides !== pvPanel.classList.contains('on')) {
+      if (instant) pvPanel.style.transition = 'none';
+      pvPanel.classList.toggle('on', slides);
+      pvPanel.setAttribute('aria-hidden', slides ? 'false' : 'true');
+      if (instant) { void pvPanel.offsetWidth; pvPanel.style.transition = ''; }
+    }
+    if (npPanel && nip !== npPanel.classList.contains('on')) {
+      if (instant) npPanel.style.transition = 'none';
+      npPanel.classList.toggle('on', nip);
+      npPanel.setAttribute('aria-hidden', nip ? 'false' : 'true');
+      if (instant) { void npPanel.offsetWidth; npPanel.style.transition = ''; }
+    }
+    if (pvBody) {
+      if (!slides) pvBody.scrollTop = 0;
+      else if (steps[cur.i].el.dataset.pscroll) {
+        var q = (t - starts[cur.i]) / steps[cur.i].dur;
+        q = Math.min(1, Math.max(0, (q - .12) / .7));
+        pvBody.scrollTop = Math.max(0, pvBody.scrollHeight - pvBody.clientHeight) * q;
+      }
+    }
+    if (vp) vp.classList.toggle('split', slides || nip);
+  }
+
+  /* 「検索完了」を見せてから「回答する」を点灯させるまでの間（ミリ秒） */
+  var FINAL_DELAY = 1500;
+  var finalIdx = -1;
+  var finals = [];
+  steps.forEach(function (s, i) { if (s.final) { finalIdx = i; finals.push({ i: i, flow: flowOf(s.el) }); } });
+  function setRepoDone(on) { if (rstatus) rstatus.classList.toggle('done', on); }
+  /* ROUND 1 の検索対象ステータス（日報検索が始まったら「検索しました」に） */
+  var rstat1 = document.getElementById('rstat1');
+  var npDoneIdx = -1;
+  steps.forEach(function (s, i) { if (s.el.dataset.repodone === '1') npDoneIdx = i; });
+  function driveNpRepo() {
+    if (npDoneIdx < 0 || !rstat1) return;
+    rstat1.classList.toggle('done', t >= starts[npDoneIdx] + 900);
+  }
+  function driveFinal() {
+    finals.forEach(function (f) {
+      var on = t >= starts[f.i] + FINAL_DELAY;
+      if (f.flow === flow) setRepoDone(on);
+      if (!f.flow || on === f.flow.classList.contains('final')) return;
+      f.flow.classList.toggle('final', on);
+      if (on) { f.flow.classList.remove('emph'); void f.flow.offsetWidth; f.flow.classList.add('emph'); }
+      else f.flow.classList.remove('emph');
+    });
+  }
+  var ansOpen = false, ansRoll = null, ansBox = null;
+
+  function openAns(instant) {
+    spot.classList.add('ans');
+    spotIn.className = 'spot-in is-ans';
+    spotIn.innerHTML = '<div class="big big-ans"><div class="ansroll">' +
+      document.getElementById('answerWrap').innerHTML + '</div></div>';
+    ansBox = spotIn.querySelector('.big-ans');
+    ansRoll = spotIn.querySelector('.ansroll');
+    spotIn.style.transform = 'none';
+    if (instant) { spotIn.style.transition = 'none'; spotIn.style.opacity = '1'; spot.classList.add('on'); }
+    else {
+      spotIn.style.transition = 'none'; spotIn.style.opacity = '0';
+      void spotIn.offsetWidth;
+      spotIn.style.transition = 'opacity ' + ms(ANS_IN) + 'ms ease';
+      spot.classList.add('on'); spotIn.style.opacity = '1';
+    }
+    ansOpen = true;
+  }
+  function closeAns(instant) {
+    if (!ansOpen) return;
+    if (instant) { spot.classList.remove('ans'); spotIn.className = 'spot-in'; clearSpot(); }
+    else {
+      spotIn.style.transition = 'opacity ' + ms(ANS_OUT) + 'ms ease';
+      spotIn.style.opacity = '0'; spot.classList.remove('on');
+      setTimeout(function () { if (!ansOpen) { spot.classList.remove('ans'); spotIn.className = 'spot-in'; clearSpot(); } }, ms(ANS_OUT));
+    }
+    ansOpen = false; ansRoll = null;
+  }
+  function driveAns(instant) {
+    if (t >= ansStart && t < ansEnd) {
+      if (!ansOpen) openAns(!!instant);
+      if (!ansRoll) return;
+      var span = (ansEnd - ansStart) - ANS_IN - ANS_OUT;
+      var p = (t - ansStart - ANS_IN) / span;
+      p = Math.min(1, Math.max(0, (p - .17) / .78));
+      var cs = getComputedStyle(ansBox);
+      var pad = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+      var over = Math.max(0, ansRoll.scrollHeight - (ansBox.clientHeight - pad) + 10);
+      ansRoll.style.transform = 'translateY(' + (-over * p) + 'px)';
+      if (t >= ansEnd - ANS_OUT) closeAns(false);
+    } else if (ansOpen) {
+      closeAns(true);
+    }
+  }
+
+  var t = 0, playing = false, shown = -1, raf = null, last = 0;
+  var userScrolled = false, scrollLock = 0;
+
+  function indexAt(ms) { var i = 0; for (var k = 0; k < steps.length; k++) if (ms >= starts[k]) i = k; return i; }
+
+  function paint() {
+    var r = total ? t / total : 0;
+    fill.style.width = (r * 100) + '%'; knob.style.left = (r * 100) + '%';
+    curEl.textContent = fmt(t); track.setAttribute('aria-valuenow', Math.round(r * 100));
+    chap.textContent = steps[indexAt(t)].label;
+  }
+
+  function clearSpot() {
+    spot.classList.remove('on');
+    spotIn.style.transition = 'none'; spotIn.style.transform = 'none'; spotIn.style.opacity = '0';
+    spotIn.innerHTML = '';
+  }
+
+  /* 質問バブルの表示／入力バーの文字 */
+  var ASK_AFTER_TAP = 1000;                 /* 「検索」を押してからバブルが出るまで */
+  var askSig = '';
+  function currentQ() {
+    if (!qSteps.length) return null;
+    var q = qSteps[0];
+    for (var k = 0; k < qSteps.length; k++) if (t >= starts[qSteps[k].i]) q = qSteps[k];
+    return q;
+  }
+  function setAsk() {
+    if (!qSteps.length) return;
+    var q = currentQ(), ph = t >= q.at, sig = '';
+    qSteps.forEach(function (x) { sig += (t >= x.at ? '1' : '0'); });
+    sig += '|' + q.i + (ph ? 'P' : 'T');
+    if (sig === askSig) return;
+    askSig = sig;
+    qSteps.forEach(function (x) { if (x.bubble) x.bubble.classList.toggle('on', t >= x.at); });
+    if (promptP) {
+      promptP.textContent = ph ? PLACEHOLDER : q.text;
+      promptP.classList.toggle('ph', ph);
+    }
+  }
+
+  function applyPhase(s, phase) {
+    var sec = s.el;
+    if (phase === 'in') {
+      spotIn.innerHTML = SPOTS[s.spot](s.el.dataset.setq || QUERY_TEXT);
+      sec.classList.add('pending');
+      spot.classList.add('on');
+      spotIn.style.transition = 'none';
+      spotIn.style.transform = 'scale(.94)'; spotIn.style.opacity = '0';
+      void spotIn.offsetWidth;
+      spotIn.style.transition = 'transform ' + ms(SPOT_IN) + 'ms cubic-bezier(.2,.85,.3,1), opacity ' + ms(SPOT_IN) + 'ms ease';
+      spotIn.style.transform = 'scale(1)'; spotIn.style.opacity = '1';
+      if (s.spot === 'q') setTimeout(function () {
+        var bq = document.getElementById('bigq'); if (bq) bq.classList.add('focus');
+      }, 260);
+    } else if (phase === 'tap') {
+      var btn = document.getElementById('promptSend');
+      if (btn) { btn.classList.add('pressed'); setTimeout(function () { btn.classList.remove('pressed'); }, 300); }
+    } else if (phase === 'ask') {
+      setAsk();
+    } else if (phase === 'out') {
+      var tgt = sec.querySelector(SPOT_TARGET[s.spot]) || document.querySelector(SPOT_TARGET[s.spot]);
+      if (!tgt) { spot.classList.remove('on'); sec.classList.remove('pending'); return; }
+      var r1 = spotIn.getBoundingClientRect(), r2 = tgt.getBoundingClientRect();
+      var sc = Math.min(r2.width / r1.width, r2.height / r1.height);
+      if (!isFinite(sc) || sc <= 0) sc = .25;
+      var dx = (r2.left + r2.width / 2) - (r1.left + r1.width / 2);
+      var dy = (r2.top + r2.height / 2) - (r1.top + r1.height / 2);
+      spotIn.style.transition = 'transform ' + ms(SPOT_OUT) + 'ms cubic-bezier(.4,0,.2,1), opacity ' + ms(SPOT_OUT) + 'ms ease';
+      spotIn.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(' + sc + ')';
+      spotIn.style.opacity = '0';
+      spot.classList.remove('on');
+      sec.classList.remove('pending');
+    } else if (phase === 'done') {
+      sec.classList.remove('pending');
+      clearSpot();
+    }
+  }
+
+  function pulseFlow(el, n) {
+    var f = flowOf(el);
+    if (!f) return;
+    setFcount(f, n);
+    f.classList.add('counting');
+    f.classList.remove('pulse'); void f.offsetWidth; f.classList.add('pulse');
+  }
+
+  function syncTo(i) {
+    closeAns(true); clearSpot();
+    steps.forEach(function (s, k) {
+      s.el.classList.remove('anim');
+      s.el.classList.toggle('show', k <= i);
+      s.el.classList.remove('pending');
+      s.phase = k <= i ? 'done' : null;
+    });
+    allProcs.forEach(function (b) { if (b.classList.contains('show')) b.classList.remove('anim'); });
+    allFlows.forEach(function (f) {
+      var maxPulse = 0;
+      steps.forEach(function (s, k) { if (k <= i && s.pulse && flowOf(s.el) === f) maxPulse = s.pulse; });
+      f.classList.toggle('counting', maxPulse > 0);
+      var fin = finals.filter(function (x) { return x.flow === f; })[0];
+      f.classList.toggle('final', !!fin && t >= starts[fin.i] + FINAL_DELAY);
+      f.classList.remove('emph');
+      f.classList.remove('pulse');
+      setFcount(f, maxPulse || 1);
+    });
+    askSig = ''; setAsk(); driveNpRepo();
+    setRepoDone(finalIdx >= 0 && t >= starts[finalIdx] + FINAL_DELAY);
+    shown = i;
+    runIdx = -1;
+    drivePanels(true);
+    placeScroll(i, false, true);
+    if (steps[i].el.dataset.scrollrun) {      /* 途中から再生してもスクロールが続くように */
+      runIdx = i; runFrom = answerTop(); runTo = maxScroll();
+    }
+  }
+
+  /* 指定ステップの表示位置（通常／回答の先頭へ／末尾まで一気に） */
+  var runIdx = -1, runFrom = 0, runTo = 0;
+  function maxScroll() { return Math.max(0, log.scrollHeight - log.clientHeight); }
+  function setScroll(v, smooth) {
+    v = Math.max(0, Math.min(v, maxScroll()));
+    scrollLock = Date.now() + 900;
+    if (smooth) log.scrollTo({ top: v, behavior: 'smooth' });
+    else { log.style.scrollBehavior = 'auto'; log.scrollTop = v; log.style.scrollBehavior = ''; }
+  }
+  /* スクロールの始点（回答の先頭） */
+  function answerTop() {
+    var aw = log.querySelector('#answerWrap');
+    return aw ? Math.max(0, contentTop(aw) - 12) : 0;
+  }
+  function runSpan(i) { return steps[i].dur * (steps[i].el.dataset.slow ? .85 : .5); }
+  function placeScroll(i, smooth, seek) {
+    var el = steps[i].el, d = el.dataset;
+    if (!log.contains(el)) return;            /* 入力バー内のステップはスクロール対象外 */
+    if (d.noscroll) {                         /* 回答本文：再生中は先頭のまま動かさない */
+      if (seek) setScroll(answerTop(), false);   /* 頭出し時は回答の先頭に合わせる */
+      return;
+    }
+    if (d.scroll) { var tg = log.querySelector(d.scroll); if (tg) { setScroll(contentTop(tg) - 12, smooth); return; } }
+    if (d.scrollrun) {                        /* 読み進め中：途中でも位置を合わせる */
+      var p = Math.min(1, Math.max(0, (t - starts[i]) / runSpan(i)));
+      var from = answerTop(), to = maxScroll();
+      setScroll(from + (to - from) * p, smooth);
+      return;
+    }
+    ensureVisible(el, smooth);
+  }
+
+  function reveal(i) {
+    var s = steps[i];
+    s.el.classList.add('show', 'anim');
+    if (s.pulse) pulseFlow(s.el, s.pulse);
+    if (s.spot) { s.phase = null; }
+    shown = i; userScrolled = false;
+    if (s.el.dataset.scrollrun) { runIdx = i; runFrom = log.scrollTop; runTo = maxScroll(); userScrolled = false; }
+    else placeScroll(i, true);
+  }
+
+  /* 末尾まで一気に送る */
+  function driveRun(i) {
+    if (i !== runIdx) return false;
+    var slow = !!steps[i].el.dataset.slow;
+    var p = (t - starts[i]) / runSpan(i);
+    p = Math.min(1, Math.max(0, p));
+    /* ゆっくり読ませる区間は、ほぼ等速（前後だけなめらかに） */
+    var e = slow ? (p < .12 ? (p * p) / .0288 * .12 : (p > .88 ? 1 - Math.pow(1 - p, 2) / .0288 * .12 : p))
+                 : (p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2);
+    scrollLock = Date.now() + 400;
+    log.style.scrollBehavior = 'auto';
+    log.scrollTop = runFrom + (Math.min(runTo, maxScroll()) - runFrom) * e;
+    log.style.scrollBehavior = '';
+    return true;
+  }
+
+  /* 要素のログ内での位置（スクロール座標）を求める */
+  function contentTop(el) {
+    return el.getBoundingClientRect().top - log.getBoundingClientRect().top + log.scrollTop;
+  }
+
+  /* 下からせり上がるプレビュー（スマホ）に隠れる高さ */
+  function bottomInset() {
+    var panel = (pvPanel && pvPanel.classList.contains('on')) ? pvPanel
+              : ((npPanel && npPanel.classList.contains('on')) ? npPanel : null);
+    if (!vp || !vp.classList.contains('split') || !panel) return 0;
+    var r = panel.getBoundingClientRect(), lr = log.getBoundingClientRect();
+    if (r.left > lr.left + 2) return 0;
+    return Math.max(0, Math.min(lr.height - 80, lr.bottom - r.top));
+  }
+
+  /* 新しく表示した要素が必ず画面に入るようにスクロールする */
+  function ensureVisible(el, smooth) {
+    if (!el) return;
+    var top = contentTop(el);
+    var h = el.offsetHeight, view = log.clientHeight - bottomInset(), cur = log.scrollTop;
+    var target = cur;
+    if (h >= view - 24) target = top - 10;                       // 画面より高い要素は上端に合わせる
+    else if (top + h > cur + view - 14) target = top + h - view + 18;  // 下がはみ出す → 下端を見せる
+    else if (top < cur + 10) target = top - 10;                  // 上がはみ出す → 上端を見せる
+    target = Math.max(0, Math.min(target, log.scrollHeight - log.clientHeight));
+    if (Math.abs(target - cur) < 2) return;
+    scrollLock = Date.now() + 900;
+    if (smooth) log.scrollTo({ top: target, behavior: 'smooth' });
+    else { log.style.scrollBehavior = 'auto'; log.scrollTop = target; log.style.scrollBehavior = ''; }
+  }
+
+  /* 現在のブロックが画面より高いときだけ、その中をゆっくり送る */
+  function autoScroll(i) {
+    if (userScrolled || Date.now() < scrollLock) return;
+    var el = steps[i].el;
+    if (!log.contains(el) || el.dataset.noscroll || el.dataset.scroll) return;
+    var top = contentTop(el) - 10;
+    var over = el.offsetHeight - (log.clientHeight - bottomInset()) + 24;
+    if (over <= 0) return;
+    var p = (t - starts[i]) / steps[i].dur;
+    p = Math.min(1, Math.max(0, (p - .15) / .7));
+    log.style.scrollBehavior = 'auto';
+    log.scrollTop = Math.max(0, top + over * p);
+    log.style.scrollBehavior = '';
+  }
+
+  log.addEventListener('scroll', function () { if (Date.now() > scrollLock) userScrolled = true; });
+
+  function driveSpot(i) {
+    var s = steps[i];
+    if (!s.spot) return;
+    var p = t - starts[i], ph;
+    var settled = SPOT_IN + s.hold + SPOT_OUT;
+    if (p < SPOT_IN) ph = 'in';
+    else if (p < SPOT_IN + s.hold) ph = 'hold';
+    else if (p < settled) ph = 'out';
+    else if (s.spot === 'q' && p < settled + 450) ph = 'done';
+    else if (s.spot === 'q' && p < settled + 450 + ASK_AFTER_TAP) ph = 'tap';
+    else if (s.spot === 'q') ph = 'ask';
+    else ph = 'done';
+    if (ph !== s.phase) { applyPhase(s, ph); s.phase = ph; }
+  }
+
+  function tick(now) {
+    if (!playing) return;
+    var dt = (now - last) * rate; last = now;
+    t = Math.min(total, t + dt);
+    var i = indexAt(t);
+    drivePanels(false);
+    var justRevealed = false;
+    if (i > shown) { for (var k = shown + 1; k <= i; k++) reveal(k); justRevealed = true; }
+    if (!driveRun(i) && !justRevealed) autoScroll(i);
+    driveSpot(i);
+    setAsk();
+    driveNpRepo();
+    driveFinal();
+    driveAns(false);
+    paint();
+    if (t >= total) { pause(true); return; }
+    raf = requestAnimationFrame(tick);
+  }
+
+  function play() {
+    if (t >= total) { t = 0; syncTo(0); steps[0].phase = null; }
+    playing = true; pp.innerHTML = ICON_PAUSE; pp.setAttribute('aria-label', '一時停止');
+    last = performance.now(); raf = requestAnimationFrame(tick);
+  }
+  function pause(ended) {
+    playing = false; cancelAnimationFrame(raf);
+    pp.innerHTML = ICON_PLAY; pp.setAttribute('aria-label', ended ? 'もう一度再生' : '再生');
+  }
+  function toggle() { playing ? pause() : play(); }
+
+  function seekTo(ratio) {
+    t = Math.min(total, Math.max(0, ratio * total));
+    syncTo(indexAt(t)); driveAns(true); paint();
+  }
+
+  /* 再生速度 */
+  if (spdBox) {
+    var spdBtns = [].slice.call(spdBox.querySelectorAll('button'));
+    spdBtns.forEach(function (b) {
+      b.addEventListener('click', function () {
+        rate = parseFloat(b.getAttribute('data-r')) || 1;
+        document.documentElement.style.setProperty('--k', (1 / rate).toFixed(3));
+        spdBtns.forEach(function (o) { o.classList.toggle('on', o === b); });
+      });
+    });
+  }
+
+  pp.addEventListener('click', toggle);
+  rst.addEventListener('click', function () { t = 0; syncTo(0); steps[0].phase = null; paint(); if (!playing) play(); });
+
+  var dragging = false;
+  function ratioFromEvent(e) {
+    var r = track.getBoundingClientRect();
+    return Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+  }
+  track.addEventListener('pointerdown', function (e) { dragging = true; track.setPointerCapture(e.pointerId); seekTo(ratioFromEvent(e)); });
+  track.addEventListener('pointermove', function (e) { if (dragging) seekTo(ratioFromEvent(e)); });
+  track.addEventListener('pointerup', function () { dragging = false; });
+  track.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight') { seekTo((t + 3000) / total); e.preventDefault(); }
+    if (e.key === 'ArrowLeft') { seekTo((t - 3000) / total); e.preventDefault(); }
+    if (e.key === ' ' || e.key === 'Enter') { toggle(); e.preventDefault(); }
+  });
+
+  syncTo(0); paint(); pp.innerHTML = ICON_PLAY;
+  steps[0].phase = null;
+
+  var started = false;
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        if (e.isIntersecting && document.visibilityState !== 'hidden') { if (!started) { started = true; play(); } }
+        else if (playing) pause();
+      });
+    }, { threshold: .25 }).observe(log);
+  } else { play(); }
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden' && playing) pause(); });
+})();
+</script>
+</body>
+</html>

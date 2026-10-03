@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG vs Agent Skills — ライブデモ</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:    #065A82;
+    --teal:    #1C7293;
+    --mid:     #21295C;
+    --accent:  #00B4D8;
+    --ok:      #2EC4B6;
+    --warn:    #E07A5F;
+    --bg:      #F0F6FA;
+    --card:    #FFFFFF;
+    --border:  #C8DDE9;
+    --text:    #1A2E40;
+    --muted:   #5B7A8E;
+    --stage1:  #3D5A80;
+    --stage2:  #1C7293;
+    --stage3:  #21295C;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Top Bar ────────────────────────────────── */
+  .topbar {
+    background: var(--mid);
+    padding: 0 24px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    border-bottom: 2px solid var(--accent);
+  }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .topbar-logo {
+    font-size: 13px; font-weight: 700; color: var(--accent);
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .topbar-sep { width: 1px; height: 20px; background: rgba(255,255,255,0.2); }
+  .topbar-title { font-size: 14px; font-weight: 500; color: #B2D4E8; }
+
+  .scenario-badge {
+    font-size: 11px; color: #7FC4E0;
+    background: rgba(0,180,216,0.12);
+    border: 1px solid rgba(0,180,216,0.3);
+    padding: 3px 10px; border-radius: 20px;
+  }
+
+  /* ── Main Layout ────────────────────────────── */
+  .main {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* ── Left Panel ─────────────────────────────── */
+  .left-panel {
+    background: #0D2137;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid rgba(255,255,255,0.08);
+    overflow: hidden;
+  }
+
+  .stage-tabs {
+    display: flex;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .stage-tab {
+    flex: 1;
+    padding: 10px 4px;
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.35);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.25s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    position: relative;
+  }
+  .stage-tab .tab-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px; font-weight: 600;
+  }
+  .stage-tab .tab-label { font-size: 9px; letter-spacing: 0.06em; }
+  .stage-tab.active { color: #fff; }
+  .stage-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .stage-tab[data-stage="1"].active::after { background: var(--stage1); }
+  .stage-tab[data-stage="2"].active::after { background: var(--teal); }
+  .stage-tab[data-stage="3"].active::after { background: var(--accent); }
+  .stage-tab[data-stage="1"].active .tab-num { color: #7BAFD4; }
+  .stage-tab[data-stage="2"].active .tab-num { color: #4DBFCF; }
+  .stage-tab[data-stage="3"].active .tab-num { color: var(--accent); }
+  .stage-tab.done .tab-num { color: var(--ok); }
+  .stage-tab.done .tab-label { color: var(--ok); }
+
+  .left-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .left-content::-webkit-scrollbar { width: 4px; }
+  .left-content::-webkit-scrollbar-track { background: transparent; }
+  .left-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+  .stage-header { display: flex; flex-direction: column; gap: 4px; }
+  .stage-name {
+    font-size: 16px; font-weight: 700; color: #fff;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .stage-pill {
+    font-size: 10px; font-weight: 700;
+    padding: 2px 8px; border-radius: 10px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .stage-desc { font-size: 12px; color: #7BAFD4; line-height: 1.6; }
+
+  /* Architecture diagram */
+  .arch-diagram {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 14px 12px;
+  }
+  .arch-title { font-size: 10px; color: #4A7FA5; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; margin-bottom: 10px; }
+  .arch-flow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .arch-node {
+    display: flex; align-items: center; gap: 5px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 5px;
+    padding: 5px 8px;
+    font-size: 11px; color: #B2D4E8; font-weight: 500;
+    transition: all 0.3s;
+  }
+  .arch-node.active-node {
+    background: rgba(0,180,216,0.15);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .arch-node .node-icon { font-size: 13px; }
+  .arch-arrow { color: #4A7FA5; font-size: 12px; flex-shrink: 0; }
+
+  /* Skill cards */
+  .skills-section { display: flex; flex-direction: column; gap: 8px; }
+  .skills-label { font-size: 10px; color: #4A7FA5; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; }
+  .skill-card {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 7px;
+    padding: 10px 10px;
+    transition: all 0.4s;
+    position: relative;
+    overflow: hidden;
+  }
+  .skill-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: transparent;
+    transition: background 0.3s;
+  }
+  .skill-card.skill-active {
+    background: rgba(0,180,216,0.08);
+    border-color: rgba(0,180,216,0.4);
+    box-shadow: 0 0 12px rgba(0,180,216,0.15);
+  }
+  .skill-card.skill-active::before { background: var(--accent); }
+  .skill-card.skill-done {
+    background: rgba(46,196,182,0.06);
+    border-color: rgba(46,196,182,0.3);
+  }
+  .skill-card.skill-done::before { background: var(--ok); }
+  .skill-icon {
+    width: 30px; height: 30px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+  }
+  .skill-info { flex: 1; min-width: 0; }
+  .skill-name { font-size: 12px; font-weight: 700; color: #C8DDE9; margin-bottom: 1px; }
+  .skill-sub { font-size: 10px; color: #4A7FA5; }
+  .skill-status {
+    font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .skill-card.skill-active .skill-status { opacity: 1; background: rgba(0,180,216,0.2); color: var(--accent); }
+  .skill-card.skill-done .skill-status { opacity: 1; background: rgba(46,196,182,0.2); color: var(--ok); }
+
+  /* Limitation tags */
+  .limits { display: flex; flex-direction: column; gap: 5px; }
+  .limit-tag {
+    font-size: 11px; color: #E07A5F;
+    background: rgba(224,122,95,0.1);
+    border: 1px solid rgba(224,122,95,0.2);
+    border-radius: 5px;
+    padding: 5px 9px;
+    display: flex; align-items: flex-start; gap: 6px;
+    line-height: 1.4;
+  }
+  .limit-tag::before { content: '✕'; font-weight: 700; flex-shrink: 0; }
+  .can-tag {
+    font-size: 11px; color: var(--ok);
+    background: rgba(46,196,182,0.08);
+    border: 1px solid rgba(46,196,182,0.2);
+    border-radius: 5px;
+    padding: 5px 9px;
+    display: flex; align-items: flex-start; gap: 6px;
+    line-height: 1.4;
+  }
+  .can-tag::before { content: '✓'; font-weight: 700; flex-shrink: 0; }
+
+  /* Control bar */
+  .ctrl-bar {
+    padding: 12px 16px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .progress-track {
+    height: 3px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--teal), var(--accent));
+    border-radius: 2px;
+    transition: width 0.5s ease;
+    width: 0%;
+  }
+  .ctrl-buttons { display: flex; gap: 8px; }
+  .btn {
+    flex: 1;
+    padding: 9px;
+    border: none; border-radius: 7px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 12px; font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #0D2137;
+  }
+  .btn-primary:hover { background: #00CFF8; }
+  .btn-primary:disabled { background: rgba(0,180,216,0.3); color: rgba(0,0,0,0.4); cursor: not-allowed; }
+  .btn-secondary {
+    background: rgba(255,255,255,0.07);
+    color: #7BAFD4;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .btn-secondary:hover { background: rgba(255,255,255,0.12); }
+  .btn-reset {
+    background: transparent;
+    color: #4A7FA5;
+    border: 1px solid rgba(255,255,255,0.07);
+    flex: 0.6;
+    font-size: 11px;
+  }
+  .btn-reset:hover { color: var(--warn); border-color: rgba(224,122,95,0.4); }
+
+  /* ── Right Panel: Chat ──────────────────────── */
+  .right-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .chat-header {
+    padding: 12px 20px;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .chat-header-left { display: flex; align-items: center; gap: 10px; }
+  .chat-ai-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #ccc;
+    transition: background 0.3s;
+  }
+  .chat-ai-dot.thinking { background: var(--accent); animation: pulse 1.2s infinite; }
+  .chat-ai-dot.done { background: var(--ok); animation: none; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .chat-ai-name { font-size: 13px; font-weight: 700; color: var(--text); }
+  .chat-stage-indicator {
+    font-size: 11px;
+    padding: 3px 10px; border-radius: 12px;
+    font-weight: 700;
+    transition: all 0.3s;
+  }
+
+  .chat-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .chat-body::-webkit-scrollbar { width: 5px; }
+  .chat-body::-webkit-scrollbar-track { background: transparent; }
+  .chat-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* Bubbles */
+  .bubble-row { display: flex; gap: 10px; align-items: flex-start; }
+  .bubble-row.user { justify-content: flex-end; }
+
+  .bubble-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+    font-weight: 700;
+  }
+  .bubble-avatar.ai-avatar {
+    background: var(--mid);
+    color: var(--accent);
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .bubble-avatar.user-avatar {
+    background: var(--stage2);
+    color: #fff;
+    font-size: 11px;
+  }
+
+  .bubble {
+    max-width: 75%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    font-size: 13px;
+    line-height: 1.65;
+    position: relative;
+    animation: bubbleIn 0.35s ease both;
+  }
+  @keyframes bubbleIn {
+    from { opacity:0; transform: translateY(8px) scale(0.97); }
+    to   { opacity:1; transform: translateY(0) scale(1); }
+  }
+
+  .bubble.user {
+    background: var(--navy);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  .bubble.ai {
+    background: var(--card);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .bubble.ai-think {
+    background: rgba(0,180,216,0.05);
+    border-color: rgba(0,180,216,0.3);
+    color: #1C5A7A;
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .bubble.ai-think .think-label {
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--accent); font-weight: 700; margin-bottom: 4px;
+    display: block;
+  }
+  .bubble.skill-call {
+    background: rgba(33,41,92,0.06);
+    border-color: rgba(33,41,92,0.2);
+    font-size: 12px;
+    padding: 8px 12px;
+  }
+  .skill-call-header {
+    display: flex; align-items: center; gap: 6px;
+    margin-bottom: 4px;
+  }
+  .skill-call-badge {
+    font-size: 9px; font-weight: 700;
+    background: var(--mid); color: var(--accent);
+    padding: 1px 6px; border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.06em;
+  }
+  .skill-call-name { font-size: 11px; font-weight: 700; color: var(--mid); }
+  .skill-call-body { font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+
+  .bubble.result-card {
+    background: linear-gradient(135deg, #f0faf8, #e8f4fb);
+    border-color: var(--ok);
+    max-width: 85%;
+  }
+  .result-title {
+    font-size: 12px; font-weight: 700; color: var(--teal);
+    margin-bottom: 6px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .result-doc {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 12px; color: var(--text);
+    line-height: 1.7;
+  }
+  .result-doc .doc-title { font-weight: 700; font-size: 13px; margin-bottom: 6px; color: var(--navy); }
+  .result-doc table { width: 100%; border-collapse: collapse; font-size: 11px; margin: 6px 0; }
+  .result-doc th { background: var(--navy); color: #fff; padding: 4px 8px; text-align: left; font-size: 10px; }
+  .result-doc td { border: 1px solid var(--border); padding: 4px 8px; }
+  .result-doc td:first-child { font-weight: 600; color: var(--navy); }
+
+  .typing-dots { display: inline-flex; gap: 3px; padding: 2px 0; }
+  .typing-dots span {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent);
+    animation: typing 1.2s infinite;
+  }
+  .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typing { 0%,80%,100%{opacity:0.2} 40%{opacity:1} }
+
+  .bubble.error-bubble {
+    background: rgba(224,122,95,0.07);
+    border-color: rgba(224,122,95,0.4);
+    color: #7A2B1A;
+    font-size: 12px;
+  }
+  .error-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--warn); font-weight: 700; margin-bottom: 3px; display: block; }
+
+  /* Chat input (decorative) */
+  .chat-input-bar {
+    padding: 12px 20px;
+    background: var(--card);
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .chat-input-fake {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 14px;
+    font-size: 13px;
+    color: var(--muted);
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: default;
+    user-select: none;
+  }
+  .send-btn-fake {
+    width: 36px; height: 36px;
+    background: var(--navy);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 14px;
+    cursor: default;
+  }
+
+  /* Timestamp */
+  .bubble-time { font-size: 10px; color: var(--muted); margin-top: 2px; padding: 0 4px; }
+  .bubble-row.user .bubble-time { text-align: right; }
+
+  /* Slide-in from stage transitions */
+  .stage-fade { animation: stageFadeIn 0.4s ease both; }
+  @keyframes stageFadeIn { from{opacity:0;transform:translateX(10px)} to{opacity:1;transform:none} }
+
+  /* Result badge */
+  .output-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--ok); color: #fff;
+    font-size: 10px; font-weight: 700;
+    padding: 3px 8px; border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    margin-left: 4px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="topbar-logo">Brains Technology</div>
+    <div class="topbar-sep"></div>
+    <div class="topbar-title">RAG vs Agent Skills ─ ライブデモ</div>
+  </div>
+  <div class="scenario-badge">📋 精密機器メーカー｜センサーX200 競合比較提案書</div>
+</div>
+
+<!-- Main -->
+<div class="main">
+
+  <!-- Left Panel -->
+  <div class="left-panel">
+    <!-- Stage tabs -->
+    <div class="stage-tabs">
+      <button class="stage-tab active" data-stage="1" onclick="switchStage(1)">
+        <span class="tab-num">1</span>
+        <span class="tab-label">素のLLM</span>
+      </button>
+      <button class="stage-tab" data-stage="2" onclick="switchStage(2)">
+        <span class="tab-num">2</span>
+        <span class="tab-label">RAG</span>
+      </button>
+      <button class="stage-tab" data-stage="3" onclick="switchStage(3)">
+        <span class="tab-num">3</span>
+        <span class="tab-label">Agent Skills</span>
+      </button>
+    </div>
+
+    <!-- Left content (swapped per stage) -->
+    <div class="left-content" id="leftContent"></div>
+
+    <!-- Controls -->
+    <div class="ctrl-bar">
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="ctrl-buttons">
+        <button class="btn btn-primary" id="btnPlay" onclick="playStep()">▶ 再生</button>
+        <button class="btn btn-secondary" id="btnSkip" onclick="skipStep()">スキップ →</button>
+        <button class="btn btn-reset" onclick="resetDemo()">↺ リセット</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Panel: Chat -->
+  <div class="right-panel">
+    <div class="chat-header">
+      <div class="chat-header-left">
+        <div class="chat-ai-dot" id="aiDot"></div>
+        <div class="chat-ai-name">AI アシスタント</div>
+      </div>
+      <div class="chat-stage-indicator" id="stageIndicator"></div>
+    </div>
+    <div class="chat-body" id="chatBody"></div>
+    <div class="chat-input-bar">
+      <div class="chat-input-fake" id="chatInputDisplay">X200センサーと競合A社・B社を比較した提案書を作って</div>
+      <div class="send-btn-fake">↑</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ────────────────────────────────────────────────────────────────
+let currentStage = 1;
+let stepIndex = 0;
+let isPlaying = false;
+let playTimer = null;
+let activeNodes = [];
+let activeSkills = [];
+
+const USER_Q = 'X200センサーと競合A社・B社を比較した提案書を作って';
+
+// ─── Stage Definitions ───────────────────────────────────────────────────
+
+const stages = {
+  1: {
+    name: '素のLLM',
+    desc: '学習済み知識のみで回答を生成します。社内文書も外部情報も参照しません。',
+    pill: { text: 'BASELINE', bg: '#3D5A80' },
+    indicatorStyle: { background: 'rgba(61,90,128,0.15)', color: '#3D5A80' },
+    arch: [
+      { id:'q', icon:'💬', label:'質問' },
+      { id:'llm', icon:'🤖', label:'LLM' },
+      { id:'ans', icon:'📝', label:'回答' },
+    ],
+    archArrows: [0,1],
+    skills: [],
+    limits: [
+      '社内仕様書（X200）を知らない',
+      '競合の最新モデル情報がない',
+      '提案書フォーマット不対応',
+    ],
+    cans: [],
+    steps: [
+      { type:'user',  delay:800,  text: USER_Q },
+      { type:'think', delay:900,  text: 'ユーザーの質問を受け取りました。\n学習済み知識から回答を生成します…', nodes:['q','llm'] },
+      { type:'think', delay:1400, text: '⚠️ 社内製品データベースへのアクセス: なし\n⚠️ 外部情報検索: 不可\n→ 一般的な知識のみで回答します', nodes:['llm'] },
+      { type:'ai',    delay:1200, text: 'X200センサーについての一般的な情報をお伝えします。\n\n精密センサー製品の比較において、一般的に重要な指標は測定精度、応答速度、IP保護等級、対応温度範囲などです。\n\n具体的な競合他社との比較については、**御社の製品仕様書や競合カタログの情報が必要**です。現在それらにアクセスできないため、詳細な比較提案書の作成はできません。', nodes:['ans'] },
+      { type:'error', delay:600,  text: '社内製品仕様（X200詳細）: 参照不可\n競合A社・B社の最新スペック: 参照不可\n提案書フォーマット: 未適用' },
+    ],
+  },
+
+  2: {
+    name: 'RAG',
+    desc: '社内文書をベクトルDBで検索し、関連情報をAIに渡して回答精度を向上させます。',
+    pill: { text: 'RAG', bg: '#1C7293' },
+    indicatorStyle: { background: 'rgba(28,114,147,0.15)', color: '#1C7293' },
+    arch: [
+      { id:'q',    icon:'💬', label:'質問' },
+      { id:'emb',  icon:'🔢', label:'埋め込み' },
+      { id:'vdb',  icon:'🗄️', label:'ベクトルDB' },
+      { id:'ctx',  icon:'📄', label:'コンテキスト' },
+      { id:'llm',  icon:'🤖', label:'LLM' },
+      { id:'ans',  icon:'📝', label:'回答' },
+    ],
+    archArrows: [0,1,2,3,4],
+    skills: [
+      { id:'s_search', icon:'🔍', iconBg:'#065A82', name:'社内文書検索', sub:'Neuronベクトル検索エンジン', statusText:'CALLING' },
+    ],
+    limits: [
+      '競合の最新Webページは取得不可（静的DB）',
+      '複数タスクの自律実行はできない',
+      '知識カットオフ後の情報は対応不可',
+    ],
+    cans: [
+      'X200仕様書を検索・参照できる',
+      '社内PDFを「知識源」として活用可能',
+    ],
+    steps: [
+      { type:'user',  delay:800,  text: USER_Q },
+      { type:'think', delay:900,  text: 'クエリを解析し、埋め込みベクトルを生成します…\nquery: "X200 センサー 仕様 精度"', nodes:['q','emb'] },
+      { type:'skill', delay:1000, skill:'s_search', call:'neuron.search(query="X200 センサー 仕様")', result:'5件の関連文書を取得: X200_spec_v3.pdf, sensor_catalog_2024.pdf ...', nodes:['vdb','ctx'], skillStatus:'done' },
+      { type:'think', delay:1100, text: '取得した文書をコンテキストに組み込み、回答を生成します…\n文書数: 5 件 | トークン使用: 2,847', nodes:['ctx','llm'] },
+      { type:'ai',    delay:1500, text: '社内仕様書（X200_spec_v3.pdf）を参照しました。\n\n**X200センサー 主要スペック**\n・測定精度: ±0.05% FS\n・応答速度: 2ms\n・IP保護等級: IP67\n・対応温度: −40〜+125°C\n\n競合他社との比較を行うため、A社・B社の最新スペックも確認します…', nodes:['ans'] },
+      { type:'error', delay:800,  text: '⚠️ 競合A社（最新モデル 2025年版）: ベクトルDB未収録\n⚠️ 競合B社 Webカタログ: 外部アクセス不可\n→ 社内保有の旧カタログ（2023年版）で代替します' },
+      { type:'ai',    delay:1200, text: '※競合データは2023年版カタログに基づきます（最新情報ではありません）。\n\n完全な提案書の自動生成には、最新競合情報の取得と複数ツールの連携が必要です。\n\n**RAGの限界**: 静的DBの情報のみを参照するため、リアルタイムの競合情報や複数ステップの自動処理には対応できません。', nodes:['ans'] },
+    ],
+  },
+
+  3: {
+    name: 'Agent Skills',
+    desc: 'AIが自律的に複数のスキル（ツール）を選択・実行。社内検索→Web検索→提案書生成を一気通貫で処理します。',
+    pill: { text: 'AGENT', bg: '#21295C' },
+    indicatorStyle: { background: 'rgba(0,180,216,0.12)', color: '#00B4D8' },
+    arch: [
+      { id:'q',     icon:'💬', label:'質問' },
+      { id:'agent', icon:'🤖', label:'AI Agent' },
+      { id:'skills',icon:'⚡', label:'Skills実行' },
+      { id:'ans',   icon:'📄', label:'提案書生成' },
+    ],
+    archArrows: [0,1,2],
+    skills: [
+      { id:'sk_neuron', icon:'🔍', iconBg:'#065A82', name:'社内検索スキル',  sub:'Neuron MCP Server',  statusText:'CALLING' },
+      { id:'sk_web',    icon:'🌐', iconBg:'#1C7293', name:'Web検索スキル',   sub:'競合リアルタイム取得', statusText:'CALLING' },
+      { id:'sk_doc',    icon:'📄', iconBg:'#21295C', name:'提案書生成スキル', sub:'Word自動フォーマット', statusText:'CALLING' },
+    ],
+    limits: [],
+    cans: [
+      'X200仕様を社内DBから正確に取得',
+      '競合A社・B社の最新Webカタログを取得',
+      '提案書をWordフォーマットで自動生成',
+      'AIが全ステップを自律的に判断・実行',
+    ],
+    steps: [
+      { type:'user',  delay:800,  text: USER_Q },
+      { type:'think', delay:900,  text: 'タスクを分解します:\n1. X200の社内仕様を取得\n2. 競合A社・B社の最新情報を検索\n3. 比較提案書を生成\n→ 最適なスキルを自律選択します', nodes:['q','agent'] },
+      { type:'skill', delay:1000, skill:'sk_neuron', call:'neuron_mcp.search(query="X200センサー 製品仕様")', result:'✓ X200_spec_v3.pdf 取得完了\n  精度: ±0.05%FS / 応答: 2ms / IP67', nodes:['agent','skills'], skillStatus:'done' },
+      { type:'skill', delay:1100, skill:'sk_web',    call:'web_search.fetch(query="競合A社 センサー 2025 最新スペック")', result:'✓ 競合A社 最新モデルXA-Pro 取得\n✓ 競合B社 BetaSense-III 取得', nodes:['agent','skills'], skillStatus:'done' },
+      { type:'skill', delay:1000, skill:'sk_doc',    call:'doc_gen.create(template="proposal", data={x200, competitors})', result:'✓ 提案書生成中... フォーマット適用完了\n  ファイル: X200_比較提案書_2025.docx', nodes:['skills','ans'], skillStatus:'done' },
+      { type:'think', delay:800,  text: '全スキルの実行が完了しました。\n処理時間: 8.3秒 | 使用スキル: 3件', nodes:['ans'] },
+      { type:'result', delay:600 },
+    ],
+  },
+};
+
+// ─── Left Panel Content Builder ──────────────────────────────────────────
+
+function buildLeftContent(stageNum) {
+  const s = stages[stageNum];
+  const lc = document.getElementById('leftContent');
+  lc.innerHTML = '';
+
+  // Header
+  const hdr = document.createElement('div');
+  hdr.className = 'stage-header stage-fade';
+  hdr.innerHTML = `
+    <div class="stage-name">
+      ${s.name}
+      <span class="stage-pill" style="background:${s.pill.bg};color:#fff">${s.pill.text}</span>
+    </div>
+    <div class="stage-desc">${s.desc}</div>
+  `;
+  lc.appendChild(hdr);
+
+  // Architecture diagram
+  const arch = document.createElement('div');
+  arch.className = 'arch-diagram stage-fade';
+  let nodesHtml = s.arch.map(n => `
+    <div class="arch-node" id="node_${n.id}">
+      <span class="node-icon">${n.icon}</span>
+      <span>${n.label}</span>
+    </div>
+  `).join('<span class="arch-arrow">→</span>');
+  arch.innerHTML = `<div class="arch-title">アーキテクチャ</div><div class="arch-flow">${nodesHtml}</div>`;
+  lc.appendChild(arch);
+
+  // Skills (if any)
+  if (s.skills.length > 0) {
+    const skillSec = document.createElement('div');
+    skillSec.className = 'skills-section stage-fade';
+    skillSec.innerHTML = `<div class="skills-label">利用スキル</div>`;
+    s.skills.forEach(sk => {
+      const card = document.createElement('div');
+      card.className = 'skill-card';
+      card.id = 'skill_' + sk.id;
+      card.innerHTML = `
+        <div class="skill-icon" style="background:${sk.iconBg}20;border:1px solid ${sk.iconBg}40">${sk.icon}</div>
+        <div class="skill-info">
+          <div class="skill-name">${sk.name}</div>
+          <div class="skill-sub">${sk.sub}</div>
+        </div>
+        <div class="skill-status">${sk.statusText}</div>
+      `;
+      skillSec.appendChild(card);
+    });
+    lc.appendChild(skillSec);
+  }
+
+  // Cans
+  if (s.cans.length > 0) {
+    const canSec = document.createElement('div');
+    canSec.className = 'limits stage-fade';
+    s.cans.forEach(t => {
+      const tag = document.createElement('div');
+      tag.className = 'can-tag';
+      tag.textContent = t;
+      canSec.appendChild(tag);
+    });
+    lc.appendChild(canSec);
+  }
+
+  // Limits
+  if (s.limits.length > 0) {
+    const limSec = document.createElement('div');
+    limSec.className = 'limits stage-fade';
+    s.limits.forEach(t => {
+      const tag = document.createElement('div');
+      tag.className = 'limit-tag';
+      tag.textContent = t;
+      limSec.appendChild(tag);
+    });
+    lc.appendChild(limSec);
+  }
+}
+
+// ─── Chat Builder ────────────────────────────────────────────────────────
+
+function addBubble(type, opts = {}) {
+  const body = document.getElementById('chatBody');
+
+  if (type === 'typing') {
+    const row = document.createElement('div');
+    row.className = 'bubble-row';
+    row.id = 'typingRow';
+    row.innerHTML = `
+      <div class="bubble-avatar ai-avatar">AI</div>
+      <div class="bubble ai"><div class="typing-dots"><span></span><span></span><span></span></div></div>
+    `;
+    body.appendChild(row);
+    body.scrollTop = body.scrollHeight;
+    return;
+  }
+
+  const typingRow = document.getElementById('typingRow');
+  if (typingRow) typingRow.remove();
+
+  if (type === 'user') {
+    const row = document.createElement('div');
+    row.className = 'bubble-row user';
+    row.innerHTML = `
+      <div>
+        <div class="bubble user">${opts.text}</div>
+        <div class="bubble-time">営業担当者</div>
+      </div>
+      <div class="bubble-avatar user-avatar">営業</div>
+    `;
+    body.appendChild(row);
+  }
+
+  else if (type === 'think') {
+    const row = document.createElement('div');
+    row.className = 'bubble-row';
+    row.innerHTML = `
+      <div class="bubble-avatar ai-avatar">AI</div>
+      <div class="bubble ai-think">
+        <span class="think-label">💭 思考中</span>
+        ${opts.text.replace(/\n/g,'<br>')}
+      </div>
+    `;
+    body.appendChild(row);
+  }
+
+  else if (type === 'skill') {
+    const row = document.createElement('div');
+    row.className = 'bubble-row';
+    row.innerHTML = `
+      <div class="bubble-avatar ai-avatar">AI</div>
+      <div class="bubble skill-call">
+        <div class="skill-call-header">
+          <span class="skill-call-badge">SKILL CALL</span>
+          <span class="skill-call-name">${opts.skillName}</span>
+        </div>
+        <div class="skill-call-body">${opts.call.replace(/\n/g,'<br>')}</div>
+        <div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(0,0,0,0.08);font-size:11px;color:#2a6b5f;font-family:'JetBrains Mono',monospace">${opts.result.replace(/\n/g,'<br>')}</div>
+      </div>
+    `;
+    body.appendChild(row);
+  }
+
+  else if (type === 'ai') {
+    const row = document.createElement('div');
+    row.className = 'bubble-row';
+    row.innerHTML = `
+      <div class="bubble-avatar ai-avatar">AI</div>
+      <div>
+        <div class="bubble ai">${opts.text.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>')}</div>
+        <div class="bubble-time">AI アシスタント</div>
+      </div>
+    `;
+    body.appendChild(row);
+  }
+
+  else if (type === 'error') {
+    const row = document.createElement('div');
+    row.className = 'bubble-row';
+    row.innerHTML = `
+      <div class="bubble-avatar ai-avatar" style="background:#7A2B1A;color:#E07A5F">!</div>
+      <div class="bubble error-bubble">
+        <span class="error-label">⚠ 制限事項</span>
+        ${opts.text.replace(/\n/g,'<br>')}
+      </div>
+    `;
+    body.appendChild(row);
+  }
+
+  else if (type === 'result') {
+    const row = document.createElement('div');
+    row.className = 'bubble-row';
+    row.innerHTML = `
+      <div class="bubble-avatar ai-avatar" style="background:var(--ok);color:#fff;font-size:16px">✓</div>
+      <div>
+        <div class="bubble result-card">
+          <div class="result-title">
+            📄 提案書が自動生成されました
+            <span class="output-badge">OUTPUT</span>
+          </div>
+          <div class="result-doc">
+            <div class="doc-title">X200センサー 競合比較提案書</div>
+            <table>
+              <tr><th>項目</th><th>X200（自社）</th><th>競合A社 XA-Pro</th><th>競合B社 BetaSense-III</th></tr>
+              <tr><td>測定精度</td><td>±0.05% FS</td><td>±0.08% FS</td><td>±0.06% FS</td></tr>
+              <tr><td>応答速度</td><td>2 ms</td><td>5 ms</td><td>3 ms</td></tr>
+              <tr><td>IP保護等級</td><td>IP67</td><td>IP65</td><td>IP67</td></tr>
+              <tr><td>対応温度</td><td>−40〜+125°C</td><td>−20〜+85°C</td><td>−30〜+100°C</td></tr>
+              <tr><td>価格帯</td><td>¥85,000〜</td><td>¥72,000〜</td><td>¥91,000〜</td></tr>
+            </table>
+            <div style="margin-top:8px;font-size:11px;color:var(--teal);font-weight:700">
+              ✓ X200_比較提案書_2025.docx として出力完了（8.3秒）
+            </div>
+          </div>
+        </div>
+        <div class="bubble-time">AI アシスタント — Agent Skills (Neuron MCP)</div>
+      </div>
+    `;
+    body.appendChild(row);
+  }
+
+  body.scrollTop = body.scrollHeight;
+}
+
+// ─── Node / Skill Highlight ──────────────────────────────────────────────
+
+function highlightNodes(nodeIds) {
+  // Reset all
+  document.querySelectorAll('.arch-node').forEach(n => n.classList.remove('active-node'));
+  // Activate
+  if (nodeIds) nodeIds.forEach(id => {
+    const el = document.getElementById('node_' + id);
+    if (el) el.classList.add('active-node');
+  });
+}
+
+function setSkillActive(skillId, status) {
+  const el = document.getElementById('skill_' + skillId);
+  if (!el) return;
+  el.classList.remove('skill-active','skill-done');
+  if (status === 'active') el.classList.add('skill-active');
+  if (status === 'done')   el.classList.add('skill-done');
+}
+
+// ─── AI Dot ──────────────────────────────────────────────────────────────
+
+function setAiDot(state) {
+  const dot = document.getElementById('aiDot');
+  dot.className = 'chat-ai-dot ' + (state || '');
+}
+
+// ─── Step Executor ───────────────────────────────────────────────────────
+
+function executeStep(stageNum, stepIdx, callback) {
+  const s = stages[stageNum];
+  const step = s.steps[stepIdx];
+  if (!step) { if(callback) callback(); return; }
+
+  setAiDot('thinking');
+
+  if (step.type === 'user') {
+    addBubble('user', { text: step.text });
+    setAiDot('thinking');
+    setTimeout(callback, 400);
+
+  } else if (step.type === 'think') {
+    addBubble('typing');
+    setTimeout(() => {
+      highlightNodes(step.nodes);
+      addBubble('think', { text: step.text });
+      setTimeout(callback, 300);
+    }, 700);
+
+  } else if (step.type === 'skill') {
+    // Activate skill card
+    setSkillActive(step.skill, 'active');
+    addBubble('typing');
+    setTimeout(() => {
+      highlightNodes(step.nodes);
+      const skDef = s.skills.find(x => x.id === step.skill);
+      addBubble('skill', { skillName: skDef ? skDef.name : step.skill, call: step.call, result: step.result });
+      setSkillActive(step.skill, step.skillStatus || 'done');
+      setTimeout(callback, 300);
+    }, 900);
+
+  } else if (step.type === 'ai') {
+    addBubble('typing');
+    setTimeout(() => {
+      highlightNodes(step.nodes);
+      addBubble('ai', { text: step.text });
+      setAiDot('done');
+      setTimeout(callback, 300);
+    }, 1000);
+
+  } else if (step.type === 'error') {
+    setTimeout(() => {
+      addBubble('error', { text: step.text });
+      setAiDot('');
+      setTimeout(callback, 300);
+    }, 400);
+
+  } else if (step.type === 'result') {
+    addBubble('typing');
+    setTimeout(() => {
+      addBubble('result');
+      setAiDot('done');
+      setTimeout(callback, 300);
+    }, 800);
+  }
+
+  updateProgress();
+}
+
+// ─── Auto Play ───────────────────────────────────────────────────────────
+
+function playStep() {
+  if (isPlaying) return;
+  const s = stages[currentStage];
+  if (stepIndex >= s.steps.length) return;
+
+  isPlaying = true;
+  document.getElementById('btnPlay').disabled = true;
+
+  const step = s.steps[stepIndex];
+  const delay = step.delay || 800;
+
+  executeStep(currentStage, stepIndex, () => {
+    stepIndex++;
+    isPlaying = false;
+    document.getElementById('btnPlay').disabled = false;
+    updateProgress();
+
+    if (stepIndex < s.steps.length) {
+      // Auto advance
+      playTimer = setTimeout(playStep, delay);
+    } else {
+      // Stage complete
+      setAiDot('done');
+      document.getElementById('btnPlay').disabled = true;
+      // Mark tab as done
+      if (currentStage < 3) {
+        document.querySelector(`.stage-tab[data-stage="${currentStage}"]`).classList.add('done');
+      }
+    }
+  });
+}
+
+function skipStep() {
+  clearTimeout(playTimer);
+  isPlaying = false;
+  document.getElementById('btnPlay').disabled = false;
+
+  const s = stages[currentStage];
+  if (stepIndex >= s.steps.length) {
+    // Move to next stage
+    if (currentStage < 3) switchStage(currentStage + 1);
+    return;
+  }
+
+  const step = s.steps[stepIndex];
+  const typingRow = document.getElementById('typingRow');
+  if (typingRow) typingRow.remove();
+
+  // Execute immediately
+  highlightNodes(step.nodes || []);
+
+  if (step.type === 'user') addBubble('user', { text: step.text });
+  else if (step.type === 'think') addBubble('think', { text: step.text });
+  else if (step.type === 'skill') {
+    setSkillActive(step.skill, 'active');
+    const skDef = stages[currentStage].skills.find(x => x.id === step.skill);
+    addBubble('skill', { skillName: skDef ? skDef.name : step.skill, call: step.call, result: step.result });
+    setSkillActive(step.skill, step.skillStatus || 'done');
+  }
+  else if (step.type === 'ai') { addBubble('ai', { text: step.text }); setAiDot('done'); }
+  else if (step.type === 'error') { addBubble('error', { text: step.text }); setAiDot(''); }
+  else if (step.type === 'result') { addBubble('result'); setAiDot('done'); }
+
+  stepIndex++;
+  updateProgress();
+
+  if (stepIndex >= s.steps.length) {
+    document.getElementById('btnPlay').disabled = true;
+    if (currentStage < 3) {
+      document.querySelector(`.stage-tab[data-stage="${currentStage}"]`).classList.add('done');
+    }
+  }
+}
+
+// ─── Stage Switch ────────────────────────────────────────────────────────
+
+function switchStage(num) {
+  clearTimeout(playTimer);
+  isPlaying = false;
+  currentStage = num;
+  stepIndex = 0;
+
+  // Update tabs
+  document.querySelectorAll('.stage-tab').forEach(t => {
+    t.classList.remove('active');
+    if (parseInt(t.dataset.stage) === num) t.classList.add('active');
+  });
+
+  // Update stage indicator
+  const si = document.getElementById('stageIndicator');
+  const s = stages[num];
+  si.textContent = `Stage ${num}: ${s.name}`;
+  Object.assign(si.style, s.indicatorStyle);
+  si.style.padding = '3px 10px';
+  si.style.borderRadius = '12px';
+  si.style.fontWeight = '700';
+  si.style.fontSize = '11px';
+
+  // Clear chat
+  document.getElementById('chatBody').innerHTML = '';
+  setAiDot('');
+
+  // Rebuild left
+  buildLeftContent(num);
+
+  // Reset controls
+  document.getElementById('btnPlay').disabled = false;
+  updateProgress();
+}
+
+function resetDemo() {
+  clearTimeout(playTimer);
+  isPlaying = false;
+  document.querySelectorAll('.stage-tab').forEach(t => t.classList.remove('done'));
+  switchStage(1);
+}
+
+function updateProgress() {
+  const s = stages[currentStage];
+  const total = s.steps.length;
+  const pct = total > 0 ? (stepIndex / total) * 100 : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────
+switchStage(1);
+</script>
+</body>
+</html>
