@@ -504,7 +504,7 @@ video.clip.on{display:block;}
       <span style="font-size:20px;color:#6B7787;">エージェント検索</span><span style="flex:1"></span>
       <span class="nreal">実際の画面イメージ</span></div>
     <div class="nmain" style="left:0;padding:20px 34px;">
-      <div style="display:flex;justify-content:flex-end;"><div class="nbub" style="font-size:17px;padding:10px 16px;max-width:780px;line-height:1.55;">過去に社内や共同研究で同じテーマの検討が行われていないか調べ、行われていた場合は、その結論と、いまもその結論が有効かどうかを確認してください。</div></div>
+      <div style="display:flex;justify-content:flex-end;"><div class="nbub" style="font-size:17px;padding:10px 16px;max-width:780px;line-height:1.55;">次期車種HX-50のドアインナーを、アルミと樹脂のマルチマテリアル構造にする検討をしています。アルミ側の表面処理と接着の条件について、過去に社内や共同研究で同じ検討が行われていないか調べ、行われていた場合は、その結論と、いまもその結論が有効かどうかを確認してください。</div></div>
       <div class="nans" style="margin-top:14px;padding:18px 24px;">
         <div class="nproc" style="display:block;">処理の経過　<span class="nnum" id="i_n">1</span><div style="font-size:16px;color:#6B7787;margin-top:4px;">検索キーワードを変えながら、Box と ファイルサーバーを検索しています</div></div>
         <div class="qbox2" id="i_q"></div>
@@ -713,7 +713,7 @@ var QUERIES=[
     +'<span class="qn">検索 '+(i+1)+'</span><span class="qq">'+x[0]+'</span><span class="qs">'+x[1]+'</span></div>'; });
   g.innerHTML=h; })();
 
-var PROMPT1="過去に社内や共同研究で同じテーマの検討が行われていないか調べ、行われていた場合は、その結論と、いまもその結論が有効かどうかを確認してください。";
+var PROMPT1="次期車種HX-50のドアインナーを、アルミと樹脂のマルチマテリアル構造にする検討をしています。アルミ側の表面処理と接着の条件について、過去に社内や共同研究で同じ検討が行われていないか調べ、行われていた場合は、その結論と、いまもその結論が有効かどうかを確認してください。";
 var PROMPT2="ここまでの内容を、テーマ計画の見直し案としてスライドにまとめてください。";
 
 /* ===== 成果物スライド（実物・4枚） ===== */
@@ -813,7 +813,7 @@ var DRAW={
    rise(q("g4"),l,15.2,.7); },
  s8:function(l){ rise(q("h1"),l,0.2,.5); rise(q("h2"),l,0.5,.6); rise(q("h3"),l,0.9,.6);
    rise(q("h4"),l,2.2,.6); rise(q("h5"),l,5.4,.6);
-   typeTo(q("h_q"),PROMPT1,l,5.8,22); ring(q("h_ring"),l,10.2); },
+   typeTo(q("h_q"),PROMPT1,l,4.6,30); ring(q("h_ring"),l,10.2); },
  s9:function(l){ rise(q("i1"),l,0.2,.5); rise(q("i2"),l,0.5,.6); rise(q("i3"),l,0.8,.6);
    rise(q("i4"),l,1.8,.6); rise(q("i5"),l,7.4,.6);
    var n=0; if(l>=2.2) n=Math.min(8,1+Math.floor((l-2.2)/1.3));
