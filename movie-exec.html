@@ -707,7 +707,7 @@ var DRAW={
    q('p6cur').style.opacity=(l<d-2.4&&blink(l))?1:0; q('send6').style.background=l>=en+0.4?'#4A90C8':'#8FB6DA'; },
  s7:function(l,d){ var n=0; for(var i=1;i<=8;i++){ var e=q('q7_'+i); if(e&&parseFloat(e.style.opacity||0)>0.5) n=i; } q('st7n').textContent=n; },
  s10:function(l,d){ typeTo(q('q10'),'部品供給について、取れる手を期限つきで整理して。',l,0.5,12); },
- s11:function(l,d){ var E=EXTRA.s11; typeTo(q('q11'),'明日、調達本部長と製造部長に協議をお願いする。A4 1枚にまとめて。Wordで。',l,0.4,16);
+ s11:function(l,d){ var E=EXTRA.s11; typeTo(q('q11'),'ここまでの回答を、協議用の資料としてWordにまとめて。',l,0.4,16);
    if(l<E.WORD+0.3) cursorMove('s11','cur11','rip11',l,E.CLICK-1.2,E.CLICK-0.1,1300,820,q('dl11'),E.CLICK);
    else { q('cur11').style.opacity=0; q('rip11').style.opacity=0; }
    var ra=q('rg11a'), tb=ra.parentNode.querySelector('table'); if(tb&&l>=E.WORD){ var rows=tb.rows, base=ra.parentNode.getBoundingClientRect(), k=q('stage').getBoundingClientRect().width/1920;
