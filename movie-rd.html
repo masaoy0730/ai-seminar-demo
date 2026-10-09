@@ -126,7 +126,7 @@ video.clip.on{display:block;}
 .call::before{content:"";position:absolute;left:-42px;top:34px;width:36px;height:3px;background:#3C5480;}
 #mode{position:absolute;right:140px;top:34px;z-index:41;font-size:19px;font-weight:700;border-radius:999px;padding:7px 18px;white-space:nowrap;}
 #mode.real{background:#D7F5F0;color:#0E6E62;border:2px solid #2DD4BF;}
-#mode.expl{background:transparent;color:var(--mute);border:2px solid var(--line);}
+#mode.expl{background:rgba(143,160,188,.10);color:#B9C7DC;border:2px solid #4A5E80;font-size:24px;padding:9px 24px;}
 .ficon{display:inline-flex;align-items:center;justify-content:center;flex:none;width:44px;height:44px;border-radius:9px;color:#fff;font-size:26px;font-weight:700;}
 
 /* ===== NEURON-OPENING:STYLE:BEGIN ===== */
@@ -571,7 +571,7 @@ video.clip.on{display:block;}
 </div></section>
 
 <section class="scene" id="s11"><div class="wrap">
-  <div class="kicker item" id="k1">エージェント検索でわかったこと</div>
+  <div class="kicker item" id="k1">解説 — エージェント検索でわかったこと</div>
   <div class="quotebig item" id="k2">
     <div class="k">共同研究 最終報告書 98ページ目 ／ 当時の担当者が残した一文</div>
     <div class="v">「耐湿グレードの接着剤で、再評価する価値がある」</div>
@@ -949,7 +949,7 @@ function seek(t){ t=cl(t,0,TOTAL); var curId=null;
     s.el.style.opacity=cl(o,0,1); });
   var m=curId?MODE[curId]:"";
   if(m){ modeEl.style.display=""; modeEl.className=m;
-    modeEl.textContent=(m==="real")?"■ Neuron の画面（実際の表示内容を再現）":"解説イメージ"; }
+    modeEl.textContent=(m==="real")?"■ Neuron の画面（実際の表示内容を再現）":"解説図｜製品画面ではありません"; }
   else { modeEl.style.display="none"; }
   drawCap(t); q("prog").style.width=(t/TOTAL*100)+"%"; }
 window.__seek=seek; seek(0);

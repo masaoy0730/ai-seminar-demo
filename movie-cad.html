@@ -126,7 +126,7 @@ video.clip.on{display:block;}
 .call::before{content:"";position:absolute;left:-42px;top:34px;width:36px;height:3px;background:#3C5480;}
 #mode{position:absolute;right:140px;top:34px;z-index:41;font-size:19px;font-weight:700;border-radius:999px;padding:7px 18px;white-space:nowrap;}
 #mode.real{background:#D7F5F0;color:#0E6E62;border:2px solid #2DD4BF;}
-#mode.expl{background:transparent;color:var(--mute);border:2px solid var(--line);}
+#mode.expl{background:rgba(143,160,188,.10);color:#B9C7DC;border:2px solid #4A5E80;font-size:24px;padding:9px 24px;}
 .ficon{display:inline-flex;align-items:center;justify-content:center;flex:none;width:44px;height:44px;border-radius:9px;color:#fff;font-size:26px;font-weight:700;}
 
 /* ===== NEURON-OPENING:STYLE:BEGIN ===== */
@@ -833,7 +833,7 @@ var EXPL={s2:1,s3:1,s4:1,s6:1};
 var modeEl=q("mode");
 function setMode(id){
   if(!modeEl) return;
-  if(EXPL[id]){ modeEl.className="expl"; modeEl.textContent="解説イメージ"; modeEl.style.opacity=1; }
+  if(EXPL[id]){ modeEl.className="expl"; modeEl.textContent="解説図｜製品画面ではありません"; modeEl.style.opacity=1; }
   else{ modeEl.style.opacity=0; modeEl.textContent=""; }
 }
 

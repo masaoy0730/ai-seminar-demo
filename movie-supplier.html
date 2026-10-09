@@ -128,7 +128,7 @@ video.clip.on{display:block;}
 .call::before{content:"";position:absolute;left:-42px;top:34px;width:36px;height:3px;background:#3C5480;}
 #mode{position:absolute;right:140px;top:34px;z-index:41;font-size:19px;font-weight:700;border-radius:999px;padding:7px 18px;white-space:nowrap;}
 #mode.real{background:#D7F5F0;color:#0E6E62;border:2px solid #2DD4BF;}
-#mode.expl{background:transparent;color:var(--mute);border:2px solid var(--line);}
+#mode.expl{background:rgba(143,160,188,.10);color:#B9C7DC;border:2px solid #4A5E80;font-size:24px;padding:9px 24px;}
 .ficon{display:inline-flex;align-items:center;justify-content:center;flex:none;width:44px;height:44px;border-radius:9px;color:#fff;font-size:26px;font-weight:700;}
 
 .nscr{position:absolute;left:140px;top:238px;width:1260px;height:646px;background:#F3F5F8;border-radius:14px;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.45),0 0 0 3px rgba(255,255,255,.10);color:#1F2A37;}
@@ -803,7 +803,7 @@ function seek(t){
   if(cur!=='s9' && cur!=='s10'){ mcur.style.opacity=0; mrip.style.opacity=0; }
   var m=CFG.MODE[cur]||'', md=q("mode");
   md.style.display=(m&&m!=='real')?'':'none'; md.className=m;
-  md.textContent=(m==='real')?"■ エージェント検索の画面（実際の表示内容を再現）":"解説イメージ";
+  md.textContent=(m==='real')?"■ エージェント検索の画面（実際の表示内容を再現）":"解説図｜製品画面ではありません";
   drawCap(t);
   q("prog").style.width=(t/TOTAL*100)+"%";
 }

@@ -16,7 +16,7 @@ html,body{height:100%;overflow:hidden;background:#05080E;margin:0}
 .disc{position:absolute;left:56px;bottom:40px;font-size:19px;color:var(--mute);letter-spacing:.02em;z-index:40;}
 .brandmark{position:absolute;right:56px;bottom:38px;font-size:19px;color:var(--mute);letter-spacing:.08em;z-index:40;}
 #mode{position:absolute;right:140px;top:34px;z-index:41;font-size:19px;font-weight:700;border-radius:999px;padding:7px 18px;white-space:nowrap;display:none;}
-#mode.expl{display:block;background:transparent;color:var(--mute);border:2px solid var(--line);}
+#mode.expl{display:block;background:rgba(143,160,188,.10);color:#B9C7DC;border:2px solid #4A5E80;font-size:24px;padding:9px 24px;}
 .kick{position:absolute;left:140px;top:96px;font-size:26px;color:var(--teal);letter-spacing:.04em;font-weight:700;}
 .h2{position:absolute;left:140px;top:134px;font-size:52px;font-weight:700;line-height:1.2;}
 .card{background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:22px 26px;}
@@ -655,7 +655,7 @@ function seek(t){ t=cl(t,0,TOTAL);
     var o=Math.min(ease(l/FADE), ease((s.d-l)/FADE)); if(s===S[S.length-1]) o=ease(l/FADE);
     s.el.style.opacity=cl(o,0,1); });
   var m=q('mode'); m.className = modeOn ? 'expl' : '';
-  if(modeOn) m.textContent='解説イメージ';
+  if(modeOn) m.textContent='解説図｜製品画面ではありません';
   drawCap(t); q('prog').style.width=(t/TOTAL*100)+'%'; }
 window.__seek=seek; window.__scenes=S;
 window.__sceneT0=function(id){ for(var i=0;i<S.length;i++) if(S[i].id===id) return S[i].t0; return 0; };

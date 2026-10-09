@@ -128,7 +128,7 @@ video.clip.on{display:block;}
 .call::before{content:"";position:absolute;left:-42px;top:34px;width:36px;height:3px;background:#3C5480;}
 #mode{position:absolute;right:140px;top:34px;z-index:41;font-size:19px;font-weight:700;border-radius:999px;padding:7px 18px;white-space:nowrap;}
 #mode.real{background:#D7F5F0;color:#0E6E62;border:2px solid #2DD4BF;}
-#mode.expl{background:transparent;color:var(--mute);border:2px solid var(--line);}
+#mode.expl{background:rgba(143,160,188,.10);color:#B9C7DC;border:2px solid #4A5E80;font-size:24px;padding:9px 24px;}
 .ficon{display:inline-flex;align-items:center;justify-content:center;flex:none;width:44px;height:44px;border-radius:9px;color:#fff;font-size:26px;font-weight:700;}
 
 /* ===== NEURON-OPENING:STYLE:BEGIN ===== */
@@ -952,7 +952,7 @@ function seek(t){
   });
   var cur=null; S.forEach(function(s){ if(t>=s.t0 && t<s.t0+s.d) cur=s.id; }); if(!cur) cur=S[S.length-1].id;
   var real={s6:1,s7:1,s8:1,s9:1,s10:1}[cur];
-  var md=q("mode"); var hide=(cur==="s3"||cur==="s4"||cur==="s6"); md.style.display=hide?"none":""; md.className=real?"real":"expl"; md.textContent=real?"■ Neuron の画面（実際の表示内容を再現）":"解説イメージ";
+  var md=q("mode"); var hide=(cur==="s3"||cur==="s4"||cur==="s6"); md.style.display=hide?"none":""; md.className=real?"real":"expl"; md.textContent=real?"■ Neuron の画面（実際の表示内容を再現）":"解説図｜製品画面ではありません";
   drawCap(t);
   q("prog").style.width=(t/TOTAL*100)+"%";
 }

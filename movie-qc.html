@@ -20,7 +20,7 @@ body{font-family:'BIZ UDPGothic','BIZ UDPゴシック','Noto Sans CJK JP','Noto 
   color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;}
 #mode{position:absolute;right:140px;top:34px;z-index:41;font-size:19px;font-weight:700;border-radius:999px;padding:7px 18px;white-space:nowrap;}
 #mode.real{background:#D7F5F0;color:#0E6E62;border:2px solid #2DD4BF;}
-#mode.expl{background:transparent;color:var(--mute);border:2px solid var(--line);}
+#mode.expl{background:rgba(143,160,188,.10);color:#B9C7DC;border:2px solid #4A5E80;font-size:24px;padding:9px 24px;}
 
 *{box-sizing:border-box;margin:0;padding:0;}
 
@@ -497,7 +497,7 @@ video.clip.on{display:block;}
 
   <!-- S8b 見えているのは片側だけ（解説） -->
   <div class="scene" id="s8b">
-    <div class="c kicker" id="s8bk" style="left:150px;top:120px;">エージェント検索でわかったこと</div>
+    <div class="c kicker" id="s8bk" style="left:150px;top:120px;">解説 — エージェント検索でわかったこと</div>
     <div class="c h2" id="s8bt" style="left:150px;top:170px;width:1640px;">同じ工程で、<span class="amberc">過検出</span>と<span class="red">見逃し</span>の両方が起きうる</div>
     <div class="c card" id="s8bc1" style="left:150px;top:340px;width:790px;height:400px;padding:44px 48px;">
       <div class="small">朝：ワークが冷えている</div><div class="h2 amber" style="margin-top:14px;">NGが増える</div>
@@ -509,7 +509,7 @@ video.clip.on{display:block;}
 
   <!-- SE 判定までに確かめること・手を打つこと（解説） -->
   <div class="scene" id="sE">
-    <div class="c kicker" id="sEk" style="left:140px;top:96px;">エージェント検索でわかったこと</div>
+    <div class="c kicker" id="sEk" style="left:140px;top:96px;">解説 — エージェント検索でわかったこと</div>
     <div class="c h2" id="sEt" style="left:140px;top:146px;width:1640px;">判定の前に、<span class="accent">打てる手</span>がそろった</div>
     <div class="c" id="sEtl" style="left:140px;top:262px;width:1240px;height:120px;">
       <div id="sEline" style="position:absolute;left:0;top:52px;height:4px;width:0;background:#3C5480;"></div>
@@ -968,7 +968,7 @@ const CAPL=[
  {a:166.0,b:171.5,t:"温度補正の設定、部品の搬入と暖機、そして、見逃しの確認。"},
  {a:171.8,b:174.4,t:"判定の前に、手を打てます。"}
 ];
-/* シーンごとの表示ラベル：real＝Neuronの画面の再現／expl＝解説イメージ／none＝出さない／box＝Box画面のイメージ */
+/* シーンごとの表示ラベル：real＝Neuronの画面の再現／expl＝解説図｜製品画面ではありません／none＝出さない／box＝Box画面のイメージ */
 const MODE = {s0:'none', sP:'none', s2:'expl', s3:'box', s4:'box', s5:'expl', s6:'none', s6b:'none', s7:'none', s8:'none', s8b:'expl', sE:'expl', s9:'none'};
 let acc = 0;
 SC.forEach(s => { s.start = acc; acc += s.dur; });
@@ -993,7 +993,7 @@ function seek(t){
   const m = cur ? MODE[cur.id] : 'none', md = $('mode');
   md.style.display = (m === 'real' || m === 'expl') ? '' : 'none';
   md.className = m === 'real' ? 'real' : 'expl';
-  md.textContent = m === 'real' ? '■ Neuron の画面（実際の表示内容を再現）' : '解説イメージ';
+  md.textContent = m === 'real' ? '■ Neuron の画面（実際の表示内容を再現）' : '解説図｜製品画面ではありません';
   $('disc').textContent = '※ 登場する企業・製品・文書・人名はすべて架空です';
   $('disc').style.display = (cur && cur.id === 's9') ? 'none' : '';
   drawCap(t);
