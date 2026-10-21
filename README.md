@@ -20,7 +20,7 @@ https://masaoy0730.github.io/ai-seminar-demo/movie-world.html
 https://masaoy0730.github.io/ai-seminar-demo/demos.html
 
 - 内容：デモの主人公を、イラスト・役職・悩みの一言のカードで並べたページ。お客様に自分の仕事に近い主人公を選んでもらい、そのデモ動画を開く
-- 収録（番号は全体像スライドの順）：1 ヒヤリハット報告活用（立花 奈緒）→ movie-nearmiss.html／2 類似図面検索（大久保 慎一）→ movie-cad.html／3 車載バッテリー研究（仲井 幸一）→ movie-batt.html／4 ロボット安全設計（青木 誠）→ movie-safety.html／5 品質管理（高田 美咲）→ movie-qc.html（3分動画版）／6 IT部門（岸本 直樹）→ movie-it.html／7 役員／量産移行判定（北村 健司）→ movie-exec.html／8 法人融資（野口 美咲）→ movie-loan.html／9 サプライヤー支援（水野 さやか）→ movie-supplier.html／10 議会答弁／空き家対策（藤井 健太）→ movie-gikai.html／11 設計図書検索／道路改良（中川 拓也）→ movie-pref.html／12 プラント試運転トラブル（原 健一）→ movie-eng.html／13 電気設備設計／法令の照合（森川 亮介）→ movie-elec.html
+- 収録（番号は全体像スライドの順）：1 ヒヤリハット報告活用（立花 奈緒）→ movie-nearmiss.html／2 類似図面検索（大久保 慎一）→ movie-cad.html／3 車載バッテリー研究（仲井 幸一）→ movie-batt.html／4 ロボット安全設計（青木 誠）→ movie-safety.html／5 品質管理（高田 美咲）→ movie-qc-kw.html（キーワード検索版）／6 IT部門（岸本 直樹）→ movie-it.html／7 役員／量産移行判定（北村 健司）→ movie-exec.html／8 法人融資（野口 美咲）→ movie-loan.html／9 サプライヤー支援（水野 さやか）→ movie-supplier.html／10 議会答弁／空き家対策（藤井 健太）→ movie-gikai.html／11 設計図書検索／道路改良（中川 拓也）→ movie-pref.html／12 プラント試運転トラブル（原 健一）→ movie-eng.html／13 電気設備設計／法令の照合（森川 亮介）→ movie-elec.html
 - 使い方：カードを押すと、そのデモ動画が新しいタブで開く（一覧は残る）。カードの上の線の色は製造業（青）・金融（橙）・自治体（緑）。PCは4列、タブレットは2列、スマートフォンは1列。ページ下に自治体向けデモ一覧（demos-gov.html）へのリンク
 - 全体像スライド（Claudeのスライド「エージェント検索デモ 全体像」）の4枚目「あなたの仕事に近いのは、どの主人公ですか」と同じ内容。イラストは各デモ動画のものをページに埋め込んでいる（単一HTML）
 
