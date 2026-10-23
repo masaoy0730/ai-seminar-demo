@@ -45,14 +45,30 @@
   a.card:hover .cta { text-decoration:underline; text-underline-offset:4px; }
   .more { margin-top:28px; font-size:clamp(14px,1.1vw,17px); color:var(--sub); }
   .more a { color:var(--a); font-weight:700; text-underline-offset:3px; }
-  footer { margin-top:20px; font-size:14px; color:var(--sub); }
-  @media (max-width:1200px) { .grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .who img { width:120px; } }
+  .note { margin-top:20px; font-size:14px; color:var(--sub); }
+  /* 導入事例（キーワード検索） */
+  .cases { margin-top:56px; padding-top:40px; border-top:1px solid var(--line); }
+  .cases h2 { font-size:clamp(22px,2vw,32px); font-weight:700; line-height:1.3; color:var(--ink); text-wrap:balance; word-break:auto-phrase; }
+  .cases-lead { margin-top:10px; font-size:clamp(15px,1.2vw,18px); color:var(--sub); word-break:auto-phrase; }
+  .cases-note { margin-top:6px; font-size:14px; color:var(--sub); }
+  .case-grid { margin-top:22px; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+  .case { display:flex; flex-direction:column; gap:8px; padding:16px 20px; background:var(--card); border:1px solid var(--line); border-radius:12px; color:inherit; text-decoration:none; transition:border-color .18s ease, box-shadow .18s ease; }
+  .case:hover { border-color:var(--a); box-shadow:0 8px 20px rgba(27,42,68,.10); }
+  .case:focus-visible { outline:3px solid var(--a); outline-offset:3px; }
+  .case-org { font-size:clamp(18px,1.4vw,22px); font-weight:700; color:var(--ink); }
+  .case-org span { display:block; margin-top:2px; font-size:14px; font-weight:400; color:var(--sub); }
+  .case-fx { flex:1; word-break:auto-phrase; font-size:clamp(14px,1.1vw,17px); line-height:1.5; color:var(--text); }
+  .case-fx .nb { white-space:nowrap; }
+  .case-cta { align-self:flex-end; font-size:15px; font-weight:700; color:var(--a); }
+  .case:hover .case-cta { text-decoration:underline; text-underline-offset:4px; }
+  @media (max-width:1200px) { .grid, .case-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .who img { width:120px; } }
   @media (max-width:640px) {
     .wrap { padding:32px 16px 28px; }
-    .grid { grid-template-columns:1fr; gap:16px; }
+    .grid, .case-grid { grid-template-columns:1fr; gap:16px; }
+    .cases { margin-top:40px; padding-top:28px; }
     .who img { width:96px; }
   }
-  @media (prefers-reduced-motion:reduce) { .card { transition:none; } a.card:hover { transform:none; } }
+  @media (prefers-reduced-motion:reduce) { .card, .case { transition:none; } a.card:hover { transform:none; } }
 </style>
 </head>
 <body>
@@ -93,8 +109,46 @@
       <span class="cta">▶ 動画を見る</span>
     </a>
   </div>
-  <p class="more">デモは順次追加します。製造業・金融のデモは <a href="demos.html">デモ一覧</a> をご覧ください。</p>
-  <footer>登場する自治体・企業・人物・文書はすべて架空です。</footer>
+  <p class="more">デモは順次追加します。民間企業向けのデモは <a href="demos.html">デモ一覧</a> をご覧ください。</p>
+  <p class="note">デモに登場する自治体・企業・人物・文書はすべて架空です。</p>
+
+  <section class="cases" aria-labelledby="cases-h">
+    <h2 id="cases-h">Neuron ES（キーワード検索）の自治体導入事例</h2>
+    <p class="cases-lead">エージェント検索の土台になるのは、庁内の文書を横断して探せる検索基盤です。全文検索エンジン Neuron ES は、既に多くの自治体で導入されています。</p>
+    <p class="cases-note">※以下はエージェント検索ではなく、キーワード検索（全文検索）の導入事例です。</p>
+    <div class="case-grid">
+      <a class="case" href="https://www.brains-tech.co.jp/neuron/case/case45-akita/" target="_blank" rel="noopener" aria-label="秋田県の導入事例を読む（新しいタブ）">
+        <p class="case-org">秋田県<span>企画振興部 デジタル政策推進課</span></p>
+        <p class="case-fx">名前があいまいな資料探しが約30分から約10秒に</p>
+        <span class="case-cta">事例を読む ↗</span>
+      </a>
+      <a class="case" href="https://www.brains-tech.co.jp/neuron/case/case36-ishikawa/" target="_blank" rel="noopener" aria-label="石川県の導入事例を読む（新しいタブ）">
+        <p class="case-org">石川県<span>総務部 デジタル推進監室</span></p>
+        <p class="case-fx">検索時間を平均約60%削減（導入前の試算）</p>
+        <span class="case-cta">事例を読む ↗</span>
+      </a>
+      <a class="case" href="https://www.brains-tech.co.jp/neuron/case/case39-kyoto-city/" target="_blank" rel="noopener" aria-label="京都市の導入事例を読む（新しいタブ）">
+        <p class="case-org">京都市<span>総合企画局 デジタル化戦略推進室</span></p>
+        <p class="case-fx">1回あたり10〜15分短縮の声</p>
+        <span class="case-cta">事例を読む ↗</span>
+      </a>
+      <a class="case" href="https://www.brains-tech.co.jp/neuron/case/case32-kobe/" target="_blank" rel="noopener" aria-label="神戸市の導入事例を読む（新しいタブ）">
+        <p class="case-org">神戸市<span>健康局 食品衛生課</span></p>
+        <p class="case-fx">LGWAN環境で運用。検索時間を86.6%削減<span class='nb'>（1時間→約8分）</span></p>
+        <span class="case-cta">事例を読む ↗</span>
+      </a>
+      <a class="case" href="https://www.brains-tech.co.jp/neuron/case/case49-komatsu-city/" target="_blank" rel="noopener" aria-label="小松市の導入事例を読む（新しいタブ）">
+        <p class="case-org">小松市<span>スマートシティ推進課</span></p>
+        <p class="case-fx">ファイルサーバーとNASを横断。検索時間が<span class='nb'>約20%削減</span></p>
+        <span class="case-cta">事例を読む ↗</span>
+      </a>
+      <a class="case" href="https://www.brains-tech.co.jp/neuron/case/case52-fuefuki/" target="_blank" rel="noopener" aria-label="笛吹市の導入事例を読む（新しいタブ）">
+        <p class="case-org">笛吹市<span>政策課</span></p>
+        <p class="case-fx">職員約800名で、2か月半に約7,000回の検索</p>
+        <span class="case-cta">事例を読む ↗</span>
+      </a>
+    </div>
+  </section>
 </main>
 </body>
 </html>
