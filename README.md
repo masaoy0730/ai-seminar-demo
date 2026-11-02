@@ -118,7 +118,7 @@ https://masaoy0730.github.io/ai-seminar-demo/movie-supplier.html
 https://masaoy0730.github.io/ai-seminar-demo/movie-pref.html
 
 ```text
-県庁向け 設計図書検索シナリオ（あさひ県・類似工事を探して積算する・段階導入）
+土木整備 設計図書検索シナリオ（あさひ県・類似工事を探して積算する・段階導入）
 https://masaoy0730.github.io/ai-seminar-demo/movie-pref.html
 
 場面設定：あさひ県（架空）県土整備部 南部土木事務所 工務課の中川 拓也さん（技師・入庁3年目）が主人公。
